@@ -1,0 +1,63 @@
+<%#
+ Copyright 2008 Steven Barth <steven@midlink.org>
+ Copyright 2008 Jo-Philipp Wich <jow@openwrt.org>
+ Copyright 2012 David Menting <david@nut-bolt.nl>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<% local ver = require "luci.version" %>
+
+   <footer>
+
+       <table>
+           <tr>
+               <td style="padding-right:30px; padding-top: 17px;">
+                   <img src="/luci-static/resources/tsmodem/img/logo_footer.png" alt="">
+               </td>
+               <td>
+                   <h3><%:Support %></h3>
+                   <table>
+                       <tr>
+                           <td>
+                               <table>
+                                   <tr>
+                                       <td valign="top" style="padding-right: 10px;"><b><%:Email %>:</b></td>
+                                       <td valign="top" style="white-space: nowrap;">
+                                           <ul style="margin-bottom: 10px;">
+                                               <li>sales@gprs-system.com</li>
+                                               <li>op@gprs-system.com</li>
+                                           </ul>
+                                       </td>
+                                   </tr>
+                                   <tr>
+                                       <td valign="top" style="padding-right: 10px;"><b><%:Tel. %>:</b></td>
+                                       <td valign="top" style="padding-left: 8px;">+ 7 (988) 998-18-08 (<%:multi-channels %>)</td>
+                                   </tr>
+                               </table>
+                           </td>
+                           <td valign="top" style="padding-left: 50px;">
+                               <table>
+                                   <tr>
+                                       <td valign="top" style="padding-right: 10px; padding-bottom:3px;"><b><%:Address of the Manufacture %>:</b></td>
+                                   </tr>
+                                   <tr>
+                                        <td valign="top"><%:344048, Rostov-on-Don, Krjijanovskogo street, 179/5/94 %></td>
+                                   </tr>
+                                   </tr>
+                               </table>
+                           </td>
+                       </tr>
+                   </table>
+               </td>
+           </tr>
+       </table>
+
+       <br /><br />
+    <ul class="breadcrumb pull-right" id="modemenu" style="display:none"></ul>
+   </footer>
+  </div>
+  <% if luci.dispatcher.context.authsession then %>
+  <script type="text/javascript">L.require('menu-bootstrap')</script>
+  <% end %>
+ </body>
+</html>
