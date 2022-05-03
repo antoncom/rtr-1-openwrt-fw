@@ -50,8 +50,7 @@ define Package/$(PKG_NAME)/prerm
 #	/etc/init.d/tsmodem disable
 endef
 
-include /home/anton/lua_projects/SKW92A/MAKING_A_PACKAGE/openwrt-sdk-19.07.7-ramips-mt76x8_gcc-7.5.0_musl.Linux-x86_64/feeds/luci/luci.mk
-# include ../../luci.mk
+include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
 #$(eval $(call BuildPackage,$(PKG_NAME)))
