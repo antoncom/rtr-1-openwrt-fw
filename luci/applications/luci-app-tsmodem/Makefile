@@ -5,11 +5,10 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI TechnoSkver RTR01
-LUCI_DEPENDS:=+luci-i18n-base-ru +luci-i18n-base-en +openssh-sftp-server +luci-compat +luaposix +luabitop +lpeg +coreutils-sleep +libubox-lua +luasocket +coreutils-stty +comgt +kmod-usb-serial +kmod-usb-serial-option +kmod-usb-serial-wwan +usb-modeswitch +kmod-usb-core +luci-app-uhttpd +luci-proto-3g
 LUCI_DESCRIPTION:=Double SIM management for Skw92A with Sim7600 modem integration.
 LUCI_PKGARCH:=all
 
-PKG_NAME:=tsmodem
+PKG_NAME:=luci-app-tsmodem
 PKG_VERSION:=1.8.2
 PKG_RELEASE:=20220401
 PKG_LICENSE:=GPL-3.0-or-later
