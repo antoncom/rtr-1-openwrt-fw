@@ -10,45 +10,9 @@ LUCI_DEPENDS:=+luci-base +luci-i18n-base-ru +luci-i18n-base-en +luci-compat +lua
 LUCI_PKGARCH:=all
 
 PKG_NAME:=luci-app-tsmodem
-PKG_VERSION:=1.8.2
-PKG_RELEASE:=20220401
+PKG_VERSION:=1.8.4
+PKG_RELEASE:=20220508
 PKG_LICENSE:=GPL-3.0-or-later
-
-define Package/$(PKG_NAME)/postinst
-#	#!/bin/sh
-#	sleep 1;
-
-#	uci set uhttpd.main.redirect_https='0'
-#	uci set luci.ccache.enable='0'
-#	uci set luci.main.mediaurlbase='/luci-static/tsmodem'
-
-#	uci set system.@system[0].timezone='<+03>-3'
-#	uci set system.@system[0].zonename='Europe/Volgograd'
-#	uci set system.@system[0].hostname='BITCORD-001'
-
-#	uci set luci.main.lang='ru'
-
-#	uci set wireless.default_radio0.ssid='BITCORD-001'
-#	uci set wireless.default_radio0.key='btCrd001'
-	
-
-#	uci commit
-
-#	/etc/init.d/uhttpd restart
-
-#	lua /root/tsmodem_set_network.lua
-#	/etc/init.d/network restart
-
-#	/etc/init.d/tsmodem enable
-
-endef
-
-define Package/$(PKG_NAME)/prerm
-#	#!/bin/sh
-#	/etc/init.d/tsmodem stop
-#	sleep 3;
-#	/etc/init.d/tsmodem disable
-endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

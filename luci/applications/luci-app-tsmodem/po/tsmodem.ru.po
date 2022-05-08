@@ -147,11 +147,23 @@ msgstr "Email"
 msgid "multi-channels"
 msgstr "многоканальный"
 
+msgid "Developer"
+msgstr "Производитель"
+
 msgid "Address of the Manufacture"
 msgstr "Адрес производителя"
 
 msgid "344048, Rostov-on-Don, Krjijanovskogo street, 179/5/94"
 msgstr "344048 г. Ростов-на-Дону, ул. Кржижановского, д.179/5/94"
+
+msgid "OOO Rostovskiy zavod electroniki, INN: 6165230568"
+msgstr "ООО \"Ростовский завод электроники\", ИНН 6165230568"
+
+msgid "Website"
+msgstr "Веб-сайт"
+
+msgid "Router"
+msgstr "Роутер"
 
 msgid "Switching the SIM card.."
 msgstr "Переключение Сим-карты.."
