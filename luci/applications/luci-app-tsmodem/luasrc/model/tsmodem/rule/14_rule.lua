@@ -18,7 +18,7 @@ rule.events_queue = {}
 
 local rule_setting = {
 	title = {
-		input = I18N.translate("Indication: update the UI when the celluar network mode (3G/4G) is changed."),
+		input = I18N.translate("Indication: update GSM provider name"),
 		output = "",
 		subtotal = nil,
 		modifier = {}
@@ -27,7 +27,7 @@ local rule_setting = {
 	event_datetime = {
 		source = {
 			model = "tsmodem.driver",
-			method = "netmode",
+			method = "provider_name",
 			param = "time"
 		},
 		input = "",
@@ -41,7 +41,7 @@ local rule_setting = {
 	event_is_new = {
 		source = {
 			model = "tsmodem.driver",
-			method = "netmode",
+			method = "provider_name",
 			param = "unread"
 		},
 		input = "",
@@ -66,32 +66,18 @@ local rule_setting = {
 		}
 	},
 
-	netmode = {
+	provider_name = {
 		source = {
 			model = "tsmodem.driver",	-- This is UBUS OBJECT name. Run in the shell "ubus list | grep tsmodem" to see all objects.
-			method = "netmode",				-- This is UBUS METHOD name. Run in the shell "ubus -v list tsmodem driver" to see all nethods.
+			method = "provider_name",				-- This is UBUS METHOD name. Run in the shell "ubus -v list tsmodem driver" to see all nethods.
 			param = "value"				-- This is requested param name. Only "value", "time" and "command" are only possible here.
 		},
 		input = "",
 		output = "",
 		subtotal = "",
 		modifier = {
-
-		}
-	},
-
-	netmode_comment = {
-		source = {
-			model = "tsmodem.driver",
-			method = "netmode",
-			param = "comment"
-		},
-		input = "",
-		output = "",
-		subtotal = "",
-		modifier = {
 			["1_ui-update"] = {
-				param_list = { "netmode_comment", "sim_id" }
+				param_list = { "provider_name", "sim_id" }
 			}
 		}
 	},
@@ -101,13 +87,13 @@ local rule_setting = {
 		output = "",
 		subtotal = nil,
 		modifier = {
-			["1_logicfunc"] = [[ if ( ("event_is_new" == "true")	and	( tonumber("netmode") ~= nil ) and tonumber("netmode") ~= 0 ) then return true else return false end ]],
+			["1_logicfunc"] = [[ if ( ("event_is_new" == "true") and "provider_name" ~= nil and "provider_name" ~= "" ) then return true else return false end ]],
 			["2_formula"] = [[return({
 					datetime = "event_datetime",
-					name = "]] .. I18N.translate("3G/4G mode was changed") .. [[",
+					name = "]] .. I18N.translate("GSM provider was identified") .. [[",
 					source = "]] .. I18N.translate("Modem") .. [[",
-					command = "AT+CNSMOD?",
-					response = "netmode_comment"
+					command = "+NITZ",
+					response = "provider_name"
 				})]],
 			["3_ui-update"] = {
 				param_list = { "journal" }
@@ -138,8 +124,7 @@ function rule:make()
 	self:load("event_datetime"):modify()
 	self:load("event_is_new"):modify()
 	self:load("sim_id"):modify()
-	self:load("netmode"):modify()
-	self:load("netmode_comment"):modify()
+	self:load("provider_name"):modify()
 
 	self:load("journal"):modify():clear() -- clear cache
 

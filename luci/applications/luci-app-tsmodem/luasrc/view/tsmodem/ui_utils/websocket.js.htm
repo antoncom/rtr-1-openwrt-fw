@@ -98,6 +98,7 @@ local uci_signal_min = {
 				var placeholder = '#simid-' + sim_id + ' .' + varname
 				var rendered = document.querySelector(placeholder)
 
+				console.log(varname);
 				var value = ui_data[varname]
 
 				if(varname == "network_registration") {
@@ -136,7 +137,7 @@ local uci_signal_min = {
 							rendered.innerHTML = value + " rub." + balance_date;
 						}
 					}
-				} else if (varname == "netmode_comment" && value != "") {
+				} else if (varname == "netmode_comment" && value != "" && value.indexOf("?") == -1) {
 						rendered.innerHTML = animationWrapper(value.split(" | ")[1]);
 				}
 
@@ -176,6 +177,8 @@ local uci_signal_min = {
 					rendered.innerHTML = value + " rub." + balance_date;
 				} else if (varname == "signal") {
 					rendered.innerHTML = value + " %" + value;
+				} else if (varname == "provider_name" && value != "") {
+					rendered.innerHTML = ' <small>(' + value + ')</small>';
 				}
 
 			}
@@ -280,6 +283,7 @@ local uci_signal_min = {
 					var sid = parseInt(sim_id)
 
 					var network_registration = ui_data["network_registration"] || ""
+					var provider_name = ui_data["provider_name"] || ""
 
 					var netmode_comment = ui_data["netmode_comment"] || false
 					//var sim_id = ui_data["sim_id"]
@@ -346,6 +350,10 @@ local uci_signal_min = {
 				        if(network_registration != "" && !modemDisconnected) {
 				        	document.querySelector("input[type=button].sim-" + inactive_sim_id).disabled = false
 				        }
+
+						if(ui_data["provider_name"]) {
+							update_without_animation(sim_id, "provider_name", ui_data)
+						}
 					}
 
 					if (ui_data["journal"] != undefined) {
