@@ -10,11 +10,20 @@ LUCI_DEPENDS:=+lua-md5 +lua-cjson +luci-base +luci-i18n-base-ru +luci-i18n-base-
 LUCI_PKGARCH:=all
 
 PKG_NAME:=luci-app-tsmodem
-PKG_VERSION:=1.8.5
-PKG_RELEASE:=20220513
+PKG_VERSION:=2.2.0
+PKG_RELEASE:=20221120
 PKG_LICENSE:=GPL-3.0-or-later
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
+define Package/$(PKG_NAME)/install
+    # Daemon
+    $(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/rc.d
+    $(INSTALL_BIN) $(PKG_BUILD_DIR)/files/tsmodem.init $(1)/etc/init.d/tsmodem
+    $(INSTALL_DIR) $(1)/usr/sbin
+    $(INSTALL_BIN) $(PKG_BUILD_DIR)/files/tsmodem.sh $(1)/usr/sbin/tsmodem
+endef
+
+
 # call BuildPackage - OpenWrt buildroot signature
-#$(eval $(call BuildPackage,$(PKG_NAME)))
+# $(eval $(call BuildPackage,$(PKG_NAME)))

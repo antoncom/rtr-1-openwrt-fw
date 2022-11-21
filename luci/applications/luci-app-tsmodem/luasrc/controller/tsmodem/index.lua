@@ -24,7 +24,6 @@ function do_sim_action(action, sim_id)
 	payload["sim_data"] = luci.jsonc.parse(luci.http.formvalue("sim_data"))
 	payload["gsm_data"] = luci.jsonc.parse(luci.http.formvalue("adapter_data"))
 
-log("PAYLOAD", payload)
 	--log("PAYLOAD", payload)
 	local commands = {
 		switch = function(sim_id, ...)
@@ -76,7 +75,7 @@ log("PAYLOAD", payload)
 			]]
 			local resp_table = util.ubus("tsmodem.driver", "sim", {})
 			local active_sim = resp_table["value"] or ""
-			
+
 			if (sim_id == active_sim) then
 				local provider_id = uci:get(config, "sim_" .. sim_id, "provider")
 				local apn_provider = uci:get(config_gsm, provider_id, "gate_address") or "APNP"

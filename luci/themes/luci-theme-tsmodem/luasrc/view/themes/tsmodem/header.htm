@@ -18,6 +18,7 @@
 	-- send as HTML5
 	http.prepare_content("text/html")
 -%>
+
 <!DOCTYPE html>
 <html lang="<%=luci.i18n.context.lang%>">
 	<head>
@@ -41,7 +42,7 @@
 		<header>
 			<div class="fill">
 				<div class="container">
-					<a class="brand" href="#"><%:Router %> <%=striptags(boardinfo.hostname or "?")%></a>
+					<a class="brand" href="#">Роутер <%=striptags(boardinfo.hostname or "?"):gsub("-"," ",1) %></a>
 					<ul class="nav" id="topmenu" style="display:none"></ul>
 					<div id="indicators" class="pull-right"></div>
 				</div>

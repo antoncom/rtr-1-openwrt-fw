@@ -1,6 +1,4 @@
-
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2017-2021 WiMark Systems
 
 START=41
 STOP=82
@@ -16,7 +14,6 @@ start_service() {
     procd_open_instance 'tsmodem'
 
     procd_set_param respawn 3600 5 0
-    procd_set_param file "/etc/config/tsmodem"
     procd_set_param stdout 1
     procd_set_param command $SERVICE
     procd_set_param pidfile $SERVICE_PID_FILE

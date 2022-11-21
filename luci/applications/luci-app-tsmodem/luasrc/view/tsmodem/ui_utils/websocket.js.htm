@@ -98,7 +98,6 @@ local uci_signal_min = {
 				var placeholder = '#simid-' + sim_id + ' .' + varname
 				var rendered = document.querySelector(placeholder)
 
-				console.log(varname);
 				var value = ui_data[varname]
 
 				if(varname == "network_registration") {
@@ -115,7 +114,7 @@ local uci_signal_min = {
 						rendered.innerHTML = '<i style="background-position: 0 ' + bgIcon_Y + 'px;">' + animationWrapper(network_state[value][0]) + "</i>"
 					}
 
-				} else if (varname == "signal" && value != "101") {
+				} else if (varname == "signal" && value != "-" && value != "") {
 					if(window.low_signal_timer != undefined && window.low_signal_timer >= 1) {
 						rendered.innerHTML = animationWrapper(value + " %")  + "&nbsp;<small><font color='red'>( .." + window.low_signal_timer + "s) </font></small>";
 
@@ -313,15 +312,23 @@ local uci_signal_min = {
 						window.low_signal_timer = 0
 					}
 
-					if(ui_data.event_switch_state && ui_data.event_switch_state != "") {
-						if(ui_data.event_switch_state == "begin") {
+					if(ui_data.switching && ui_data.switching != "") {
+						if(ui_data.switching == "true") {
+
 							if(sim_id == "0") clearInactive("0")
 							if(sim_id == "1") clearInactive("1")
 						}
 
-						if(ui_data.event_switch_state == "end") {
-							clearInactive("0")
-							clearInactive("1")
+						if(ui_data.switching == "false") {
+							if(sim_id == "0") clearInactive("1")
+							if(sim_id == "1") clearInactive("0")
+						}
+					}
+
+					if(ui_data.do_switch && ui_data.do_switch != "") {
+						if(ui_data.do_switch == "true") {
+							if(sim_id == "0") clearInactive("0")
+							if(sim_id == "1") clearInactive("1")
 						}
 					}
 
@@ -379,7 +386,7 @@ local uci_signal_min = {
 					}
 
 					// Show overlay and block any user's activities
-					if(ui_data["event_switch_state"] != undefined && ui_data["event_switch_state"] == "begin") {
+					if(ui_data["do_switch"] != undefined && ui_data["do_switch"] == "true") {
 						document.querySelector("input[type=button].sim-0-settings").disabled = true
 						document.querySelector("input[type=button].sim-1-settings").disabled = true
 
@@ -394,16 +401,10 @@ local uci_signal_min = {
 					}
 
 					// Hide overlay and allow any user's activities
-					if(ui_data["event_switch_state"] != undefined && ui_data["event_switch_state"] == "end") {
+					if(ui_data["switching"] != undefined && ui_data["switching"] == "false") {
 						if ($("#overlay").length > 0) {
 							removeOverlay();
 						}
-
-						document.querySelector("input[type=button].sim-0-settings").disabled = false
-						document.querySelector("input[type=button].sim-1-settings").disabled = false
-
-						document.querySelector("input[type=button].sim-0").disabled = false
-						document.querySelector("input[type=button].sim-1").disabled = false
 					}
 
 
