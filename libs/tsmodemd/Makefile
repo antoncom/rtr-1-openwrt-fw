@@ -5,7 +5,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=tsmodem
+PKG_NAME:=tsmodemd
 PKG_RELEASE:=2.3
 
 PKG_SOURCE_URL=https://github.com/antoncom/tsmodem.git
@@ -15,7 +15,7 @@ PKG_SOURCE_VERSION:=aa174d6f3c32ca7a0cfaf1b231bed79398be47cc
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/tsmodem
+define Package/tsmodemd
 	SUBMENU:=Lua
 	SECTION:=lang
 	CATEGORY:=Languages
@@ -24,17 +24,17 @@ define Package/tsmodem
 	DEPENDS:=+luci-i18n-base-ru +luci-i18n-base-en +openssh-sftp-server +luci-compat +luaposix +luabitop +lpeg +coreutils-sleep +libubox-lua +luasocket +coreutils-stty +comgt +kmod-usb-serial +kmod-usb-serial-option +kmod-usb-serial-wwan +usb-modeswitch +kmod-usb-core +luci-app-uhttpd +luci-proto-3g
 endef
 
-define Package/tsmodem/description
+define Package/tsmodemd/description
 	Application level modem driver for sky92a based routers.
 endef
 
 define Build/Compile
 endef
 
-define Package/tsmodem/install
+define Package/tsmodemd/install
 	# Source code
-	$(INSTALL_DIR) $(1)/usr/lib/lua/tsmodem
-	$(CP) $(PKG_BUILD_DIR)/src/* $(1)/usr/lib/lua/tsmodem
+	$(INSTALL_DIR) $(1)/usr/lib/lua/tsmodemd
+	$(CP) $(PKG_BUILD_DIR)/src/* $(1)/usr/lib/lua/tsmodemd
 
 	# Default config
 	$(INSTALL_DIR) $(1)/etc/config
@@ -43,9 +43,9 @@ define Package/tsmodem/install
 
 	# Daemon
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/rc.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/tsmodem.init $(1)/etc/init.d/tsmodem
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/tsmodemd.init $(1)/etc/init.d/tsmodemd
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/tsmodem.sh $(1)/usr/sbin/tsmodem
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/tsmodemd.sh $(1)/usr/sbin/tsmodemd
 endef
 
-$(eval $(call BuildPackage,tsmodem))
+$(eval $(call BuildPackage,tsmodemd))
