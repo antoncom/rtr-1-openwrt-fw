@@ -15,18 +15,3 @@ PKG_RELEASE:=20221120
 PKG_LICENSE:=GPL-3.0-or-later
 
 include $(TOPDIR)/feeds/luci/luci.mk
-
-define Package/$(PKG_NAME)/install
-	# Default config
-	$(INSTALL_DIR) $(1)/etc/config
-	$(CP) $(PKG_BUILD_DIR)/root/etc/config/tsmodem $(1)/etc/config/tsmodem
-	$(CP) $(PKG_BUILD_DIR)/root/etc/config/tsmodem_adapter_provider $(1)/etc/config/tsmodem_adapter_provider
-
-	# Daemon
-	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/rc.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/etc/init.d/tsmodem.init $(1)/etc/init.d/tsmodem
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/etc/init.d/tsmodem.sh $(1)/usr/sbin/tsmodem
-endef
-
-$(eval $(call BuildPackage,$(PKG_NAME)))
