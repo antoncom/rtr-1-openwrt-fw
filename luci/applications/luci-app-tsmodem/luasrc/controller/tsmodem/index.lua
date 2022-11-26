@@ -6,7 +6,7 @@ local http = require "luci.http"
 local uci = require "luci.model.uci".cursor()
 local util = require "luci.util"
 local ubus = require "ubus"
-local log = require "luci.model.tsmodem.util.log"
+local log = require "tsmodem.util.log"
 
 
 

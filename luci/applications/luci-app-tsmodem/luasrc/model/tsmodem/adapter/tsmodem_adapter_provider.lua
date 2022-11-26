@@ -1,8 +1,8 @@
 local fs = require "nixio.fs"
 local uci = require "luci.model.uci".cursor()
 local util = require "luci.util"
-local log = require "luci.model.tsmodem.util.log"
-local parse_i18n = require "luci.model.tsmodem.parser.parse_i18n"
+local log = require "tsmodem.util.log"
+local parse_i18n = require "tsmodem.parser.parse_i18n"
 ---------------------------------------------------------
 --------- Change these when create new adapter ----------
 local adapter_config = "tsmodem_adapter_provider"
