@@ -15,19 +15,4 @@ PKG_LICENSE:=GPL-3.0-or-later
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
-define Package/$(PKG_NAME)/install
-    # Daemon
-    $(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/rc.d
-    $(INSTALL_BIN) $(PKG_BUILD_DIR)/files/gwsocket.init $(1)/etc/init.d/gwsocket
-    $(INSTALL_DIR) $(1)/usr/sbin
-    $(INSTALL_BIN) $(PKG_BUILD_DIR)/files/gwsocket.sh $(1)/usr/sbin/gwsocket
-endef
-
-
-define Package/$(PKG_NAME)/prerm
-	#!/bin/sh
-	rm /usr/bin/gwsocket
-endef
-
 # call BuildPackage - OpenWrt buildroot signature
-# $(eval $(call BuildPackage,$(PKG_NAME)))
