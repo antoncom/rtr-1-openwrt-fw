@@ -10,6 +10,8 @@
 	local util = require "luci.util"
 	local http = require "luci.http"
 	local disp = require "luci.dispatcher"
+	local uci = luci.model.uci.cursor()
+	local pubname = uci:get("system", "@system[0]", "pubname")
 
 	local boardinfo = util.ubus("system", "board")
 
@@ -42,7 +44,7 @@
 		<header>
 			<div class="fill">
 				<div class="container">
-					<a class="brand" href="#">Роутер <%=striptags(boardinfo.hostname or "?"):gsub("-"," ",1) %></a>
+					<a class="brand" href="#"><%=striptags(pubname or boardinfo.hostname or "?") %></a>
 					<ul class="nav" id="topmenu" style="display:none"></ul>
 					<div id="indicators" class="pull-right"></div>
 				</div>
