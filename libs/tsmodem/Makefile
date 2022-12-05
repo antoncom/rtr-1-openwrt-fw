@@ -38,14 +38,14 @@ define Package/tsmodem/postinst
 	#!/bin/sh
 	uci batch <<-EOF
 		set system.@system[0].hostname='BITCORD-RTR-02'
-		set system.@system[0].pubname='BITCORD RTR-02'
+		set system.@system[0].pubname='Роутер BITCORD RTR-02'
 		set system.@system[0].timezone='MSK-3'
 		set system.@system[0].zonename='Europe/Moscow'
 		commit system
-
 		set wireless.default_radio0.key='bitcord999'
 		set wireless.default_radio0.ssid='BITCORD-RTR-02'
 		set wireless.default_radio0.encryption='psk2'
+		set wireless.radio0.disabled='0'
 		commit wireless
 	EOF
 	exit 0
