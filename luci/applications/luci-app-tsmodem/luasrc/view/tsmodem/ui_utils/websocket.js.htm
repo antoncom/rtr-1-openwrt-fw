@@ -351,6 +351,8 @@ local uci_signal_min = {
 				        }
 				        // Disable "Activate" button of currently activated Sim
 				        document.querySelector("input[type=button].sim-" + sim_id).disabled = true
+						document.querySelector("input[type=button].sim-0-settings").disabled = false
+						document.querySelector("input[type=button].sim-1-settings").disabled = false
 
 				        // Enable "Activate" button of another Sim only if current Sim has already activated
 				        var inactive_sim_id = (parseInt(sim_id) == 0) ? "1" : "0"
