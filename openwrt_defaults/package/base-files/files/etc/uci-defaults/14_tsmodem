@@ -13,4 +13,20 @@ uci -q batch <<-EOF >/dev/null
     commit wireless
 EOF
 
+uci -q batch <<-EOF
+	set network.tsmodem=interface
+	set network.tsmodem.username='root'
+	set network.tsmodem.proto='3g'
+	set network.tsmodem.device='/dev/ttyUSB2'
+	set network.tsmodem.service='umts'
+	set network.tsmodem.ipv6='auto'
+	set network.tsmodem.apn='internet.mts.ru'
+	commit network
+EOF
+
+uci -q batch <<-EOF
+	add_list firewall.@zone[1].network='tsmodem'
+	commit firewall
+EOF
+
 exit 0
