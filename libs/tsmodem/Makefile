@@ -10,8 +10,8 @@ PKG_RELEASE:=2.3
 
 PKG_SOURCE_URL=https://github.com/antoncom/tsmodem.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE=2022-12-04
-PKG_SOURCE_VERSION:=99038c801aecf3c5cab5f7d3dd8d3a0ed6e9f09b
+PKG_SOURCE_DATE=2022-12-12
+PKG_SOURCE_VERSION:=2e39a54ca4d7fa4b574e04ff6cc701269156b0f5
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -32,24 +32,6 @@ define Package/tsmodem/description
 	User is able to add custom modifiers or use the existed ones: [func], [bash], [save], [skip], [frozen].
 	Debug mode allows to check all the entities and pass-logics in form of formatted ASCII tables.
 	Ordinary UBUS calls designed to get variables' value from the outside.
-endef
-
-define Package/tsmodem/postinst
-	#!/bin/sh
-	uci batch <<-EOF
-		set system.@system[0].hostname='BITCORD-RTR-02'
-		set system.@system[0].pubname='Роутер BITCORD RTR-02'
-		set system.@system[0].timezone='MSK-3'
-		set system.@system[0].zonename='Europe/Moscow'
-		commit system
-		set wireless.default_radio0.key='bitcord999'
-		set wireless.default_radio0.ssid='BITCORD-RTR-02'
-		set wireless.default_radio0.encryption='psk2'
-		set wireless.radio0.disabled='0'
-		commit wireless
-	EOF
-	exit 0
-
 endef
 
 define Build/Compile
