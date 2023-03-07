@@ -1,0 +1,4 @@
+#!/bin/sh
+	sed -i.bak 's/%+footer%/%+footer_nover%/g' /usr/lib/lua/luci/view/sysauth.htm
+	echo 'WiMark notes: File /usr/lib/lua/luci/view/sysauth.htm patched. Backup sysauth.htm.bak created.'
+exit 0

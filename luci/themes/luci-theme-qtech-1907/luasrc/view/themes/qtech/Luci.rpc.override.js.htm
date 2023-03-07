@@ -1,0 +1,62 @@
+<script type="text/javascript">
+//<![CDATA[
+
+    L.require("rpc").then(function(rpc)	{
+    	/* privates */
+        rpc.handleCallReply = function(req, msg) {
+
+		var type = Object.prototype.toString,
+		    ret = null;
+
+        setTimeout(window.moveFooterBottom, 600)
+
+		try {
+			/* verify message frame */
+			if (!L.isObject(msg) || msg.jsonrpc != '2.0')
+				L.raise('RPCError', 'RPC call to %s/%s returned invalid message frame',
+					req.object, req.method);
+
+			/* check error condition */
+			if (L.isObject(msg.error) && msg.error.code && msg.error.message)
+				L.raise('RPCError', 'RPC call to %s/%s failed with error %d: %s',
+					req.object, req.method, msg.error.code, msg.error.message || '?');
+		}
+		catch (e) {
+			return req.reject(e);
+		}
+
+		if (!req.object && !req.method) {
+			ret = msg.result;
+		}
+		else if (Array.isArray(msg.result)) {
+			if (req.raise && msg.result[0] !== 0)
+				L.raise('RPCError', 'RPC call to %s/%s failed with ubus code %d: %s',
+					req.object, req.method, msg.result[0], this.getStatusText(msg.result[0]));
+
+			ret = (msg.result.length > 1) ? msg.result[1] : msg.result[0];
+		}
+
+		if (req.expect) {
+			for (var key in req.expect) {
+				if (ret != null && key != '')
+					ret = ret[key];
+
+				if (ret == null || type.call(ret) != type.call(req.expect[key]))
+					ret = req.expect[key];
+
+				break;
+			}
+		}
+
+		/* apply filter */
+		if (typeof(req.filter) == 'function') {
+			req.priv[0] = ret;
+			req.priv[1] = req.params;
+			ret = req.filter.apply(this, req.priv);
+		}
+
+		req.resolve(ret);
+	}
+});
+//]]>
+</script>
