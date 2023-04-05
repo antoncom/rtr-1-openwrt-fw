@@ -9,7 +9,6 @@ local ubus = require "ubus"
 local log = require "tsmodem.util.log"
 
 
-
 function index()
 	if nixio.fs.access("/etc/config/tsmodem") then
 		entry({"admin", "system", "sim_list"}, cbi("tsmodem/main"), translate("SIM cards settings"), 30)
@@ -24,7 +23,6 @@ function do_sim_action(action, sim_id)
 	payload["sim_data"] = luci.jsonc.parse(luci.http.formvalue("sim_data"))
 	payload["gsm_data"] = luci.jsonc.parse(luci.http.formvalue("adapter_data"))
 
-	--log("PAYLOAD", payload)
 	local commands = {
 		switch = function(sim_id, ...)
 			local conn = ubus.connect()
@@ -33,7 +31,6 @@ function do_sim_action(action, sim_id)
 			end
 
 			local resp = conn:call("tsmodem.driver", "do_switch", {})
-
 		end,
 
 		edit = function(sim_id, payloads)

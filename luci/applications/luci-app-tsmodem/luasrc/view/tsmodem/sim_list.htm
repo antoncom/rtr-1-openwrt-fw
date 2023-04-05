@@ -1,6 +1,3 @@
-<% 	--[[=========== STYLES ==========]] %>
-<%+tsmodem/css%>
-
 <% --[[=========== JS ==========]] %>
 <%+tsmodem/ui_utils/utils.js%>
 <%+tsmodem/ui_utils/external.js%>
@@ -10,10 +7,15 @@
 <%+tsmodem/sim.js%>
 <%+tsmodem/sim_modal%>
 
-
 <% --[[=========== UI WIDGETS ==========]] %>
 <%+tsmodem/ui_widget/UIEventBus.js%>
 <%+tsmodem/ui_widget/UITextareaHighlighted.js%>
+
+<% 	--[[=========== STYLES ==========]] %>
+<%+tsmodem/css%>
+
+<% 	--[[=========== TSMODEM.CONSOLE ==========]] %>
+<%+tsmconsole/modal%>
 
 <% --[[=========== LUA BACKEND ==========]] %>
 
@@ -40,6 +42,7 @@
 		}
 
 	}
+
 
 	local ubus_sim = util.ubus("tsmodem.driver", "sim", {})
 	local ubus_balance = util.ubus("tsmodem.driver", "balance", {})
@@ -169,6 +172,11 @@
 						onclick="edit_sim(this)"
 						data-simid="<%=simid %>"
 						value="<%:Settings %>"
+						style="display: initial;" />
+
+					<input type="button" id="popup-button" class="cbi-button cbi-button-apply webconsole"
+						data-simid="<%=simid %>"
+						value="АТ-консоль"
 						style="display: initial;" />
 
 				</div>

@@ -36,6 +36,11 @@ function my_handler(a) {
 function edit_sim(btn) {
 	var globals_data = {}
 	var simid = btn.getAttribute("data-simid") || null;
+
+	// Stop modem automation first
+	//window.socket.send('driver-stop-automation');
+	stop_modem_automation()
+
 	L.require("ui").then(function(ui){
 		L.require("uci").then(function(uci) {
 			uci.load("<%=config%>").then(function(out){
@@ -164,7 +169,13 @@ function edit_sim(btn) {
 					E('div', { class: 'cbi-value-field' }, [
 						E('div', {
 							class: 'btn',
-							click: function() { L.hideModal() }
+							click: function() {
+								// Start modem automation again
+								//window.socket.send('driver-run-automation');
+								start_modem_automation()
+								L.hideModal()
+								$(".modal").empty()
+							}
 						}, _('Close')),
 						' ',
 
@@ -214,11 +225,20 @@ function edit_sim(btn) {
 									sim_data["provider"] = proto.getValue()
 
 									my_handleEdit(simid, sim_data, a_adapter_data);
+
+									// Start modem automation again
+									//window.socket.send('driver-run-automation');
+									start_modem_automation()
+
+									L.hideModal()
+									// Clear modal content
+									$(".modal").empty()
+
 									return true;
 
 								}
 								else {
-									//return 0;
+
 								}
 
 							})

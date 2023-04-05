@@ -38,9 +38,11 @@
 		<% end -%>
 		<script src="<%=url('admin/translations', luci.i18n.context.lang)%>?v=git-21.189.23240-7b931da"></script>
 		<script src="<%=resource%>/cbi.js?v=git-21.189.23240-7b931da"></script>
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 	</head>
 
 	<body class="lang_<%=luci.i18n.context.lang%> <% if node then %><%= striptags( node.title ) %><%- end %>" data-page="<%= pcdata(table.concat(disp.context.requestpath, "-")) %>">
+
 		<header>
 			<div class="fill">
 				<div class="container">
@@ -52,6 +54,7 @@
 		</header>
 
 		<div id="maincontent" class="container">
+
 			<%- if luci.sys.process.info("uid") == 0 and luci.sys.user.getuser("root") and not luci.sys.user.getpasswd("root") then -%>
 				<div class="alert-message warning">
 					<h4><%:No password set!%></h4>

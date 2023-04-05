@@ -24,6 +24,13 @@ function widgetPopulation(uci_section, uci) {
 }
 
 function switch_sim(btn) {
+
+	window.is_switching = true;
+	setTimeout(function(){
+		window.is_switching = false;
+	}, 3000)
+
+
 	btn.disabled = true;
 	document.querySelector("input[type=button].sim-0").disabled = true
 	document.querySelector("input[type=button].sim-1").disabled = true
@@ -41,6 +48,7 @@ function switch_sim(btn) {
 	} else {
 		displayOverlay('<%:Switching the SIM card.. %>');
 	}
+
 
 
 	var xhr = new XHR(false);

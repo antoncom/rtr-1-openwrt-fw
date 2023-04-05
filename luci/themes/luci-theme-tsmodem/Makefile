@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=TSmodem Theme
 PKG_NAME:=luci-theme-tsmodem
-PKG_VERSION:=2.2.0
-PKG_RELEASE:=20221120
+PKG_VERSION:=2.4
+PKG_RELEASE:=20230405
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

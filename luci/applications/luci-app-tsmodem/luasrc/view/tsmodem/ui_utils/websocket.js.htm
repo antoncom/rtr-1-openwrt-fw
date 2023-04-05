@@ -14,6 +14,8 @@ local uci_signal_min = {
 <script type="text/javascript">
 //<![CDATA[
 	$(window).on('load', function() {
+		window.is_switching = false;
+
 		var journal = document.querySelector(".journal")
 		var journal_html = window.sessionStorage.getItem("journal")
 		if(journal_html && journal_html.length > 0) {
@@ -102,6 +104,7 @@ local uci_signal_min = {
 
 				if(varname == "network_registration") {
 					if (value == "") {
+
 						value = old_network_registration; // don't change if no data received
 					} else {
 						old_network_registration = value;
@@ -109,15 +112,14 @@ local uci_signal_min = {
 
 					var bgIcon_Y = -(value * 15) // see www/luci-static/resources/ts_skw92a/img/icon_reg_status.png
 					if(value != "1" && value != "7" &&  window.lastreg_timer != "0" && window.lastreg_timer != undefined) {
-						rendered.innerHTML = '<i style="background-position: 0 ' + bgIcon_Y + 'px;">' + animationWrapper(network_state[value][0]) + "</i> &nbsp;<small><font color='red'>( .." + window.lastreg_timer + "s) </font></small>";
+						rendered.innerHTML = '<i style="background-position: 0 ' + bgIcon_Y + 'px;">' + animationWrapper(network_state[value][0]) + "</i><br /><small><font color='red'>( .." + window.lastreg_timer + "s) </font></small>";
 					} else {
 						rendered.innerHTML = '<i style="background-position: 0 ' + bgIcon_Y + 'px;">' + animationWrapper(network_state[value][0]) + "</i>"
 					}
 
 				} else if (varname == "signal" && value != "-" && value != "") {
 					if(window.low_signal_timer != undefined && window.low_signal_timer >= 1) {
-						rendered.innerHTML = animationWrapper(value + " %")  + "&nbsp;<small><font color='red'>( .." + window.low_signal_timer + "s) </font></small>";
-
+						rendered.innerHTML = animationWrapper(value + " %")  + "<br /><small><font color='red'>( .." + window.low_signal_timer + "s) </font></small>";
 					} else {
 						rendered.innerHTML = animationWrapper(value + " %");
 					}
@@ -139,10 +141,21 @@ local uci_signal_min = {
 				} else if (varname == "netmode_comment" && value != "" && value.indexOf("?") == -1) {
 						rendered.innerHTML = animationWrapper(value.split(" | ")[1]);
 				} else if (varname == "ping_status" && value != "") {
+
 					if (value == "1") {
 						rendered.innerHTML = '<font color="green"><b>Ok</b></font>';
 					} else if (value == "0") {
 						rendered.innerHTML = '<font color="red">No</font><br><small>Нет&nbsp;доступа в&nbsp;Интернет</small>';
+					} else {
+						rendered.innerHTML = '-'
+					}
+
+					// Clear Ping status of inactive SIM
+					if (sim_id == "0") {
+						var placeholder = '#simid-' + sim_id + ' .' + varname
+						document.querySelector('#simid-1 .ping_status').innerHTML = '-';
+					} else if (sim_id == "1") {
+						document.querySelector('#simid-0 .ping_status').innerHTML = '-';
 					}
 
 				}
@@ -195,7 +208,7 @@ local uci_signal_min = {
 			function update_journal(raw_data) {
 
 				var raw_html = `<div class="tr cbi-rowstyle-0 data">
-									<div class="td" data-title="Дата / время">
+									<div class="td" data-title="Дата / время" style="white-space: nowrap;">
 										<b>{date}</b><i>{time}</i>
 									</div>
 									<div class="td" data-title="Событие">
@@ -280,6 +293,8 @@ local uci_signal_min = {
 
 			    };
 			    window.socket.onmessage = function(event) {
+
+					if (window.is_switching == true) return;
 
 			        // Parse data received from Websocket
 			        // Update UI elements
@@ -414,6 +429,10 @@ local uci_signal_min = {
 						} else {
 							displayOverlay('<%:Switching the SIM card.. %>');
 						}
+						window.is_switching = true;
+						setTimeout(function(){
+							window.is_switching = false;
+						}, 3000)
 					}
 
 					// Hide overlay and allow any user's activities

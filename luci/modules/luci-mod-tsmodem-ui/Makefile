@@ -9,8 +9,8 @@ LUCI_DESCRIPTION:=UI module for Double SIM management for Skw92A with Sim7600 mo
 LUCI_TYPE:=mod
 
 PKG_NAME:=luci-mod-tsmodem-ui
-PKG_VERSION:=2.2.0
-PKG_RELEASE:=20221120
+PKG_VERSION:=2.4
+PKG_RELEASE:=20230405
 PKG_LICENSE:=GPL-3.0-or-later
 
 include $(TOPDIR)/feeds/luci/luci.mk

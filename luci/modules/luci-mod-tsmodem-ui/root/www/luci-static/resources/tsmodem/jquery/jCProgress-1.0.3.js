@@ -235,7 +235,17 @@ $.ns.cprogress.defaultOptions = {
 
 })( jQuery );
 
+function delay(ms) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 function displayOverlay(text) {
+    // Make delay of 5 sec for unbouncing "Switching SIM card overly"
+	window.unbouncing_switching_overlay = 1
+	delay(5000).then(function() { window.unbouncing_switching_overlay = 0; console.log("unbouncing_switching_overlay = 0")} );
+
     $("<table id='overlay'><tbody><tr><td>" + text + "</td></tr></tbody></table>").css({
         "position": "fixed",
         "top": "0px",
