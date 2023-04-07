@@ -7,6 +7,14 @@
 
 <% local ver = require "luci.version" %>
 
+<%
+    local config = "tsmodem"
+    local uci = require "luci.model.uci".cursor()
+    local util = require "luci.util"
+    local tsmodem_version = uci:get(config,"version","number")
+    local tsmodem_date = uci:get(config,"version","date")
+%>
+
    <footer>
 
        <table>
@@ -50,6 +58,8 @@
                                           <%:344048, Rostov-on-Don, Krjijanovskogo street, 179/5/94 %>
                                         </td>
                                    </tr>
+                                   <tr>
+                                       <td valign="top" style="padding-right: 10px; padding-bottom:3px;"><b>Версия ПО: </b><%=tsmodem_version %> от <%=tsmodem_date %></td>
                                    </tr>
                                </table>
                            </td>

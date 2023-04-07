@@ -29,4 +29,16 @@ uci -q batch <<-EOF
 	commit firewall
 EOF
 
+VDATE=$(opkg info tsmodem | grep Version | awk '{
+    print substr($0,10,10)
+}')
+
+VNUM=$(opkg info tsmodem | grep Version | awk '{
+    print substr($0,30,10)
+}')
+
+uci set tsmodem.version.number=$VNUM
+uci set tsmodem.version.date=$VDATE
+uci commit tsmodem
+
 exit 0
