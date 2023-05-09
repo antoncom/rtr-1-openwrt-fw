@@ -4,14 +4,14 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=LuCI TechnoSkver RTR01
+LUCI_TITLE:=LuCI TechnoSkver RTR02
 LUCI_DESCRIPTION:=Double SIM management for Skw92A with Sim7600 modem integration.
 LUCI_DEPENDS:=+tsmodem
 LUCI_PKGARCH:=all
 
 PKG_NAME:=luci-app-tsmodem
-PKG_VERSION:=2.4
-PKG_RELEASE:=20220405
+PKG_VERSION:=2.5
+PKG_RELEASE:=20230509
 PKG_LICENSE:=GPL-3.0-or-later
 
 include $(TOPDIR)/feeds/luci/luci.mk

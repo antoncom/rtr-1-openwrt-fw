@@ -1,2 +1,17 @@
 <script type="text/javascript" src="<%=resource%>/tsmodem/utils/utils.js?v=0.0.1"></script>
 <script type="text/javascript" src="<%=resource%>/tsmodem/utils/get_cursor_position.js?v=0.0.1"></script>
+
+<script type="text/javascript">
+//<![CDATA[
+    function spinner2(element, state) {
+    	if (state === 1) {
+    		element.css("width", "16px");
+    		element.html('<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" width="16" height="16" style="vertical-align:middle" />');
+    	}
+    	else {
+            element.css("width", "0px");
+    		element.html('');
+    	}
+    }
+//]]>
+</script>

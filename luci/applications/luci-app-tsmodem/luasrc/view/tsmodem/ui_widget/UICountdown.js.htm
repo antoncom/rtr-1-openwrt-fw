@@ -1,0 +1,221 @@
+
+<script type="text/javascript">
+//<![CDATA[
+	L.require('ui').then(function(ui) {
+		L.require('dom').then(function(dom) {
+			var UICountdown = ui.AbstractElement.extend({
+				__init__: function(className, total, progress, title, descr) {
+                    this.className = className
+                    this.TIME_LIMIT = total
+                    this.FULL_DASH_ARRAY = 283
+                    this.WARNING_THRESHOLD = 10
+                    this.ALERT_THRESHOLD = 5
+
+                    this.COLOR_CODES = {
+                      info: {
+                        color: "red"
+                      },
+                      warning: {
+                        color: "red",
+                        threshold: this.WARNING_THRESHOLD
+                      },
+                      alert: {
+                        color: "green",
+                        threshold: this.ALERT_THRESHOLD
+                      }
+                    };
+
+                    this.timerInterval = null
+                    this.timePassed = parseInt(progress)
+                    this.timeLeft = parseInt(this.TIME_LIMIT)
+                    this.remainingPathColor = this.COLOR_CODES.info.color;
+
+					this.title = title
+					this.description = descr
+
+					this.do_switch = undefined
+
+				},
+
+				render: function() {
+                    this.timeLeft = this.TIME_LIMIT - this.timePassed
+                    const container = document.createElement("div");
+                    container.classList.add(this.className);
+                    container.innerHTML = `
+					<div class="table">
+						<div class="td">
+		                    <div class="base-timer">
+			                      <svg class="base-timer__svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+			                        <g class="base-timer__circle">
+			                          <circle class="base-timer__path-elapsed" cx="50" cy="50" r="45" fill="white"></circle>
+			                          <path
+			                            id="base-timer-path-remaining-${this.className}"
+			                            stroke-dasharray="283"
+			                            class="base-timer__path-remaining ${this.remainingPathColor}"
+			                            d="
+			                              M 50, 50
+			                              m -45, 0
+			                              a 45,45 0 1,0 90,0
+			                              a 45,45 0 1,0 -90,0
+			                            "
+			                          ></path>
+			                        </g>
+			                      </svg>
+			                      <span id="base-timer-label-${this.className}" class="base-timer__label">${this.formatTime(
+			                        this.timeLeft
+			                      )}</span>
+							</div>
+	                    </div>
+						<div class="td">
+							<h3 style="line-height: 100%;">${this.title}</h3>
+							<p>${this.description}</p>
+						</div>
+					</div>
+                    `;
+
+					return this.bind(container);
+				},
+
+				bind: function(container) {
+					this.node = container
+					var self = this
+					dom.bindClassInstance(container, this);
+
+                    this.setOffset()
+                    this.startTimer()
+
+					window.addEventListener('resize', function(){
+						self.setOffset()
+					});
+
+					// -----------------------------------------------------------
+					// Subscribe to UISiminfo widget. On "Activate" button pressed
+					// Removes all downcounters from the page, as switching process has started
+					// -----------------------------------------------------------
+					window.EventBus.listenToASAP("UISiminfo", ["btn_activate_pressed"], function(ev) {
+						clearInterval(self.timerInterval);
+						self.node.remove()
+					})
+
+					// -----------------------------------------------------------
+					// Subscribe to WebSocket widget. On switch
+					// -----------------------------------------------------------
+					window.EventBus.listenToASAP("websocket", ["01_rule", "02_rule"], function(ev) {
+						var event_data = ev.detail || {}
+                        self.do_switch = event_data["do_switch"]
+
+						if(self.do_switch == "true") {
+							console.log("========= SWITCHING ========", self.do_switch)
+							self.onTimesUp()
+						}
+
+					})
+
+					return(container);
+				},
+
+                onTimesUp: function() {
+                    clearInterval(this.timerInterval);
+					this.node.remove()
+                },
+
+                startTimer: function() {
+                    var self = this;
+                    this.timerInterval = setInterval(() => {
+                      self.timePassed = self.timePassed += 1;
+                      self.timeLeft = self.TIME_LIMIT - self.timePassed;
+                      document.getElementById("base-timer-label-" + self.className).innerHTML = self.formatTime(
+                        self.timeLeft
+                      );
+                      self.setCircleDasharray();
+                      self.setRemainingPathColor(self.timeLeft);
+
+                      if (self.timeLeft === 0) {
+                        self.onTimesUp();
+                      }
+                    }, 1000);
+                },
+
+                formatTime: function(time) {
+                    var minutes = Math.floor(time / 60);
+                    var seconds = time % 60;
+
+                    if (seconds < 10) {
+                      seconds = `0${seconds}`;
+                    }
+
+                    return `${minutes}:${seconds}`;
+					// return `${time}`;
+                },
+
+                setRemainingPathColor: function() {
+                    var { alert, warning, info } = this.COLOR_CODES;
+                    if (this.timeLeft <= alert.threshold) {
+                      document
+                        .getElementById("base-timer-path-remaining-" + this.className)
+                        .classList.remove(warning.color);
+                      document
+                        .getElementById("base-timer-path-remaining-" + this.className)
+                        .classList.add(alert.color);
+                    } else if (this.timeLeft <= warning.threshold) {
+                      document
+                        .getElementById("base-timer-path-remaining-" + this.className)
+                        .classList.remove(info.color);
+                      document
+                        .getElementById("base-timer-path-remaining-" + this.className)
+                        .classList.add(warning.color);
+                    }
+                },
+
+                calculateTimeFraction: function() {
+                    var rawTimeFraction = this.timeLeft / this.TIME_LIMIT;
+                    return rawTimeFraction - (1 / this.TIME_LIMIT) * (1 - rawTimeFraction);
+                },
+
+                setCircleDasharray: function() {
+                    var circleDasharray = `${(
+                      this.calculateTimeFraction() * this.FULL_DASH_ARRAY
+                    ).toFixed(0)} 283`;
+                    document
+                      .getElementById("base-timer-path-remaining-" + this.className)
+                      .setAttribute("stroke-dasharray", circleDasharray);
+                },
+
+                // getOffset: function(srcElm) {
+                //     var rect = srcElm.getBoundingClientRect();
+                //     return {
+                //         left: rect.left + window.scrollX,
+                //         top: rect.top + window.scrollY
+                //     };
+                //     // return {
+                //     //     left: srcElm.offsetLeft,
+                //     //     top: srcElm.offsetTop
+                //     // };
+                // },
+
+                setOffset: function() {
+                    // var srcElm = this.near[0]
+                    // var pos = this.getOffset(srcElm);
+					// var nearElm_size = srcElm.getBoundingClientRect()
+					// var x_correction = {
+					// 	["cdown-signal"]: -22,
+					// 	["cdown-balance-btn"]: -19,
+					// 	["cdown-balance"]: -136,
+					// 	["cdown-ping"]: -40,
+					// 	["cdown-netreg"]: -118,
+					// }
+
+                    this.node.style.position = "relative";
+                    // this.node.style.left = pos.left + nearElm_size.width + x_correction[this.className] + 'px';
+                    // this.node.style.top = pos.top + nearElm_size.height/2-9 + 'px';
+                }
+
+			});
+
+			ui["Countdown"] = UICountdown;
+
+		});
+	});
+
+//]]>
+</script>

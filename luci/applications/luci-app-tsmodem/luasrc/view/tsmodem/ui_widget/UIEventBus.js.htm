@@ -6,10 +6,12 @@
 **/
 //<![CDATA[
 L.require('ui').then(function(ui) {
-	L.require("session").then(function(session){
+//	L.require("session").then(function(session){
 		L.require('dom').then(function(dom) {
 			var UIEventBus = ui.AbstractElement.extend(/** @lends LuCI.ui.Textarea.prototype */ {
 				__init__: function() {
+					this.busobjects = {}
+					this.timeoutId = {}
 				},
 
 				/** @override */
@@ -25,8 +27,10 @@ L.require('ui').then(function(ui) {
 				bind: function(divEl) {
 					this.node = divEl;
 					dom.bindClassInstance(divEl, this);
+
 					return divEl;
 				},
+
 
 				removeEvents: function(target, eventNameList, func) {
 					for(var i=0; i<eventNameList.length; i++) {
@@ -60,13 +64,38 @@ L.require('ui').then(function(ui) {
 					for (var i = 0; i < sourceEvents.length; i++) {
 						source.addEventListener(sourceEvents[i], dispatchFn);
 					}
-				}
+				},
+
+				registerTo: function(source, name) {
+						this.busobjects[name] = source;
+						console.log("EventBus Object [" + name + "] registered.")
+				},
+
+				// Subscription methanism
+				// If some widget has not loaded yet, then setInterval is used to create EventBus object ASAP with 200 ms delay
+				listenToASAP: function(objname, events, callback) {
+					var tmId = uuid(objname + "_" + events.join("_") + "_" + callback);
+					if(this.busobjects && this.busobjects[objname]) {
+						this.timeoutId[tmId] = setTimeout(this._listenTo.bind(this), 10, objname, events, callback)
+					} else {
+						this.timeoutId[tmId] = setTimeout(this.listenToASAP.bind(this), 1000, objname, events, callback)
+					}
+				},
+				_listenTo: function(objname, events, callback) {
+					var tmId = uuid(objname + "_" + events.join("_") + "_" + callback);
+					for (var i = 0; i < events.length; i++) {
+						this.busobjects[objname].addEventListener(events[i], callback);
+					}
+					clearInterval(this.timeoutId[tmId])
+				},
+
+
 			});
 			ui["EventBus"] = UIEventBus;
 			window.EventBus = new ui.EventBus()
-			var EventBus_pseudo_widget = window.EventBus.render()
+			window.EventBusNode = window.EventBus.render()
 		});
-	});
+//	});
 });
 //]]>
 </script>
