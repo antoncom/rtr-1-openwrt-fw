@@ -93,7 +93,7 @@ local sim_id = ubus_sim["value"]
 
 
 						// Disable "Activate" button for currently active Sim card
-						var active_sim_id = <%=sim_id %>
+						var active_sim_id = parseInt("<%=sim_id %>") || null
 						if (active_sim_id == this.simid) {
 							this.chunk.btn_activate.setAttribute("disabled", "disabled");
 						}
@@ -252,7 +252,7 @@ local sim_id = ubus_sim["value"]
 
 								var bgIcon_Y = -(self.netreg * 15) // see www/luci-static/resources/ts_skw92a/img/icon_reg_status.png
 
-								if(self.lastreg_timer > 0) {
+								if(self.netreg != 1) {
 									spinner2($(".spinner-reg-"+self.simid), 1)
 								} else if((self.lastreg_timer - TimeBeforeShowDownCounter) > 0) {
 									 chunk_update = E('i', { style: "background-position: 0 " + bgIcon_Y + "px; color: red;" }, [

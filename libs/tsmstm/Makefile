@@ -5,13 +5,13 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=tsmodem
-PKG_RELEASE:=2.4
+PKG_NAME:=tsmstm
+PKG_RELEASE:=2.5
 
 PKG_SOURCE_URL=https://github.com/antoncom/tsmstm.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_DATE=2023-05-15
-PKG_SOURCE_VERSION:=1a553e21c57d972746b5ae87ac6cfdbf9974ba74
+PKG_SOURCE_VERSION:=ccc877b8b289b206d6dc42c5ab0eb81430133785
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -21,7 +21,7 @@ define Package/tsmstm
 	CATEGORY:=Languages
 	TITLE:=STM32 AT-protocol realisation on ubus
 	URL:=https://github.com/antoncom/tsmstm.git
-	DEPENDS:=
+	DEPENDS:=coreutils-stty
 endef
 
 define Package/tsmstm/description
