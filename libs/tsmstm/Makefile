@@ -21,7 +21,7 @@ define Package/tsmstm
 	CATEGORY:=Languages
 	TITLE:=STM32 AT-protocol realisation on ubus
 	URL:=https://github.com/antoncom/tsmstm.git
-	DEPENDS:=coreutils-stty
+	DEPENDS:=+coreutils-stty
 endef
 
 define Package/tsmstm/description
