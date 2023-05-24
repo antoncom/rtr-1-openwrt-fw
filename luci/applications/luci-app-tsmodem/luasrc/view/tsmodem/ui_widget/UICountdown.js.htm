@@ -92,9 +92,12 @@
 					// Subscribe to UISiminfo widget. On "Activate" button pressed
 					// Removes all downcounters from the page, as switching process has started
 					// -----------------------------------------------------------
-					window.EventBus.listenToASAP("UISiminfo", ["btn_activate_pressed"], function(ev) {
-						clearInterval(self.timerInterval);
-						self.node.remove()
+					window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
+						self.onTimesUp()
+					})
+
+					window.EventBus.listenToASAP("UISiminfo_1", ["btn_activate_pressed"], function(ev) {
+						self.onTimesUp()
 					})
 
 					// -----------------------------------------------------------
@@ -115,8 +118,14 @@
 				},
 
                 onTimesUp: function() {
-                    clearInterval(this.timerInterval);
-					this.node.remove()
+					clearInterval(this.timerInterval);
+					var self = this
+					// Let UICountdown will be shown with zero value for two sec.
+					// It's needed to UICover appeared before UICountdown is hidden
+					var t = setTimeout(function() {
+						self.node.remove()
+					}, 2000)
+
                 },
 
                 startTimer: function() {
@@ -131,6 +140,7 @@
                       self.setRemainingPathColor(self.timeLeft);
 
                       if (self.timeLeft === 0) {
+					  //if (self.timeLeft === 0 || dom.findClassInstance(self.node) == null) {
                         self.onTimesUp();
                       }
                     }, 1000);

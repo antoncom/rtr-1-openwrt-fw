@@ -153,49 +153,53 @@
 
 L.require("ui").then(function(ui){
 	L.require('dom').then(function(dom) {
-		var sim_0 = new ui.Siminfo("Name 1", {
-			simid: "0",
-			name: "Name",
-			provider: "Неопределён",
-			netreg: "7",
-			ping_status: "-",
-			netmode: "-",
-			signal: "-",
-			balance: "-",
+		L.require("uci").then(function(uci) {
+			uci.load("tsmodem").then(function(out){
+				var sim_0 = new ui.Siminfo("Name 1", {
+					simid: "0",
+					name: uci.get("tsmodem", "sim_0", "name"),
+					provider: "Неопределён",
+					netreg: "7",
+					ping_status: " ",
+					netmode: " ",
+					signal: " ",
+					balance: " ",
+				});
+				var sim_1 = new ui.Siminfo("Name 2", {
+					simid: "1",
+					name: uci.get("tsmodem", "sim_1", "name"),
+					provider: "Неопределён",
+					netreg: "7",
+					ping_status: " ",
+					netmode: " ",
+					signal: " ",
+					balance: " ",
+				});
+
+				var viewWrapper= document.getElementById('simcards_rows');
+				viewWrapper.appendChild(sim_0.render())
+				viewWrapper.appendChild(sim_1.render())
+
+
+
+				var sim_0_setting = new ui.SimSettingModal("Настройки сим-карты", {
+					simid: "0",
+				});
+
+				var ui_cover = new ui.Cover("Переключение сим-карты", {
+					simid: "0",
+				});
+				var widget_ui_cover = ui_cover.render()
+				$("body").append(widget_ui_cover)
+
+				var viewWrapper= document.getElementById('simcards_rows');
+				var widget_simsetting_0 = sim_0_setting.render()
+				viewWrapper.appendChild(widget_simsetting_0)
+
+				var console_modal = new ui.Modal();
+				$("body").append(console_modal.render())
+			});
 		});
-		var sim_1 = new ui.Siminfo("Name 2", {
-			simid: "1",
-			name: "Name",
-			provider: "Неопределён",
-			netreg: "7",
-			ping_status: "-",
-			netmode: "-",
-			signal: "-",
-			balance: "-",
-		});
-
-		var viewWrapper= document.getElementById('simcards_rows');
-		viewWrapper.appendChild(sim_0.render())
-		viewWrapper.appendChild(sim_1.render())
-
-
-
-		var sim_0_setting = new ui.SimSettingModal("Настройки сим-карты", {
-			simid: "0",
-		});
-
-		var ui_cover = new ui.Cover("Переключение сим-карты", {
-			simid: "0",
-		});
-		var widget_ui_cover = ui_cover.render()
-		$("body").append(widget_ui_cover)
-
-		var viewWrapper= document.getElementById('simcards_rows');
-		var widget_simsetting_0 = sim_0_setting.render()
-		viewWrapper.appendChild(widget_simsetting_0)
-
-		var console_modal = new ui.Modal();
-		$("body").append(console_modal.render())
 	});
 });
 
