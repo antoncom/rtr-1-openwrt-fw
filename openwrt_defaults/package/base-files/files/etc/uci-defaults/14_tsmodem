@@ -23,21 +23,36 @@ uci -q batch <<-EOF
 	set network.tsmodem.service='umts'
 	set network.tsmodem.ipv6='auto'
 	set network.tsmodem.apn='internet.mts.ru'
-	delete network.lan.ifname='eth0.1'
 	set network.lan.ifname='3g-tsmodem eth0.1'
 	commit network
 EOF
 
 uci -q batch <<-EOF
-	add_list firewall.@zone[1].network='tsmodem'
-	delete firewall.@defaults[0].syn_flood='1'
-	delete firewall.@defaults[0].forward='REJECT'
+	set firewall.@defaults[0]=defaults
+	set firewall.@defaults[0].input='ACCEPT'
+	set firewall.@defaults[0].output='ACCEPT'
 	set firewall.@defaults[0].forward='ACCEPT'
 	set firewall.@defaults[0].synflood_protect='1'
-	delete firewall.@zone[1].input='REJECT'
-	delete firewall.@zone[1].forward='REJECT'
+	set firewall.@zone[0]=zone
+	set firewall.@zone[0].name='lan'
+	set firewall.@zone[0].input='ACCEPT'
+	set firewall.@zone[0].output='ACCEPT'
+	set firewall.@zone[0].forward='ACCEPT'
+	set firewall.@zone[0].network='lan' 'tsmodem'
+	set firewall.@zone[1]=zone
+	set firewall.@zone[1].name='wan'
+	set firewall.@zone[1].output='ACCEPT'
+	set firewall.@zone[1].masq='1'
+	set firewall.@zone[1].mtu_fix='1'
 	set firewall.@zone[1].input='ACCEPT'
 	set firewall.@zone[1].forward='ACCEPT'
+	set firewall.@zone[1].network='lan' 'tsmodem'
+	set firewall.@forwarding[0]=forwarding
+	set firewall.@forwarding[0].src='lan'
+	set firewall.@forwarding[0].dest='wan'
+	set firewall.@forwarding[1]=forwarding
+	set firewall.@forwarding[1].dest='lan'
+	set firewall.@forwarding[1].src='wan'
 	commit firewall
 EOF
 
