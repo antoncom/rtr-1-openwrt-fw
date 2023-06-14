@@ -11,6 +11,8 @@ uci -q batch <<-EOF >/dev/null
     set wireless.default_radio0.encryption='psk2'
     set wireless.radio0.disabled='0'
     commit wireless
+    set dhcp.lan.ra_management='1'
+    commit dhcp
 EOF
 
 uci -q batch <<-EOF
@@ -21,11 +23,21 @@ uci -q batch <<-EOF
 	set network.tsmodem.service='umts'
 	set network.tsmodem.ipv6='auto'
 	set network.tsmodem.apn='internet.mts.ru'
+	delete network.lan.ifname='eth0.1'
+	set network.lan.ifname='3g-tsmodem eth0.1'
 	commit network
 EOF
 
 uci -q batch <<-EOF
 	add_list firewall.@zone[1].network='tsmodem'
+	delete firewall.@defaults[0].syn_flood='1'
+	delete firewall.@defaults[0].forward='REJECT'
+	set firewall.@defaults[0].forward='ACCEPT'
+	set firewall.@defaults[0].synflood_protect='1'
+	delete firewall.@zone[1].input='REJECT'
+	delete firewall.@zone[1].forward='REJECT'
+	set firewall.@zone[1].input='ACCEPT'
+	set firewall.@zone[1].forward='ACCEPT'
 	commit firewall
 EOF
 
