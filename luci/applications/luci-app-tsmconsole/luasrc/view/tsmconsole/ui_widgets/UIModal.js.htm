@@ -10,6 +10,7 @@
 				var UIModal = ui.AbstractElement.extend({
 					__init__: function() {
 						this.term = null;
+						this.className = "webcon_term"
 this.welcome = `
 ██████  ██ ████████  ██████  ██████  ██████  ██████
 ██   ██ ██    ██    ██      ██    ██ ██   ██ ██   ██
@@ -176,13 +177,44 @@ this.welcome = `
 									term.echo(at_check["msg"], {raw: true});
 									term.echo(` <dl class="attrs">
 													<dt>AT</dt><dd>Проверка отклика модема: OK или ERROR.</dd>
+													<dt>ATI</dt><dd>Узнать IMEI и другую информацию производителя модема.</dd>
+													<dt>ATD</dt><dd>Позвонить с модема на произвольный номер.</dd>
 													<dt>AT+CREG?</dt><dd>Статус регистрации СИМ-карты в сети: 0..5.</dd>
 													<dt>AT+CSQ</dt><dd>Уровень сигнала и уровень помех (подробнее: AT+CSQ help)</dd>
 													<dt>AT+CUSD=1,#100#,15</dt><dd>Запрос баланса Мегафон, МТС (подробнее: AT+CUSD help)</dd>
 													<dt>AT+COPS?</dt><dd>Узнать идентификатор GSM-оператора для текущего соединения</dd>
 													<dt>AT+CNSMOD?</dt><dd>Узнать тип соединения: 2G/3G/4G и т.п.</dd>
+													<dt>------------------</dt><dd>-----------------------------------------------------------</dd>
 													<dt>&lt;TAB&gt;</dt><dd>Клавиша &lt;TAB&gt; - для автодополнения команды.<br />Двойной &lt;TAB&gt; покажет список вариантов.</dd>
 													<dt>&lt;команда&gt; help</dt><dd>Выводит описание значений AT-команды, например введите: "AT+CSQ help"</dd>
+												</dl>`, {raw: true});
+									term.resume();
+								}
+								else if (at_check["noerror"] && command == "ATI help")  {
+									term.echo(` <dl class="attrs">
+														<table class="bordered">
+															<caption>Узнать IMEI и другую информацию производителя модема:</caption>
+															<tr><th>Характеристика</th><th>Пример значений</th></tr>
+															<tr><td>Manufacturer</td><td>INCORPORATED</td></tr>
+															<tr><td>Model</td><td>A7600E-HNVW</td></tr>
+															<tr><td>Revision</td><td>A7600M7_V3.9</td></tr>
+															<tr><td>IMEI</td><td>Введите команду ATI чтобы узнать IMEI данного модема</td></tr>
+															<tr><td>+GCAP</td><td>+CGSM,+FCLASS,+DS</td></tr>
+														</table>
+													</dd>
+												</dl>`, {raw: true});
+									term.resume();
+								}
+								else if (at_check["noerror"] && command == "ATD help")  {
+									term.echo(` <dl class="attrs">
+														<table class="bordered">
+															<caption>Позвонить с модема на произвольный номер:</caption>
+															<tr><th>Пример команды</th></tr>
+															<tr><td>ATD+79677593231;</td></tr>
+															<tr><td>где +7(967)759-32-31 - номер абонента</td></tr>
+															<tr><td>ВАЖНО: команда должна оканчиваться точкой с запятой: ";"</td></tr>
+														</table>
+													</dd>
 												</dl>`, {raw: true});
 									term.resume();
 								}
@@ -309,7 +341,7 @@ this.welcome = `
 								greetings: self.welcome + 'Терминал доступа к модему по протоколу АТ\r\n',
 								prompt: "[[b;#ffffff;]&gt;] ",
 								tabcompletion: true,
-								completion: ['AT+CREG?', 'AT+CSQ', 'AT+CUSD=1,#100#,15', 'AT+CUSD=1,#102#,15', 'AT+COPS?', 'AT+CNSMOD?']
+								completion: ['ATI', 'ATD+','AT+CREG?', 'AT+CSQ', 'AT+CUSD=1,#100#,15', 'AT+CUSD=1,#102#,15', 'AT+COPS?', 'AT+CNSMOD?']
 							});
 
 

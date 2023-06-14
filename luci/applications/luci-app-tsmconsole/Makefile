@@ -10,8 +10,8 @@ LUCI_DEPENDS:=+tsmconsole
 LUCI_PKGARCH:=all
 
 PKG_NAME:=luci-app-tsmconsole
-PKG_VERSION:=2.5.1
-PKG_RELEASE:=20230524
+PKG_VERSION:=2.6.0
+PKG_RELEASE:=20230614
 PKG_LICENSE:=GPL-3.0-or-later
 
 include $(TOPDIR)/feeds/luci/luci.mk

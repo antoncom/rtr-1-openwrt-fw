@@ -17,6 +17,7 @@ local sim_id = ubus_sim["value"]
 		                this.name = options.name
 		                this.provider = options.provider
 
+						this.cpin = options.cpin
 						this.netreg = options.netreg
 						this.lastreg_timer = 0
 						this.netreg_timeout = null
@@ -49,6 +50,7 @@ local sim_id = ubus_sim["value"]
 								self.signal_min = uci.get("tsmodem", "sim_" + self.simid, "signal_min")
 								self.lowsignal_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_signal")
 
+								self.cpin_timeout = uci.get("tsmodem", "default", "timeout_sim_absent")
 								self.netreg_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_reg")
 								self.lowbalance_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_bal")
 								self.lastping_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_ping")
@@ -62,6 +64,7 @@ local sim_id = ubus_sim["value"]
 										this.name,
 										E('i', {class: "provider_name"}, " ")
 		                    ]),
+							cpin: E('div', {class: 'td cpin_status', ["data-title"]: this.cpin}, E('div', { style: "width: 53px;"}, " ")),
 							netreg: E('div', {class: 'td network_registration', style: "width: 170px;", ["data-title"]: this.netreg}, E('div', { style: "width: 60px;"}, " ")),
 							ping_status: E('div', {class: 'td ping_status', ["data-title"]: this.ping_status}, E('div', { style: "width: 53px;"}, this.ping_status)),
 							netmode: E('div', {class: 'td netmode_comment', style: "white-space: nowrap;", ["data-title"]: this.netmode}, E('div', {}, this.netmode)),
@@ -93,6 +96,12 @@ local sim_id = ubus_sim["value"]
 			                                    value: _("AT console"),
 			                                    style: "display: initial;"
 		                    }),
+							spinner: E('img', {
+								src: "<%=resource%>/icons/loading.gif",
+								alt: "<%:Loading%>",
+								width: 16,
+								style: "vertical-align:middle"
+							})
 						}
 
 
@@ -102,6 +111,7 @@ local sim_id = ubus_sim["value"]
 							this.chunk.btn_activate.setAttribute("disabled", "disabled");
 						}
 
+						// Disable "Balance" button for another, non-active Sim card
 						if (active_sim_id != this.simid) {
 							this.chunk.btn_balance.setAttribute("disabled", "disabled");
 						}
@@ -112,6 +122,7 @@ local sim_id = ubus_sim["value"]
 		                var container = E('div', { id: 'simid-' + this.simid, class: 'tr cbi-rowstyle-' + this.simid }, [
 		                    this.chunk.simid,
 							this.chunk.name,
+							this.chunk.cpin,
 							this.chunk.netreg,
 							this.chunk.ping_status,
 							this.chunk.netmode,
@@ -137,6 +148,52 @@ local sim_id = ubus_sim["value"]
 						})
 						if(window.EventBus.busobjects["UISiminfo_"+this.simid]) {
 							window.EventBus.busobjects["UISiminfo_"+this.simid].dispatchEvent(s);
+						}
+					},
+
+					// Clear Siminfo row when do_switch event or btn_activate pressed
+					clearInfo: function(simid) {
+
+						// Clear table row for non-active Sim-card
+						var chunk_update = E('div', {}, " ")
+						var node_pointer = "#" + simid + " div.cpin_status"
+						console.log(node_pointer, $(node_pointer))
+						$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+						var chunk_update = E('div', {}, " ")
+						node_pointer = "#" + simid + " div.network_registration"
+						$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+						chunk_update = E('div', {}, " ")
+						node_pointer = "#" + simid + " div.ping_status"
+						$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+						chunk_update = E('div', {}, " ")
+						node_pointer = "#" + simid + " div.netmode_comment"
+						$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+						chunk_update = E('div', {}, " ")
+						node_pointer = "#" + simid + " div.signal"
+						$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+
+						// Disable Balance buttons while sim is switching
+						$(".cbi-button.cbi-button-apply.sim-0-balance").prop( "disabled", true );
+						$(".cbi-button.cbi-button-apply.sim-1-balance").prop( "disabled", true );
+
+						// Disable AT-console button as soon as Sim activation buton pressed
+						$(".webconsole").prop( "disabled", true );
+
+						// Remove all countdowns
+						if (self.countdown) {
+							if (self.countdown["cdown-cpin"]) self.countdown["cdown-cpin"].onTimesUp();
+							if (self.countdown["cdown-netreg"]) self.countdown["cdown-netreg"].onTimesUp();
+							if (self.countdown["cdown-ping"]) self.countdown["cdown-ping"].onTimesUp();
+							if (self.countdown["cdown-balance"]) self.countdown["cdown-balance"].onTimesUp();
+							if (self.countdown["cdown-signal"]) self.countdown["cdown-signal"].onTimesUp();
+
+
+							self.countdown = {}
 						}
 					},
 
@@ -184,7 +241,6 @@ local sim_id = ubus_sim["value"]
 								// 	uuid: uuid(),
 								// })
 								// self.chunk.btn_activate.disabled = true
-								console.log("CONSOLE SHOULD BE OPENED")
 								self.fireEvent("btn_console_pressed", {
 									simid: self.simid
 								})
@@ -197,38 +253,10 @@ local sim_id = ubus_sim["value"]
 						window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
 							var event_data = ev.detail || {}
 
-							// Clear table row for non-active Sim-card
-							var chunk_update = E('div', {}, " ")
-							var node_pointer = "#simid-1 div.network_registration"
-							$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+							console.log("UISiminfo_0")
 
-							chunk_update = E('div', {}, " ")
-							node_pointer = "#simid-1 div.ping_status"
-							$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-							chunk_update = E('div', {}, " ")
-							node_pointer = "#simid-1 div.netmode_comment"
-							$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-							chunk_update = E('div', {}, " ")
-							node_pointer = "#simid-1 div.signal"
-							$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-
-							// Disable Balance buttons while sim is switching
-							$(".cbi-button.cbi-button-apply.sim-0-balance").prop( "disabled", true );
-							$(".cbi-button.cbi-button-apply.sim-1-balance").prop( "disabled", true );
-
-							// Disable AT-console button as soon as Sim activation buton pressed
-							$(".webconsole").prop( "disabled", true );
-
-							// Remove all countdowns
-							// if (self.countdown["cdown-netreg"]) self.countdown["cdown-netreg"].onTimesUp();
-							// if (self.countdown["cdown-ping") self.countdown["cdown-ping"].onTimesUp();
-							// if (self.countdown["cdown-balance") self.countdown["cdown-balance"].onTimesUp();
-							// if (self.countdown["cdown-signal") self.countdown["cdown-signal"].onTimesUp();
-
-							self.countdown = {}
+							self.clearInfo("simid-0")
+							self.clearInfo("simid-1")
 
 						})
 
@@ -238,40 +266,97 @@ local sim_id = ubus_sim["value"]
 						// ---------------------------------------------------
 						window.EventBus.listenToASAP("UISiminfo_1", ["btn_activate_pressed"], function(ev) {
 							var event_data = ev.detail || {}
-							// Clear table row for non-active Sim-card
-							var chunk_update = E('div', {}, " ")
-							var node_pointer = "#simid-0 div.network_registration"
-							$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
 
-							chunk_update = E('div', {}, " ")
-							node_pointer = "#simid-0 div.ping_status"
-							$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+							console.log("UISiminfo_1")
 
-							chunk_update = E('div', {}, " ")
-							node_pointer = "#simid-0 div.netmode_comment"
-							$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
 
-							chunk_update = E('div', {}, " ")
-							node_pointer = "#simid-0 div.signal"
-							$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+							self.clearInfo("simid-0")
+							self.clearInfo("simid-1")
 
-							// Disable Balance buttons while sim is switching
-							$(".cbi-button.cbi-button-apply.sim-0-balance").prop( "disabled", true );
-							$(".cbi-button.cbi-button-apply.sim-1-balance").prop( "disabled", true );
-
-							// Remove all countdowns
-							self.countdown = {}
 						})
 
-
 						// -----------------------------------------------
-						// 01_rule UI updates: Network registration status
+						// 01_rule UI updates: Sim is in slot or not
 						// -----------------------------------------------
 						window.EventBus.listenToASAP("websocket", ["01_rule"], function(ev) {
+							var event_data = ev.detail || {}
+							var chunk_update = self.chunk.cpin;
+
+							var currently_activated_sim_id = event_data["sim_id"] && parseInt(event_data["sim_id"])
+							if(currently_activated_sim_id == self.simid) {
+
+								if(event_data && event_data.timer) {
+
+									// Update sim-in-slot state
+									self.sim_ready = event_data.sim_ready || " "
+									self.cpin_timeout = event_data.uci_timeout_sim_absent
+									self.cpin_timer = parseInt(event_data.timer)
+
+									var SIM_READY = (self.sim_ready == "true")
+									var SIM_ABSENT = (self.sim_ready == "false")
+									var SIM_CHECKING = (self.sim_ready == " ")
+
+									var node_pointer = "#simid-" + self.simid + " div.cpin_status"
+
+									if (SIM_READY) {
+											chunk_update = E('font', {style: "color: green; font-weight: bolder;"}, "OK")
+
+											$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+											if (self.countdown["cdown-cpin"]) {
+												self.countdown["cdown-cpin"].onTimesUp()
+												self.countdown["cdown-cpin"] = null
+											}
+									} else if (SIM_CHECKING) {
+										chunk_update = self.chunk.spinner;
+										$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+									} else if (SIM_ABSENT) {
+										chunk_update = E('font', {style: "color: red; font-weight: bolder;"}, "No")
+
+										$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+										if (self.cpin_timer && self.cpin_timer > 5) {
+											// Show countdown progress if SIM isn't in slot
+											if (!self.countdown["cdown-cpin"]) {
+												var title = "Нет сим-карты в слоте № " + self.simid
+												var description = "В слоте № " + self.simid + " не обнаружена Сим-карта. Вставьте сим-карту до истечения таймера, или дождитесь переключения модема на другой слот."
+
+												self.countdown["cdown-cpin"] = new ui.Countdown("cdown-cpin", self.cpin_timeout, self.cpin_timer, title, description)
+												$('#ui-countdown').append(self.countdown["cdown-cpin"].render())
+											}
+										}
+									}
+								} else {
+									chunk_update = E('font', {style: "color: red; font-weight: bolder;"}, " ")
+
+									var node_pointer = "#simid-" + self.simid + " div.cpin_status"
+									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+									if (self.countdown["cdown-cpin"]) {
+										self.countdown["cdown-cpin"].onTimesUp()
+										self.countdown["cdown-cpin"] = null
+									}
+								}
+							// Clear CPIN state of non-activated row (UISiminfo) as we can't know whether Sim-card exists in non-active slot or not
+							} else if(currently_activated_sim_id != self.simid) {
+								chunk_update = E('font', {style: "color: red; font-weight: bolder;"}, " ")
+
+								var node_pointer = "#simid-" + self.simid + " div.cpin_status"
+								$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+							}
+						});
+
+						// -----------------------------------------------
+						// 02_rule UI updates: Network registration status
+						// -----------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["02_rule"], function(ev) {
 							var event_data = ev.detail || {}
 							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
 
 								var network_state = {
+									"-1": ["<%:Sim not inserted %>", "SIM NOT INSERTED"],
 									"0": ["<%:Not registered %>", "NOT REGISTERED"],
 									"1": ["<%:Active %>", "REGISTERED"],
 									"2": ["<%:Searching %>", "SEARCHING"],
@@ -282,37 +367,11 @@ local sim_id = ubus_sim["value"]
 									"7": ["<%:Switching ttyUSB2 %>", "UNKNOWN"]
 								}
 
-								self.is_switching = event_data["switching"]
-
-								// Clear table row when start switching
-								if(self.is_switching == "true") {
-									var chunk_update = E('div', {}, " ")
-									var node_pointer = "div.network_registration"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.ping_status"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.netmode_comment"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.signal"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-								}
-
-
-								var chunk_update = self.chunk.netreg;
+																var chunk_update = self.chunk.netreg;
 
 								// Update net registration state
 								self.netreg = parseInt(event_data.network_registration)
 								self.lastreg_timer = parseInt(event_data.lastreg_timer)
-
-								// var IS_SWITCHING = (self.is_switching == "true")
-								// var REG_OK = (self.netreg == 1)
-
 
 								var bgIcon_Y = -(self.netreg * 15) // see www/luci-static/resources/ts_skw92a/img/icon_reg_status.png
 
@@ -381,42 +440,26 @@ local sim_id = ubus_sim["value"]
 						})
 
 						// ---------------------------------------
-						// 02_rule UI updates: Balance on Sim card
+						// 03_rule UI updates: Balance on Sim card
 						// ---------------------------------------
-						window.EventBus.listenToASAP("websocket", ["02_rule"], function(ev) {
+						window.EventBus.listenToASAP("websocket", ["03_rule"], function(ev) {
 							var event_data = ev.detail || {}
 							var node_pointer = "#simid-" + self.simid + " div.sim_balance"
 							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
 
-								self.is_switching = event_data["switching"]
-
-								// Clear table row when start switching
-								if(self.is_switching == "true") {
-									var chunk_update = E('div', {}, " ")
-									var node_pointer = "div.network_registration"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.ping_status"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.netmode_comment"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.signal"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-								}
-
-
+								// var balance_state = {
+								// 	["-998"]: "<%:USSD response doesn't look like balance message %><br /><%:Please check USSD-command or template. %>",
+								// 	["-999"]: "<%:GSM provider cancels USSD session. %> <br /><%:We will get the balance later. %>",
+								// 	["-9999"]: "in progress",
+								// }
 								var balance_state = {
-									["-998"]: "<%:USSD response doesn't look like balance message %><br /><%:Please check USSD-command or template. %>",
-									["-999"]: "<%:GSM provider cancels USSD session. %> <br /><%:We will get the balance later. %>",
+									["-998"]: " ",
+									["-999"]: " ",
+									["-9999"]: "in progress",
 								}
 								var chunk_update = self.chunk.balance;
 
-								self.balance = event_data.sim_balance || " "
+								self.balance = parseInt(event_data.sim_balance) || " "
 								self.balance_datetime = event_data.event_datetime || self.balance_datetime || " "
 								self.lowbalance_timer = event_data.lowbalance_timer || self.lowbalance_timer || 0
 
@@ -436,6 +479,11 @@ local sim_id = ubus_sim["value"]
 										])
 										$(node_pointer).replaceWith(chunk_update)
 
+									} else if (self.balance == -9999) {
+										chunk_update = E('div', { class: "td sim_balance", style: "white-space: nowrap;", ["data-title"]: " " })
+										$(node_pointer).replaceWith(chunk_update)
+										spinner2($(node_pointer), 1)
+										$(".cbi-button.cbi-button-apply.sim-" + self.simid + "-balance").prop( "disabled", true );
 									} else {
 
 										if (self.lowbalance_timer > 0) {
@@ -475,35 +523,13 @@ local sim_id = ubus_sim["value"]
 						})
 
 						// ---------------------------------------
-						// 03_rule UI updates: PING
+						// 04_rule UI updates: PING
 						// ---------------------------------------
-						window.EventBus.listenToASAP("websocket", ["03_rule"], function(ev) {
+						window.EventBus.listenToASAP("websocket", ["04_rule"], function(ev) {
 							var event_data = ev.detail || {}
 							var chunk_update = self.chunk.ping_status;
 
 							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
-
-								self.is_switching = event_data["switching"]
-
-								// Clear table row when start switching
-								if(self.is_switching == "true") {
-									var chunk_update = E('div', {}, " ")
-									var node_pointer = "div.network_registration"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.ping_status"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.netmode_comment"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.signal"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-								}
-
 
 								if(event_data && event_data.lastping_timer) {
 
@@ -511,9 +537,8 @@ local sim_id = ubus_sim["value"]
 									self.lastping_timer = event_data.lastping_timer
 
 									var NETREG_OK = (self.netreg == 1)
-									var NOT_SWITCHING = (self.is_switching == "false")
 
-									if (NETREG_OK && NOT_SWITCHING) {
+									if (NETREG_OK) {
 										var PING_OK = (self.lastping_timer && (self.lastping_timer <= 0))
 										if (PING_OK) {
 											chunk_update = E('font', {style: "color: green; font-weight: bolder;"}, "OK")
@@ -526,7 +551,6 @@ local sim_id = ubus_sim["value"]
 												self.countdown["cdown-ping"] = null
 											}
 										} else {
-											console.log("self.lastping_timer",self.lastping_timer)
 											chunk_update = E('font', {style: "color: red; font-weight: bolder;"}, "No")
 
 											var node_pointer = "#simid-" + self.simid + " div.ping_status"
@@ -548,9 +572,7 @@ local sim_id = ubus_sim["value"]
 										var node_pointer = "#simid-" + self.simid + " div.ping_status"
 										$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
 
-console.log("PING COUNTDOWN HAS TO BE REMOVED HERE")
 										if (self.countdown["cdown-ping"]) {
-											console.log("THAT'S TRUE")
 											self.countdown["cdown-ping"].onTimesUp()
 											self.countdown["cdown-ping"] = null
 										}
@@ -563,77 +585,23 @@ console.log("PING COUNTDOWN HAS TO BE REMOVED HERE")
 						})
 
 						// ---------------------------------------
-						// 04_rule UI updates: Signal level
+						// 05_rule UI updates: Signal level
 						// ---------------------------------------
-						window.EventBus.listenToASAP("websocket", ["04_rule"], function(ev) {
+						window.EventBus.listenToASAP("websocket", ["05_rule"], function(ev) {
 							var event_data = ev.detail || {}
 							var chunk_update = self.chunk.signal;
 
 							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
 
-								self.is_switching = event_data["switching"]
-
-								// Clear table row when start switching
-								if(self.is_switching == "true") {
-									var chunk_update = E('div', {}, " ")
-									var node_pointer = "div.network_registration"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.ping_status"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.netmode_comment"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-									chunk_update = E('div', {}, " ")
-									node_pointer = "div.signal"
-									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-								}
-
-
 								self.signal = parseInt(event_data.signal) || 0
 								self.lowsignal_timer = parseInt(event_data.low_signal_timer) || 0
 								var NETREG_OK = (self.netreg == 1)
-								var NOT_SWITCHING = (self.is_switching == "false")
 
 
-								//if (NETREG_OK && NOT_SWITCHING){
-								if (NOT_SWITCHING){
-									var SIGNAL_OK = (self.signal > 0)
-									var LOWSIGNAL_TIMER_IS_ZERO = (self.lowsignal_timer <=0 )
-									if (LOWSIGNAL_TIMER_IS_ZERO) {
-										chunk_update = E('div', {}, self.signal + " %")
-
-										var node_pointer = "#simid-" + self.simid + " div.signal"
-										$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-
-										if (self.countdown["cdown-signal"]) {
-											self.countdown["cdown-signal"].onTimesUp()
-											self.countdown["cdown-signal"] = undefined
-										}
-
-									} else {
-										chunk_update = E('div', { style: "color: red;"}, self.signal + " %")
-
-										var node_pointer = "#simid-" + self.simid + " div.signal"
-										$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
-
-										if(self.lowsignal_timer > 5) {
-											// Show countdown progress if low signal
-											if (!self.countdown["cdown-signal"]) {
-												var title = "Сигнал базовой станции ниже минимума"
-												var description = "Устройство находится в зоне слабого сигнала. По истечении таймера Сим-карта будет переключена. Проверьте минимальный порог переключения в настройках Сим-карты."
-												self.countdown["cdown-signal"] = new ui.Countdown("cdown-signal", self.lowsignal_timeout, self.lowsignal_timer, title, description)
-												$('#ui-countdown').append(self.countdown["cdown-signal"].render($(node_pointer)))
-											}
-										}
-									}
-
-								} else {
-									chunk_update = E('div', {}, " ")
+								var SIGNAL_OK = (self.signal > 0)
+								var LOWSIGNAL_TIMER_IS_ZERO = (self.lowsignal_timer <=0 )
+								if (LOWSIGNAL_TIMER_IS_ZERO) {
+									chunk_update = E('div', {}, self.signal + " %")
 
 									var node_pointer = "#simid-" + self.simid + " div.signal"
 									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
@@ -642,32 +610,42 @@ console.log("PING COUNTDOWN HAS TO BE REMOVED HERE")
 										self.countdown["cdown-signal"].onTimesUp()
 										self.countdown["cdown-signal"] = undefined
 									}
+
+								} else {
+									chunk_update = E('div', { style: "color: red;"}, self.signal + " %")
+
+									var node_pointer = "#simid-" + self.simid + " div.signal"
+									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
+
+									if(self.lowsignal_timer > 5) {
+										// Show countdown progress if low signal
+										if (!self.countdown["cdown-signal"]) {
+											var title = "Сигнал базовой станции ниже минимума"
+											var description = "Устройство находится в зоне слабого сигнала. По истечении таймера Сим-карта будет переключена. Проверьте минимальный порог переключения в настройках Сим-карты."
+											self.countdown["cdown-signal"] = new ui.Countdown("cdown-signal", self.lowsignal_timeout, self.lowsignal_timer, title, description)
+											$('#ui-countdown').append(self.countdown["cdown-signal"].render($(node_pointer)))
+										}
+									}
 								}
-
-
-
 							}
 						})
 
 						// -------------------------------------------
-						// 13_rule UI updates: Network mode indication
+						// 07_rule UI updates: Network mode indication
 						// -------------------------------------------
-						window.EventBus.listenToASAP("websocket", ["13_rule"], function(ev) {
+						window.EventBus.listenToASAP("websocket", ["07_rule"], function(ev) {
 							var event_data = ev.detail || {}
 							var chunk_update = self.chunk.provider;
 
 							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
 
-								self.netmode = event_data.netmode_comment || self.netmode || " "
+								self.netmode = event_data.netmode || " "
 
-								chunk_update = E('div', {class: 'td sim_name', style: "white-space: nowrap;", ["data-title"]: self.name}, [
-									self.name,
-									E('i', {class: "provider_name"}, " (" + self.provider + ") ")
-			                    ]);
+								chunk_update = E('div', { style: "color: black;"}, self.netmode)
 
+								var node_pointer = "#simid-" + self.simid + " div.netmode_comment"
+								$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
 
-								var node_pointer = "#simid-" + self.simid + " div.sim_name"
-								$(node_pointer).replaceWith(chunk_update)
 
 
 							}
@@ -682,11 +660,15 @@ console.log("PING COUNTDOWN HAS TO BE REMOVED HERE")
 							var chunk_update = self.chunk.provider;
 
 							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
-								self.provider = event_data.provider_name || self.provider || " "
+								self.provider = event_data.provider_name || " "
 
-								chunk_update = E('div', {class: 'td netmode_comment', style: "white-space: nowrap;", ["data-title"]: self.netmode}, self.netmode)
+								chunk_update = E('div', { class: "td sim_name", style: "white-space: nowrap;", ["data-title"]: self.name }, [
+									self.name,
+									E('br'),
+									E('small', {}, self.provider)
+								])
 
-								var node_pointer = "#simid-" + self.simid + " div.netmode_comment"
+								var node_pointer = "#simid-" + self.simid + " .sim_name"
 								$(node_pointer).replaceWith(chunk_update)
 
 
@@ -698,11 +680,8 @@ console.log("PING COUNTDOWN HAS TO BE REMOVED HERE")
 						//
 						// If UIWebSocket fires "ubus" event with "do_switch" method, then
 						// we disable "Activate" buttons for both Sim cards
-
-						// IF UIWebSocket fires "01_rule" event with "switching=false", then
-						// we enable another Sim card (not-active currently)
 						// -------------------------------------------------------
-						window.EventBus.listenToASAP("websocket", ["ubus", "01_rule"], function(ev) {
+						window.EventBus.listenToASAP("websocket", ["ubus"], function(ev) {
 							var event_data = ev.detail || {}
 							var chunk_update = self.chunk.btn_activate;
 
@@ -710,25 +689,48 @@ console.log("PING COUNTDOWN HAS TO BE REMOVED HERE")
 							if(event_data && event_data["command"] && event_data["command"] == "do_switch") {
 								$(".cbi-button.cbi-button-apply.sim-" + self.simid).prop("disabled", true)
 							}
+						})
+
+
+						// -----------------------------------------------------------
+						// 99_rule UI updates: UICover hide / show, clear Siminfo rows
+
+						// IF UIWebSocket fires "99_rule" event with "switching=false", then
+						// we enable another Sim card (not-active currently)
+						// -----------------------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["99_rule"], function(ev) {
+							var event_data = ev.detail || {}
+							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+
+								// Clear table row when start switching
+								self.is_switching = event_data["switching"]
+
+								if(self.is_switching == "true") {
+									self.clearInfo("simid-0")
+									self.clearInfo("simid-1")
+								}
+
+							}
 
 							// Enable "Activate" button for that Sim card which is not currently activated
-							if(event_data && event_data["switching"] && event_data["switching"] == "false") {
+							if(self.is_switching == "false") {
 								var currently_activated_sim_id = event_data["sim_id"] && parseInt(event_data["sim_id"])
 
- 								if(currently_activated_sim_id != self.simid) {
+								if(currently_activated_sim_id != self.simid) {
+
 									$(".cbi-button.cbi-button-apply.sim-" + self.simid).prop("disabled", false)
 									$(".cbi-button.cbi-button-apply.sim-" + currently_activated_sim_id).prop("disabled", true)
 
 									// Clear Sim connection state for non-active SIM
 									var chunk_update = E('div', {}, [
-										"",
+										" ",
 										E('div', { class: "spinner-reg-"+self.simid, style: "display: inline-block; margin-left: 4px;"})
 									])
 									var node_pointer = "#simid-" + self.simid + " div.network_registration"
 									$(node_pointer)[0].firstChild.firstChild.replaceWith(chunk_update)
 								}
 							}
-						})
+						});
 
 						return container;
 					},

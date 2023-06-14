@@ -36,7 +36,7 @@
                     // --------------------------------------------------------------------------------
                     // Subscribe on UISiminfo widget, btn_setting_pressed event: Open SIM Setting modal
                     // --------------------------------------------------------------------------------
-                    window.EventBus.listenToASAP("websocket", ["01_rule", "02_rule", "03_rule", "04_rule"], function(ev) {
+                    window.EventBus.listenToASAP("websocket", ["99_rule"], function(ev) {
                         var event_data = ev.detail || {}
                         self.simid = event_data.simid || self.simid || "simid-0"
                         self.switching = event_data.switching || self.switching || false

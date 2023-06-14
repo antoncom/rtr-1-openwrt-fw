@@ -6,11 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tsmconsole
-PKG_RELEASE:=2.5.1
+PKG_RELEASE:=2.6.0
 
 PKG_SOURCE_URL=https://github.com/antoncom/tsmconsole.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE=2023-05-24
+PKG_SOURCE_DATE=2023-06-14
 PKG_SOURCE_VERSION:=76863df4cb4d989174bd0d656764b4aac299d546
 
 include $(INCLUDE_DIR)/package.mk

@@ -109,6 +109,7 @@
 		<div class="tr table-titles">
 			<div class="th">N</div>
 			<div class="th"><%:Name %></div>
+			<div class="th"><%:SIM %></div>
 			<div class="th" style="width: 33%;"><%:Status %></div>
 			<div class="th"><%:PING %></div>
 			<div class="th"><%:Mode %></div>
@@ -119,7 +120,7 @@
 	</div>
 </div>
 
-
+<!--
 <h3><%:System log %></h3>
 <div class="table journal">
 	<div class="tr table-titles">
@@ -144,7 +145,7 @@
 		onclick="clearJournal()"
 		value="<%:Clear the log %>"
 	/>
-</div>
+</div> -->
 
 <span id="btn_enable_spinner" class="btn_spinner"></span>
 
@@ -159,6 +160,7 @@ L.require("ui").then(function(ui){
 					simid: "0",
 					name: uci.get("tsmodem", "sim_0", "name"),
 					provider: "Неопределён",
+					cpin: "false",
 					netreg: "7",
 					ping_status: " ",
 					netmode: " ",
@@ -169,6 +171,7 @@ L.require("ui").then(function(ui){
 					simid: "1",
 					name: uci.get("tsmodem", "sim_1", "name"),
 					provider: "Неопределён",
+					cpin: "false",
 					netreg: "7",
 					ping_status: " ",
 					netmode: " ",
