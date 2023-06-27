@@ -87,6 +87,23 @@ function edit_sim(btn) {
 					optional: false
 				});
 
+				var timeout_ping = new ui.Textfield(sim_data["timeout_ping"], {
+					datatype: "rangelength(1,4)",
+					optional: false
+				});
+
+				var timeout_sim_absent = new ui.Textfield(sim_data["timeout_sim_absent"], {
+					datatype: "rangelength(1,4)",
+					optional: false
+				});
+
+				var timeout_link = new ui.Textfield(sim_data["timeout_link"], {
+					datatype: "rangelength(1,4)",
+					optional: false
+				});
+
+				console.log("HERE")
+
 
 				// ADAPTER INITS
 				<%
@@ -102,7 +119,7 @@ function edit_sim(btn) {
 				var emptyProto = new ui.AdapterEmpty()
 
 
-				L.showModal(_('<%:SIM card settings %>'), [
+				L.showModal(_('<%:SIM__ card settings %>'), [
 					E('div', { class: 'cbi-map' }, [
 						E('div', { class: 'cbi-map-section' }, [
 							E('div', { class: 'cbi-map-section-node' }, [
@@ -151,6 +168,18 @@ function edit_sim(btn) {
 														E('div', {class: 'td', style: "width: 100%;"}, _('<%:Timeout - balance below min, sec. %>')),
 														E('div', {class: 'td', style: "text-align: right;"}, [timeout_bal.render()])
 													]),
+													E('div', {class: 'tr cbi-rowstyle-0'}, [
+														E('div', {class: 'td', style: "width: 100%;"}, _('Timeout - остуствует/повреждена Сим-карта')),
+														E('div', {class: 'td', style: "text-align: right;"}, [timeout_sim_absent.render()])
+													]),
+													E('div', {class: 'tr cbi-rowstyle-0'}, [
+														E('div', {class: 'td', style: "width: 100%;"}, _('Timeout - нет доступа в интернет')),
+														E('div', {class: 'td', style: "text-align: right;"}, [timeout_link.render()])
+													]),
+													E('div', {class: 'tr cbi-rowstyle-0'}, [
+														E('div', {class: 'td', style: "width: 100%;"}, _('Timeout - отсутствует PING сети')),
+														E('div', {class: 'td', style: "text-align: right;"}, [timeout_ping.render()])
+													]),
 												]),
 												E('button', {
 													'class': 'cbi-button cbi-button-apply',
@@ -191,7 +220,7 @@ function edit_sim(btn) {
 								var widget_list = []
 
 
-								var widget_list = [proto, rssi, timeout_signal, timeout_bal, timeout_reg, balance_min, memo];
+								var widget_list = [proto, rssi, timeout_signal, timeout_bal, timeout_reg, timeout_ping, timeout_link, timeout_sim_absent, balance_min, memo];
 								if(adapters[sim_data["provider"]] != undefined) {
 									widget_list = widget_list.concat(tsmodem_adapter_provider.getFields())
 								}
@@ -217,6 +246,10 @@ function edit_sim(btn) {
 									sim_data["timeout_reg"] = timeout_reg.getValue()
 									sim_data["timeout_signal"] = timeout_signal.getValue()
 									sim_data["timeout_bal"] = timeout_bal.getValue()
+
+									sim_data["timeout_ping"] = timeout_ping.getValue()
+									sim_data["timeout_link"] = timeout_timeout_linkbal.getValue()
+									sim_data["timeout_sim_absent"] = timeout_sim_absent.getValue()
 
 									var a_adapter_data = {}
 									a_adapter_data = Object.assign(a_adapter_data, {

@@ -42,6 +42,10 @@ function do_sim_action(action, sim_id)
 				"timeout_bal",
 				"timeout_signal",
 				"timeout_reg",
+				"timeout_link",
+				"timeout_sim_absent",
+				"timeout_ping",
+				"autodetect_provider"
 			}
 			local allowed_gsm_options = {
 				"name",
@@ -85,8 +89,8 @@ function do_sim_action(action, sim_id)
 				end
 			end
 
-			--[[ try to get balance ]]
-			util.ubus("tsmodem.driver", "do_request_ussd_balance", { ["sim_id"] = sim_id })
+			--[[ glear modem states ]]
+			util.ubus("tsmodem.driver", "clear_state", {})
 		end,
 
 		default = function(...)

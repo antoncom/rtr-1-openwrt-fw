@@ -2,170 +2,188 @@
 //<![CDATA[
 L.require('ui').then(function(ui) {
 	L.require('dom').then(function(dom) {
-		var UIWebSocket = ui.AbstractElement.extend({
-			__init__: function(host, port) {
-                this.host = host,
-                this.port = port,
-                this.socket = new WebSocket('ws://' + this.host + ":" + this.port)
-			},
-            /** @override */
-            render: function() {
-                var divEl = E('div', {
-                    class: 'web-socket',
-                    style: 'display: none'
-                });
-                return this.bind(divEl);
-            },
+		L.require("rpc").then(function(rpc){
+			var UIWebSocket = ui.AbstractElement.extend({
+				__init__: function(host, port) {
+	                this.host = host,
+	                this.port = port,
+	                this.socket = new WebSocket('ws://' + this.host + ":" + this.port)
+				},
+	            /** @override */
+	            render: function() {
+	                var divEl = E('div', {
+	                    class: 'web-socket',
+	                    style: 'display: none'
+	                });
+	                return this.bind(divEl);
+	            },
 
-            /** @private */
-            bind: function(divEl) {
-                var self = this
-                this.node = divEl;
-                dom.bindClassInstance(divEl, this);
-
-				window.EventBus.registerTo(this.node,"websocket")
-
-				// -----------------------------------------------------------
-				// Subscribe to UISiminfo widget. On "Activate" button pressed
-				// -----------------------------------------------------------
-				window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
-
-					var event_data = ev.detail || {}
-					self.simid = event_data.simid || self.simid || "simid-0"
-
-					self.socket.send(JSON.stringify({
-						proto: "ubus",
-						uuid: event_data.uuid || "",
-						obj: "tsmodem.driver",
-						method: "do_switch",
-						params: {}
-					}));
-
-				})
-
-				window.EventBus.listenToASAP("UISiminfo_1", ["btn_activate_pressed"], function(ev) {
-
-					var event_data = ev.detail || {}
-					self.simid = event_data.simid || self.simid || "simid-0"
-
-					self.socket.send(JSON.stringify({
-						proto: "ubus",
-						uuid: event_data.uuid || "",
-						obj: "tsmodem.driver",
-						method: "do_switch",
-						params: {}
-					}));
-
-				})
+	            /** @private */
+	            bind: function(divEl) {
+	                var self = this
+	                this.node = divEl;
+	                dom.bindClassInstance(divEl, this);
 
 
-				// -----------------------------------------------------------
-				// Subscribe to UISiminfo widget. On "Balance" button pressed
-				// -----------------------------------------------------------
-				window.EventBus.listenToASAP("UISiminfo_0", ["btn_balance_pressed"], function(ev) {
-					var event_data = ev.detail || {}
-					self.simid = event_data.simid || self.simid || 0
+					window.EventBus.registerTo(this.node,"websocket")
 
-					self.socket.send(JSON.stringify({
-						proto: "ubus",
-						uuid: event_data.uuid || "",
-						obj: "tsmodem.driver",
-						method: "do_request_ussd_balance",
-						params: { sim_id: self.simid }
-					}));
+					// -----------------------------------------------------------
+					// Subscribe to UISiminfo widget. On "Activate" button pressed
+					// -----------------------------------------------------------
+					window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
 
-				})
+						var event_data = ev.detail || {}
+						self.simid = event_data.simid || self.simid || "simid-0"
 
-				window.EventBus.listenToASAP("UISiminfo_1", ["btn_balance_pressed"], function(ev) {
-					var event_data = ev.detail || {}
-					self.simid = event_data.simid || self.simid || 1
+						self.socket.send(JSON.stringify({
+							proto: "ubus",
+							uuid: event_data.uuid || "",
+							obj: "tsmodem.driver",
+							method: "do_switch",
+							params: { rule: "user  slot #1" }
+						}));
 
-					self.socket.send(JSON.stringify({
-						proto: "ubus",
-						uuid: event_data.uuid || "",
-						obj: "tsmodem.driver",
-						method: "do_request_ussd_balance",
-						params: { sim_id: self.simid }
-					}));
+					})
 
-				})
+					window.EventBus.listenToASAP("UISiminfo_1", ["btn_activate_pressed"], function(ev) {
 
-				window.EventBus.listenToASAP("UIModal", ["send-at-command"], function(ev) {
-					var event_data = ev.detail || {}
+						var event_data = ev.detail || {}
+						self.simid = event_data.simid || self.simid || "simid-0"
 
-					self.socket.send(JSON.stringify({
-						proto: "ubus",
-						uuid: event_data.uuid || "",
-						obj: "tsmodem.driver",
-						method: "send_at",
-						params: { command: event_data["command"] }
-					}));
+						self.socket.send(JSON.stringify({
+							proto: "ubus",
+							uuid: event_data.uuid || "",
+							obj: "tsmodem.driver",
+							method: "do_switch",
+							params: { rule: "user slot #1" }
+						}));
 
-				})
-
-				window.EventBus.listenToASAP("UIModal", ["send-to-websocket"], function(ev) {
-					var event_data = ev.detail || {}
-					self.socket.send(JSON.stringify(event_data));
-				})
-
-				window.EventBus.listenToASAP("UISimSettingModal", ["send-at-command"], function(ev) {
-					var event_data = ev.detail || {}
-
-					self.socket.send(JSON.stringify({
-						proto: "ubus",
-						uuid: event_data.uuid || "",
-						obj: "tsmodem.driver",
-						method: "send_at",
-						params: { command: event_data["command"] }
-					}));
-
-				})
-
-				window.EventBus.listenToASAP("UISimSettingModal", ["send-to-websocket"], function(ev) {
-					var event_data = ev.detail || {}
-					self.socket.send(JSON.stringify(event_data));
-				})
+					})
 
 
-                try {
-					var self = this
-                    this.socket.onopen = function(event) {
+					// -----------------------------------------------------------
+					// Subscribe to UISiminfo widget. On "Balance" button pressed
+					// -----------------------------------------------------------
+					window.EventBus.listenToASAP("UISiminfo_0", ["btn_balance_pressed"], function(ev) {
+						var event_data = ev.detail || {}
+						self.simid = event_data.simid || self.simid || 0
 
-                    };
-                    this.socket.onmessage = function(event) {
-						if (event && event.data) {
-							var event_data = JSON.parse(event.data) || {}
-							if (event_data.ruleid) {
-								self.fireEvent(event_data.ruleid, JSON.parse(event.data))
+						self.socket.send(JSON.stringify({
+							proto: "ubus",
+							uuid: event_data.uuid || "",
+							obj: "tsmodem.driver",
+							// method: "do_request_ussd_balance",
+							// params: { sim_id: self.simid }
+							method: "send_at",
+							params: {
+								command: "AT+CUSD=1,#102#,15",
+								["what-to-update"]: "balance"
 							}
-							if (event_data.proto && event_data.proto == "ubus") {
-								self.fireEvent("ubus", JSON.parse(event.data))
-							}
-							if (event_data.module && event_data.module == "tsmconsole") {
-								console.log("Fire: tsmconsole")
-								self.fireEvent("tsmconsole", JSON.parse(event.data))
-							}
-						}
-                    };
-                } catch (exception) {
-                    console.log('Error' + exception)
-                }
+						}));
 
-                return divEl;
-            },
+					})
 
-			fireEvent: function(event_name, event_data) {
-				var s = new CustomEvent(event_name, {
-					detail: event_data,
-					bubbles: true,
-				})
-				window.EventBus.busobjects["websocket"].dispatchEvent(s);
-			}
+					window.EventBus.listenToASAP("UISiminfo_1", ["btn_balance_pressed"], function(ev) {
+						var event_data = ev.detail || {}
+						self.simid = event_data.simid || self.simid || 1
+
+						self.socket.send(JSON.stringify({
+							proto: "ubus",
+							uuid: event_data.uuid || "",
+							obj: "tsmodem.driver",
+							// method: "do_request_ussd_balance",
+							// params: { sim_id: self.simid }
+							method: "send_at",
+							params: {
+								command: "AT+CUSD=1,#102#,15",
+								["what-to-update"]: "balance"
+							}
+						}));
+
+					})
+
+					window.EventBus.listenToASAP("UIModal", ["send-at-command"], function(ev) {
+						var event_data = ev.detail || {}
+
+						self.socket.send(JSON.stringify({
+							proto: "ubus",
+							uuid: event_data.uuid || "",
+							obj: "tsmodem.driver",
+							method: "send_at",
+							params: { command: event_data["command"] }
+						}));
+
+					})
+
+					window.EventBus.listenToASAP("UIModal", ["send-to-websocket"], function(ev) {
+						var event_data = ev.detail || {}
+						self.socket.send(JSON.stringify(event_data));
+					})
+
+					window.EventBus.listenToASAP("UISimSettingModal", ["send-at-command"], function(ev) {
+						var event_data = ev.detail || {}
+
+						self.socket.send(JSON.stringify({
+							proto: "ubus",
+							uuid: event_data.uuid || "",
+							obj: "tsmodem.driver",
+							method: "send_at",
+							params: { command: event_data["command"] }
+						}));
+
+					})
+
+					window.EventBus.listenToASAP("UISimSettingModal", ["send-to-websocket"], function(ev) {
+						var event_data = ev.detail || {}
+						self.socket.send(JSON.stringify(event_data));
+					})
+
+
+	                try {
+						var self = this
+	                    this.socket.onopen = function(event) {
+							var rpc_sess = rpc.getSessionID()
+							self.socket.send(JSON.stringify({
+								driver_command: "driver-start-automation",
+								ubus_rpc_session: rpc_sess
+							}));
+							console.log("RUN DRIVER AUTOMATION ON PAGE REFRESH.")
+	                    };
+	                    this.socket.onmessage = function(event) {
+							if (event && event.data) {
+								var event_data = JSON.parse(event.data) || {}
+								if (event_data.ruleid) {
+									self.fireEvent(event_data.ruleid, JSON.parse(event.data))
+								}
+								if (event_data.proto && event_data.proto == "ubus") {
+									self.fireEvent("ubus", JSON.parse(event.data))
+								}
+								if (event_data.module && event_data.module == "tsmconsole") {
+									console.log("Fire: tsmconsole")
+									self.fireEvent("tsmconsole", JSON.parse(event.data))
+								}
+							}
+	                    };
+	                } catch (exception) {
+	                    console.log('Error' + exception)
+	                }
+
+	                return divEl;
+	            },
+
+				fireEvent: function(event_name, event_data) {
+					var s = new CustomEvent(event_name, {
+						detail: event_data,
+						bubbles: true,
+					})
+					window.EventBus.busobjects["websocket"].dispatchEvent(s);
+				},
+			});
+
+			ui["WebSocket"] = UIWebSocket;
+	        window.WebSocket = new ui.WebSocket("192.168.1.1", 7890)
+	        window.WebSocket_pseudo_widget = window.WebSocket.render()
 		});
-
-		ui["WebSocket"] = UIWebSocket;
-        window.WebSocket = new ui.WebSocket("192.168.1.1", 7890)
-        window.WebSocket_pseudo_widget = window.WebSocket.render()
 	});
 });
 //]]>

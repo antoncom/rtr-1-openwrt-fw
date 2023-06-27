@@ -37,6 +37,13 @@
 								self.netreg_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_reg")
 								self.balance_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_bal")
 								self.ping_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_ping")
+
+								self.sim_absent_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_sim_absent")
+								self.link_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_link")
+
+								self.autodetection_mode = uci.get("tsmodem", "sim_" + self.simid, "autodetect_provider")
+
+
 							});
 						});
 
@@ -86,6 +93,8 @@
 						window.EventBus.busobjects["UISimSettingModal"].dispatchEvent(s);
 					},
 
+
+
 					stop_modem_automation: function() {
 						var self = this
 						L.require("rpc").then(function(rpc){
@@ -131,6 +140,11 @@
 
                                     var	adapter_widgets = [];
 
+									// Set proto drodown to AUTO if autodetect_provider set is 1 (see /etc/tsmodem)
+									console.log("========",sim_data)
+									if(sim_data["autodetect_provider"] == "1") {
+										sim_data["provider"] = "00000"
+									}
                                     var proto = new ui.DropdownProto(sim_data["provider"], <%= util.serialize_json(adapter():list()) %>, {
                                         disabled: false,
                                         sort: true,
@@ -164,6 +178,21 @@
                                         optional: false
                                     });
 
+									var timeout_ping = new ui.Textfield(sim_data["timeout_ping"], {
+										datatype: "rangelength(1,4)",
+										optional: false
+									});
+
+									var timeout_sim_absent = new ui.Textfield(sim_data["timeout_sim_absent"], {
+										datatype: "rangelength(1,4)",
+										optional: false
+									});
+
+									var timeout_link = new ui.Textfield(sim_data["timeout_link"], {
+										datatype: "rangelength(1,4)",
+										optional: false
+									});
+
 
                                     // ADAPTER INITS
                                     <%
@@ -173,8 +202,9 @@
                                     %>
 
 
-                                    var memo = new ui.Textfield(sim_data["name"], {
-                                        datatype: "rangelength(3,128)" });
+                                    var memo = new ui.Textfield(sim_data["name"],{});
+                                        //datatype: "rangelength(3,128)" });
+										// Note: we allow empty memo
 
                                     var emptyProto = new ui.AdapterEmpty()
 
@@ -215,19 +245,33 @@
                                                                             print(adapter():render("jsrender") .. ",\n")
                                                                         end
                                                                     %>
+
                                                                     E('div', { class: 'table modal-section-param more-params'}, [
                                                                         E('div', {class: 'tr cbi-rowstyle-0'}, [
-                                                                            E('div', {class: 'td', style: "width: 100%;"}, _('<%:Timeout - network unregistered, sec. %>')),
+                                                                            E('div', {class: 'td', style: "width: 100%;"}, _('Timeout - GSM: нет сети')),
                                                                             E('div', {class: 'td', style: "text-align: right;"}, [timeout_reg.render()])
                                                                         ]),
                                                                         E('div', {class: 'tr cbi-rowstyle-1'}, [
-                                                                            E('div', {class: 'td', style: "width: 100%;"}, _('<%:Timeout - weak signal, sec. %>')),
+                                                                            E('div', {class: 'td', style: "width: 100%;"}, _('Timeout - СИГНАЛ: слабый')),
                                                                             E('div', {class: 'td', style: "text-align: right;"}, [timeout_signal.render()])
                                                                         ]),
                                                                         E('div', {class: 'tr cbi-rowstyle-0'}, [
-                                                                            E('div', {class: 'td', style: "width: 100%;"}, _('<%:Timeout - balance below min, sec. %>')),
+                                                                            E('div', {class: 'td', style: "width: 100%;"}, _('Timeout - БАЛАНС: ниже минимума')),
                                                                             E('div', {class: 'td', style: "text-align: right;"}, [timeout_bal.render()])
                                                                         ]),
+																		E('div', {class: 'tr cbi-rowstyle-0'}, [
+																			E('div', {class: 'td', style: "width: 100%;"}, _('Timeout - SIM: отсутствует в слоте')),
+																			E('div', {class: 'td', style: "text-align: right;"}, [timeout_sim_absent.render()])
+																		]),
+																		E('div', {class: 'tr cbi-rowstyle-0'}, [
+																			E('div', {class: 'td', style: "width: 100%;"}, _('Timeout - LINK: без доступа в интернет')),
+																			E('div', {class: 'td', style: "text-align: right;"}, [timeout_link.render()])
+																		]),
+																		E('div', {class: 'tr cbi-rowstyle-0'}, [
+																			E('div', {class: 'td', style: "width: 100%;"}, _('Timeout - PING: интернет ресурсы недоступны')),
+																			E('div', {class: 'td', style: "text-align: right;"}, [timeout_ping.render()])
+																		]),
+
                                                                     ]),
                                                                     E('button', {
                                                                         'class': 'cbi-button cbi-button-apply',
@@ -268,7 +312,7 @@
                                                     var widget_list = []
 
 
-                                                    var widget_list = [proto, rssi, timeout_signal, timeout_bal, timeout_reg, balance_min, memo];
+                                                    var widget_list = [rssi, timeout_signal, timeout_bal, timeout_reg, balance_min, timeout_ping, timeout_link, timeout_sim_absent, memo];
                                                     if(adapters[sim_data["provider"]] != undefined) {
                                                         widget_list = widget_list.concat(tsmodem_adapter_provider.getFields())
                                                     }
@@ -282,7 +326,6 @@
                                                         }
                                                     }
 
-
                                                     if (form_valid) {
 
                                                         sim_data["name"] = memo.getValue()
@@ -295,10 +338,18 @@
                                                         sim_data["timeout_signal"] = timeout_signal.getValue()
                                                         sim_data["timeout_bal"] = timeout_bal.getValue()
 
-                                                        var a_adapter_data = {}
-                                                        a_adapter_data = Object.assign(a_adapter_data, {
-                                                            [proto.getValue()]: adapter_data[sim_data["provider"]]
-                                                        })
+														sim_data["timeout_ping"] = timeout_ping.getValue()
+														sim_data["timeout_link"] = timeout_link.getValue()
+														sim_data["timeout_sim_absent"] = timeout_sim_absent.getValue()
+
+														// Code of provider for AUTO is 00000 (see /etc/config/tsmodem)
+														sim_data["autodetect_provider"] = (proto.getValue() == "00000") ? 1 : 0;
+
+														var a_adapter_data = {}
+														a_adapter_data = Object.assign(a_adapter_data, {
+															[proto.getValue()]: adapter_data[sim_data["provider"]]
+														})
+
                                                         sim_data["provider"] = proto.getValue()
 
                                                         my_handleEdit(simid, sim_data, a_adapter_data);

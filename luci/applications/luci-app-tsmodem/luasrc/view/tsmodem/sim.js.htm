@@ -9,6 +9,10 @@ function activate_sim(btn) {
 	send_action(action, sim_id, payload);
 }
 
+function my_handleEdit(simid, sim_data, adapter_data) {
+	send_action("edit", simid, { "sim_data": sim_data, "adapter_data": adapter_data } )
+}
+
 // TODO
 // XHR() is deprecated. Use L.request instead.
 function send_action(action, sim_id, payload) {

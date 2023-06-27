@@ -3,7 +3,6 @@
 <%+tsmodem/ui_utils/external.js%>
 <%+tsmodem/ui_override/TextFieldStyled.js%>
 <%+tsmodem/sim.js%>
-<%+tsmodem/sim_modal%>
 
 <% --[[=========== UI WIDGETS ==========]] %>
 <%+tsmodem/ui_widget/UIEventBus.js%>
@@ -93,9 +92,12 @@
 			<p><%:Communication with the mobile device is supported by the main and reserved channels. %>
 			<%:Switching to the reserved channel is performed when the following events occur %>:</p>
 				<ul>
-					<li><%:Loss of registration in the network %></li>
-					<li><%:Weak signal %></li>
-					<li><%:Balance below minimum %></li>
+					<li>Нет регистрации в GSM-сети</li>
+					<li>Слабый сигнал от базовой станции GSM-сети</li>
+					<li>Баланс средств на Сим-карте ниже минимума</li>
+					<li>Сим-карта отсутствует в слоте, либо повреждена</li>
+					<li>Нет доступа к Интернет в GSM-сети</li>
+					<li>Интернет-ресурсы недоступны (отсутствует PING)</li>
 				</ul>
 			</p>
 		</div>
@@ -156,10 +158,25 @@ L.require("ui").then(function(ui){
 	L.require('dom').then(function(dom) {
 		L.require("uci").then(function(uci) {
 			uci.load("tsmodem").then(function(out){
+
+				// Make name of Slot depending on auto or selected proto
+				var sim_0_memo = uci.get("tsmodem", "sim_0", "name")
+				sim_0_memo = (sim_0_memo == undefined) ? "" : sim_0_memo
+				var sim_0_providerCode = uci.get("tsmodem", "sim_0", "provider")
+				var sim_0_providerName = uci.get("tsmodem_adapter_provider", sim_0_providerCode, "name")
+				var sim_0_providerAutoDetect = uci.get("tsmodem", "sim_0", "autodetect_provider")
+
+				var sim_1_memo = uci.get("tsmodem", "sim_1", "name")
+				sim_1_memo = (sim_1_memo == undefined) ? "" : sim_1_memo
+				var sim_1_providerCode = uci.get("tsmodem", "sim_1", "provider")
+				var sim_1_providerName = uci.get("tsmodem_adapter_provider", sim_1_providerCode, "name")
+				var sim_1_providerAutoDetect = uci.get("tsmodem", "sim_1", "autodetect_provider")
+
 				var sim_0 = new ui.Siminfo("Name 1", {
 					simid: "0",
-					name: uci.get("tsmodem", "sim_0", "name"),
-					provider: "Неопределён",
+					name: sim_0_memo,
+					autodetection_mode: sim_0_providerAutoDetect,
+					provider: sim_0_providerName,
 					cpin: "false",
 					netreg: "7",
 					ping_status: " ",
@@ -169,8 +186,9 @@ L.require("ui").then(function(ui){
 				});
 				var sim_1 = new ui.Siminfo("Name 2", {
 					simid: "1",
-					name: uci.get("tsmodem", "sim_1", "name"),
-					provider: "Неопределён",
+					name: sim_1_memo,
+					autodetection_mode: sim_1_providerAutoDetect,
+					provider: sim_1_providerName,
 					cpin: "false",
 					netreg: "7",
 					ping_status: " ",
@@ -201,9 +219,15 @@ L.require("ui").then(function(ui){
 
 				var console_modal = new ui.Modal();
 				$("body").append(console_modal.render())
+				console_modal.start_modem_automation()
+
 			});
 		});
 	});
+});
+
+$( document ).ready(function() {
+    console.log( "ready!" );
 });
 
 
