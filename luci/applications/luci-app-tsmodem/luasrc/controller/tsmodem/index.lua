@@ -30,6 +30,9 @@ function do_sim_action(action, sim_id)
 				error("do_sim_switch_action - Failed to connect to ubus")
 			end
 
+			--[[ glear modem states ]]
+			 util.ubus("tsmodem.driver", "clear_state", {})
+
 			local resp = conn:call("tsmodem.driver", "do_switch", {})
 		end,
 
@@ -90,7 +93,7 @@ function do_sim_action(action, sim_id)
 			end
 
 			--[[ glear modem states ]]
-			util.ubus("tsmodem.driver", "clear_state", {})
+			-- util.ubus("tsmodem.driver", "clear_state", {})
 		end,
 
 		default = function(...)

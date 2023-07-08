@@ -2,7 +2,7 @@
 
 local util = require "luci.util"
 local ubus_sim = util.ubus("tsmodem.driver", "sim", {})
-local sim_id = ubus_sim["value"]
+local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 
 %>
 
@@ -14,7 +14,7 @@ local sim_id = ubus_sim["value"]
 				var UISiminfo = ui.AbstractElement.extend({
 					__init__: function(simname, options) {
 		                this.simid = options.simid
-		                this.name = (options.name == "") ? "Слот #" + this.simid : options.name
+		                this.name = (options.name == "") ? "SIM-" + (parseInt(this.simid)+1) : options.name
 						this.autodetection_mode = options.autodetection_mode
 		                this.provider = options.provider || ""
 						this.provider_autodetected = ""
@@ -88,7 +88,7 @@ local sim_id = ubus_sim["value"]
 						});
 
 						this.chunk = {
-							simid: E('div', {class: 'td', ["data-title"]: 'N'}, E('div', {}, this.simid)),
+							simid: E('div', {class: 'td', ["data-title"]: 'N'}, E('div', {}, parseInt(this.simid)+1)),
 							name: E('div', {class: 'td sim_name', style: "white-space: nowrap;", ["data-title"]: this.name}, [
 										this.name,
 										E('font', {class: "provider_detection"}, ""),
@@ -102,13 +102,6 @@ local sim_id = ubus_sim["value"]
 							signal: E('div', {class: 'td signal', ["data-title"]: this.signal}, E('div', { class: "signal_value", style: "width: 53px;"}, this.signal)),
 							//balance: E('div', {class: 'td sim_balance', ["data-title"]: this.signal}, E('div', { style: "width: 53px;"}, E('div', {}, this.balance))),
 							balance: E('div', {class: 'td sim_balance', style: "white-space: nowrap;", ["data-title"]: this.balance}, E('div', {}, E('div', { class: "balance_value" }, this.balance))),
-							btn_activate: E('input',  {
-												type: "button", class: "cbi-button cbi-button-apply sim-" + this.simid,
-												["data-simid"]: this.simid,
-												value: _("Activate"),
-												style: "display: initial;",
-							}),
-
 							btn_balance: E('input',  {
 									type: "button", class: "cbi-button cbi-button-apply sim-" + this.simid + "-balance",
 									["data-simid"]: this.simid,
@@ -128,6 +121,12 @@ local sim_id = ubus_sim["value"]
 												value: _("AT console"),
 												style: "display: initial;"
 							}),
+							btn_activate: E('input',  {
+												type: "button", class: "cbi-button cbi-button-apply sim-" + this.simid,
+												["data-simid"]: this.simid,
+												value: _("Activate"),
+												style: "display: initial;",
+							}),
 							spinner: E('img', {
 								src: "<%=resource%>/icons/loading.gif",
 								alt: "<%:Loading%>",
@@ -138,7 +137,8 @@ local sim_id = ubus_sim["value"]
 
 
 						// Disable "Activate" button for currently active Sim card
-						var active_sim_id = parseInt("<%=sim_id %>") || null
+						var active_sim_id = <%=sim_id %>
+
 						if (active_sim_id == this.simid) {
 							this.chunk.btn_activate.setAttribute("disabled", "disabled");
 						}
@@ -160,10 +160,10 @@ local sim_id = ubus_sim["value"]
 							this.chunk.signal,
 							this.chunk.balance,
 		                    E('div', {class: "nowrap cbi-section-actions td", style: "text-align: right;"}, [
-		                        this.chunk.btn_activate,
 								this.chunk.btn_balance,
 								this.chunk.btn_setting,
 								this.chunk.btn_console,
+								this.chunk.btn_activate,
 		                    ])
 		                ])
 
@@ -193,7 +193,7 @@ local sim_id = ubus_sim["value"]
 						var node_pointer = "#" + simid + " .cpin_value"
 						$(node_pointer).replaceWith(chunk_update)
 
-						chunk_update = E('div', {class: "netreg_value"}, " ")
+						chunk_update = E('div', {class: "netreg_value"}, ". . .")
 						node_pointer = "#" + simid + " .netreg_value"
 						$(node_pointer).replaceWith(chunk_update)
 
@@ -212,6 +212,10 @@ local sim_id = ubus_sim["value"]
 						chunk_update = E('div', {class: "balance_value"}, " ")
 						node_pointer = "#" + simid + " .balance_value"
 						$(node_pointer).replaceWith(chunk_update)
+
+						// Disable Activate buttons while sim is switching
+						$(".cbi-button.cbi-button-apply.sim-0").prop("disabled", true)
+						$(".cbi-button.cbi-button-apply.sim-0").prop("disabled", true)
 
 
 						// Disable Balance buttons while sim is switching
@@ -271,6 +275,7 @@ local sim_id = ubus_sim["value"]
 
 								self.fireEvent("btn_balance_pressed", {
 									simid: self.simid,
+									provider_code: self.provider_code,
 									uuid: uuid(),
 								})
 
@@ -325,6 +330,7 @@ local sim_id = ubus_sim["value"]
 						// 01_rule UI updates: Sim is in slot or not
 						// -----------------------------------------------
 						window.EventBus.listenToASAP("websocket", ["01_rule"], function(ev) {
+
 							if (!self.is_switching && !self.debounce) {
 								var event_data = ev.detail || {}
 								var chunk_update = self.chunk.cpin;
@@ -333,12 +339,14 @@ local sim_id = ubus_sim["value"]
 								var currently_activated_sim_id = event_data["sim_id"] && parseInt(event_data["sim_id"])
 								if(currently_activated_sim_id == self.simid) {
 
-									if(event_data && event_data.timer) {
+									if(event_data && event_data.wait_timer) {
 
 										// Update sim-in-slot state
 										self.sim_ready = event_data.sim_ready || " "
-										self.cpin_timeout = event_data.uci_timeout_sim_absent
-										self.cpin_timer = parseInt(event_data.timer)
+										self.cpin_timeout = event_data.timeout
+										self.cpin_wait_timer = parseInt(event_data.wait_timer)
+
+
 
 										var SIM_READY = (self.sim_ready == "true")
 										var SIM_ABSENT = (self.sim_ready == "false")
@@ -354,42 +362,37 @@ local sim_id = ubus_sim["value"]
 													self.countdown["cdown-cpin"] = null
 													self.countdown_many--;
 												}
-										} else if (SIM_CHECKING) {
-											chunk_update = E('img', {
-												class: "cpin_value",
-												src: "<%=resource%>/icons/loading.gif",
-												alt: "<%:Loading%>",
-												width: 16,
-												style: "vertical-align:middle"
-											})
-											$(node_pointer).replaceWith(chunk_update)
+										} else {
+											if (SIM_CHECKING) {
+												chunk_update = E('img', {
+													class: "cpin_value",
+													src: "<%=resource%>/icons/loading.gif",
+													alt: "<%:Loading%>",
+													width: 16,
+													style: "vertical-align:middle"
+												})
+												$(node_pointer).replaceWith(chunk_update)
 
-										} else if (SIM_ABSENT) {
-											chunk_update = E('font', {class: "cpin_value", style: "color: red; font-weight: bolder;"}, "No")
+											} else if (SIM_ABSENT) {
+												chunk_update = E('font', {class: "cpin_value", style: "color: red; font-weight: bolder;"}, "No")
 
-											$(node_pointer).replaceWith(chunk_update)
+												$(node_pointer).replaceWith(chunk_update)
 
-											if (self.cpin_timer && self.cpin_timer > 5) {
-												// Show countdown progress if SIM isn't in slot
-												if (!self.countdown["cdown-cpin"] && self.countdown_many <= 0) {
-													var title = "Нет сим-карты в слоте № " + self.simid
-													var description = "В слоте № " + self.simid + " не обнаружена Сим-карта. Вставьте сим-карту до истечения таймера, или дождитесь переключения модема на другой слот."
 
-													self.countdown["cdown-cpin"] = new ui.Countdown("cdown-cpin", self.cpin_timeout, self.cpin_timer, title, description)
-													$('#ui-countdown').append(self.countdown["cdown-cpin"].render())
+												if (self.cpin_wait_timer && self.cpin_timeout && ((self.cpin_timeout - self.cpin_wait_timer) > 5)) {
+													// Show countdown progress if SIM isn't in slot
+													if (!self.countdown["cdown-cpin"] && self.countdown_many <= 0) {
+														var slot_name = ((self.simid == 0) ? "SIM-1" : "SIM-2")
+														var title = "Нет сим-карты в слоте " + slot_name
+														var description = "В слоте " + slot_name + " не обнаружена Сим-карта. Вставьте сим-карту до истечения таймера, или дождитесь переключения модема на другой слот."
 
-													self.countdown_many++
+														self.countdown["cdown-cpin"] = new ui.Countdown("cdown-cpin", self.cpin_timeout, self.cpin_wait_timer, title, description)
+														$('#ui-countdown').append(self.countdown["cdown-cpin"].render())
+
+														self.countdown_many++
+													}
 												}
 											}
-										}
-									} else {
-										chunk_update = E('font', {class: "cpin_value", style: "color: red; font-weight: bolder;"}, " ")
-										$(node_pointer).replaceWith(chunk_update)
-
-										if (self.countdown["cdown-cpin"]) {
-											self.countdown["cdown-cpin"].onTimesUp()
-											self.countdown["cdown-cpin"] = null
-											self.countdown_many--;
 										}
 									}
 								// Clear CPIN state of non-activated row (UISiminfo) as we can't know whether Sim-card exists in non-active slot or not
@@ -413,7 +416,7 @@ local sim_id = ubus_sim["value"]
 								if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
 
 									var network_state = {
-										"-1": ["<%:Sim not inserted %>", "SIM NOT INSERTED"],
+										"-1": ["Проверьте Сим-карту в слоте", "SIM NOT INSERTED"],
 										"0": ["<%:Not registered %>", "NOT REGISTERED"],
 										"1": ["<%:Active %>", "REGISTERED"],
 										"2": ["<%:Searching %>", "SEARCHING"],
@@ -421,9 +424,9 @@ local sim_id = ubus_sim["value"]
 										"4": ["<%:Unknown %>", "UNKNOWN"],
 										"5": ["<%:Active-roaming %>", "ROAMING"],
 										"6": ["<%:Not active %>", "OK"],
-										"7": ["<%:Switching ttyUSB2 %>", "UNKNOWN"],
-										"8": ["<%:No internet connection %>", "CHECK IFACE TSMODEM"],
-										"9": ["<%:Connecting.. %>", "CHECK IFACE TSMODEM"],
+										"7": ["Инициализация модема", "UNKNOWN"],
+										"8": ["Соединение с Интернет", "CHECK IFACE TSMODEM"],
+										"9": ["Соединение с GSM-провайдером", "CHECK IFACE TSMODEM"],
 									}
 
 									// Update net registration state
@@ -523,6 +526,8 @@ local sim_id = ubus_sim["value"]
 									self.balance_datetime = event_data.event_datetime || self.balance_datetime || " "
 									self.lowbalance_timer = event_data.lowbalance_timer || self.lowbalance_timer || 0
 
+									console.log("self.lowbalance_timer = ", self.lowbalance_timer)
+
 									// If Balance is a number
 									if(parseInt(event_data.sim_balance)) {
 										self.balance = parseInt(event_data.sim_balance)
@@ -570,47 +575,23 @@ local sim_id = ubus_sim["value"]
 										spinner2($(".spinner-bal-"+self.simid), 1)
 									// If balance getting doesn't meet success
 									} else {
+										var bal_interval = self.balance_interval
+										var next_try_bal_timer = self.balance_interval_timer
+										var recent_mins = parseInt((bal_interval - next_try_bal_timer) / 60) || false
+										var recent_sec = (bal_interval - next_try_bal_timer) - (recent_mins*60) || false
 										self.chunk.btn_balance.removeAttribute("disabled");
-										chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;"}, [
-											E("small", {}, "Нет данных,<br>ждите" + ((parseInt(self.balance_timeout) ? " до " + Number((self.balance_timeout/60).toFixed(0)) + " мин." : ".."))),
-										])
+										if (recent_mins && recent_sec) {
+											chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;"}, [
+												E("small", {}, "Авто-запрос<br>через " + recent_mins + ":" + ((recent_sec < 10) ? ("0" + recent_sec) : recent_sec) ),
+											])
+										} else {
+											chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;"}, [
+												E("small", {}, " - "),
+											])
+										}
 										$(node_pointer).replaceWith(chunk_update)
 									}
 
-									// if(self.balance != " ") {
-									// 	self.chunk.btn_balance.removeAttribute("disabled");
-									//
-									// 	if(self.balance == 99991) {
-									// 		chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;" }, [
-									// 			E('small', { style: "color: red;" }, balance_state["99991"])
-									// 		])
-									// 		$(node_pointer).replaceWith(chunk_update)
-									//
-									// 	} else if(self.balance == 99992) {
-									// 		chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;" }, [
-									// 			E('small', { style: "color: red;" }, balance_state["99992"])
-									// 		])
-									// 		$(node_pointer).replaceWith(chunk_update)
-									//
-									// 	} else if (self.balance == 99993) {
-									// 		chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;"}, [
-									// 			" ",
-									// 			E('div', { class: "spinner-bal-"+self.simid, style: "display: inline-block; margin-left: 4px;"})
-									// 		])
-									// 		$(node_pointer).replaceWith(chunk_update)
-									// 		spinner2($(".spinner-bal-"+self.simid), 1)
-									//
-									// 		$(".cbi-button.cbi-button-apply.sim-" + self.simid + "-balance").prop( "disabled", true );
-									// 	} else if (self.balance == 99994) {
-									// 		chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;" }, [
-									// 			E('small', { style: "color: red;" }, balance_state["99994"])
-									// 		])
-									// 		$(node_pointer).replaceWith(chunk_update)
-									// 	} else {
-									//
-									//
-									// 	}
-									// }
 								}
 							}
 						})
@@ -633,7 +614,8 @@ local sim_id = ubus_sim["value"]
 										var NETREG_OK = (self.netreg == 1)
 
 										if (NETREG_OK) {
-											var PING_OK = (self.lastping_timer && (self.lastping_timer <= 15) && self.ping_status == 1)
+											//var PING_OK = (self.lastping_timer && (self.lastping_timer <= 15) && self.ping_status == 1)
+											var PING_OK = (self.lastping_timer && (self.lastping_timer <= 0))
 											if (PING_OK) {
 												chunk_update = E('font', {class: "ping_value", style: "color: green; font-weight: bolder;"}, "OK")
 												$(node_pointer).replaceWith(chunk_update)
@@ -651,7 +633,7 @@ local sim_id = ubus_sim["value"]
 													// Show countdown progress if No ping
 													if (!self.countdown["cdown-ping"] && self.countdown_many <= 0) {
 														var title = "Нет пинга сети"
-														var description = "Сим-карта зарегистрирована в сети, соединение с интернет установлено, но доступ к интернет-ресурсам отсутствует. Возможно недостаточно средств на балансе Сим-карты, либо имеют место временные сбои на стороне GSM-оператора."
+														var description = "Сим-карта зарегистрирована в сети, соединение с интернет установлено, но доступ к интернет-ресурсам отсутствует, т.к. default-хост ({0}) не пингуется. Возможно недостаточно средств на балансе Сим-карты, либо имеют место временные сбои на стороне GSM-оператора.".string_format(event_data['host'])
 														self.countdown["cdown-ping"] = new ui.Countdown("cdown-ping", self.lastping_timeout, self.lastping_timer, title, description)
 														$('#ui-countdown').append(self.countdown["cdown-ping"].render())
 														self.countdown_many++;
@@ -770,8 +752,10 @@ local sim_id = ubus_sim["value"]
 									}
 									$(node_pointer).replaceWith(chunk_update)
 									if (self.autodetection_mode == 1) {
+										self.provider_code = event_data.new_provider_id
 										chunk_update = E('font', {class: "provider_detection", style: "color: black;"}, " - настроен: AUTO")
 									} else {
+										self.provider_code = event_data.old_provider_id
 										if (self.provider == self.provider_autodetected) {
 											chunk_update = E('font', {class: "provider_detection", style: "color: black;"}, " - настроен: " + self.provider)
 										} else if (self.provider != "") {
@@ -782,6 +766,12 @@ local sim_id = ubus_sim["value"]
 									}
 
 									$("#simid-" + self.simid + " .provider_detection").replaceWith(chunk_update)
+
+									// Disable "Balance" button if provider_code 000000 (from auto config)
+									if(self.provider_code == 0) {
+										console.log("self.provider_code", self.provider_code)
+										self.chunk.btn_balance.setAttribute("disabled", "disabled");
+									}
 								}
 							}
 						})
@@ -796,6 +786,8 @@ local sim_id = ubus_sim["value"]
 								if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
 									self.balance_timeout = event_data.timeout
 									self.wait_balance_for = event_data.wait_balance
+									self.balance_interval = event_data.balance_interval
+									self.balance_interval_timer = event_data.timer
 
 									// If timeout is a number
 									if(parseInt(self.balance_timeout)) {
@@ -841,6 +833,45 @@ local sim_id = ubus_sim["value"]
 								$(".cbi-button.cbi-button-apply.sim-" + self.simid).prop("disabled", true)
 							}
 						})
+
+
+						// -----------------------------------------------------------
+						// 98_rule UI updates: If modem disconnected from USB too long
+						// -----------------------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["98_rule"], function(ev) {
+							var event_data = ev.detail || {}
+							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+								if(event_data["idle_time"] && event_data["idle_time"] >= 30) {
+									// Show countdown progress if modem is disconnected too long
+									if (!self.countdown["cdown-usb-timeout"]) {
+										var wbf = parseInt(event_data["idle_time"]/60)
+										if (wbf <= 0) { wbf = 1}
+										var title = "USB-порт не инициализирован дольше " + wbf + " мин."
+										var description = "Порт модема /dev/ttyUSB2 не инициализирован более чем за " + wbf + " мин."
+										description += "<br>По истечение таймера USB-порт будет реинициализиорован и устройство возобновит работу. Если данная проблема встречается повторно - обратитесь в службу тех.поддержки."
+										self.countdown["cdown-usb-timeout"] = new ui.Countdown("cdown-usb-timeout", 120, event_data["idle_time"], title, description)
+										$('#ui-countdown').append(self.countdown["cdown-usb-timeout"].render())
+										self.countdown_many++;
+									}
+								} else if (event_data["idle_time"] && event_data["idle_time"] == 0) {
+									if (self.countdown["cdown-usb-timeout"]) {
+										self.countdown["cdown-usb-timeout"].onTimesUp()
+										self.countdown["cdown-usb-timeout"] = null
+										self.countdown_many--;
+									}
+								}
+
+								// Enable "Activate" button for that Sim card which is not currently activated
+								if(self.is_switching) {
+									var currently_activated_sim_id = event_data["sim_id"] && parseInt(event_data["sim_id"])
+
+									if(currently_activated_sim_id != self.simid) {
+										$(".cbi-button.cbi-button-apply.sim-" + self.simid).prop("disabled", false)
+										$(".cbi-button.cbi-button-apply.sim-" + currently_activated_sim_id).prop("disabled", true)
+									}
+								}
+							}
+						});
 
 
 						// -----------------------------------------------------------

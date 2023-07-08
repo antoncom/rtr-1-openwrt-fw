@@ -11,7 +11,7 @@ PKG_RELEASE:=2.6.0
 PKG_SOURCE_URL=https://github.com/antoncom/tsmodem.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_DATE=2023-06-14
-PKG_SOURCE_VERSION:=7f9925bdc8d1046bc61aa85795b90ad362738df5
+PKG_SOURCE_VERSION:=b3f6626f46da49caf633d50a5bfb8b0890203d64
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -21,7 +21,7 @@ define Package/tsmodem
 	CATEGORY:=Languages
 	TITLE:=Rule-based application logic framework
 	URL:=https://github.com/antoncom/tsmodem.git
-	DEPENDS:=+luci +luci-i18n-base-ru +luci-i18n-base-en +openssh-sftp-server +luci-compat +luaposix +luabitop +lpeg +coreutils +libubox-lua +luasocket +comgt +kmod-usb-serial +kmod-usb-serial-option +kmod-usb-serial-wwan +usb-modeswitch +kmod-usb-core +luci-app-uhttpd +luci-proto-3g
+	DEPENDS:=+luci +luci-i18n-base-ru +luci-i18n-base-en +openssh-sftp-server +luci-compat +luaposix +luabitop +lpeg +coreutils +libubox-lua +luasocket +comgt +kmod-usb-serial +kmod-usb-serial-option +kmod-usb-serial-wwan +usb-modeswitch +kmod-usb-core +luci-app-uhttpd +luci-proto-3g +coreutils-stty
 endef
 
 define Package/tsmodem/description

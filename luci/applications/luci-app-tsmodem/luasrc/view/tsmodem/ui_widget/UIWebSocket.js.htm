@@ -68,38 +68,45 @@ L.require('ui').then(function(ui) {
 						var event_data = ev.detail || {}
 						self.simid = event_data.simid || self.simid || 0
 
-						self.socket.send(JSON.stringify({
-							proto: "ubus",
-							uuid: event_data.uuid || "",
-							obj: "tsmodem.driver",
-							// method: "do_request_ussd_balance",
-							// params: { sim_id: self.simid }
-							method: "send_at",
-							params: {
-								command: "AT+CUSD=1,#102#,15",
-								["what-to-update"]: "balance"
-							}
-						}));
+						L.require("uci").then(function(uci) {
+							uci.load("tsmodem_adapter_provider").then(function(out){
+								var ussd_comm = uci.get("tsmodem_adapter_provider",event_data.provider_code, "balance_ussd") || ""
 
+								self.socket.send(JSON.stringify({
+									proto: "ubus",
+									uuid: event_data.uuid || "",
+									obj: "tsmodem.driver",
+									method: "send_at",
+									params: {
+										command: "AT+CUSD=1," + ussd_comm + ",15",
+										["what-to-update"]: "balance"
+									}
+								}));
+							});
+						});
 					})
 
 					window.EventBus.listenToASAP("UISiminfo_1", ["btn_balance_pressed"], function(ev) {
 						var event_data = ev.detail || {}
 						self.simid = event_data.simid || self.simid || 1
 
-						self.socket.send(JSON.stringify({
-							proto: "ubus",
-							uuid: event_data.uuid || "",
-							obj: "tsmodem.driver",
-							// method: "do_request_ussd_balance",
-							// params: { sim_id: self.simid }
-							method: "send_at",
-							params: {
-								command: "AT+CUSD=1,#102#,15",
-								["what-to-update"]: "balance"
-							}
-						}));
+						L.require("uci").then(function(uci) {
+							uci.load("tsmodem_adapter_provider").then(function(out){
+								var ussd_comm = uci.get("tsmodem_adapter_provider",event_data.provider_code, "balance_ussd") || ""
 
+								self.socket.send(JSON.stringify({
+									proto: "ubus",
+									uuid: event_data.uuid || "",
+									obj: "tsmodem.driver",
+									method: "send_at",
+									params: {
+										command: "AT+CUSD=1," + ussd_comm + ",15",
+										["what-to-update"]: "balance"
+									}
+								}));
+
+							});
+						});
 					})
 
 					window.EventBus.listenToASAP("UIModal", ["send-at-command"], function(ev) {

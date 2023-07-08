@@ -7,6 +7,20 @@
 				__init__: function(cover_text, options) {
                     this.simid = null,
                     this.switching = false
+					this.timeoutId = null
+					self.debounce = false
+				},
+
+				// Debounce helper
+				waitme: function() {
+					this.debounce = true;
+					if (this.timeoutId) {
+						clearTimeout(this.timeoutId)
+					}
+					var self = this
+					this.timeoutId = setTimeout(function(){
+						self.debounce = false
+					}, 3000)
 				},
 
 				render: function() {
@@ -42,14 +56,16 @@
                         self.switching = event_data.switching || self.switching || false
 
                         if(event_data["switching"] == "true") {
+							self.waitme()
                             self.displayOverlay()
-                        } else if(event_data["switching"] == "false") {
+                        } else if(event_data["switching"] == "false" && !self.debounce) {
 							self.removeOverlay()
 						}
 
 						if(event_data["do_switch"] == "true") {
+							self.waitme()
                             self.displayOverlay()
-                        } else if(event_data["do_switch"] == "false") {
+                        } else if(event_data["do_switch"] == "false" && !self.debounce) {
 							self.removeOverlay()
 						}
                     })
@@ -60,7 +76,7 @@
                     window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
                         var event_data = ev.detail || {}
                         self.simid = event_data.simid || self.simid || "simid-0"
-
+						self.waitme()
 						self.displayOverlay()
 
                     })
@@ -68,7 +84,7 @@
 					window.EventBus.listenToASAP("UISiminfo_1", ["btn_activate_pressed"], function(ev) {
                         var event_data = ev.detail || {}
                         self.simid = event_data.simid || self.simid || "simid-1"
-
+						self.waitme()
 						self.displayOverlay()
 
                     })

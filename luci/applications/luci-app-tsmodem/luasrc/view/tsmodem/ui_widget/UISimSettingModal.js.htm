@@ -141,7 +141,6 @@
                                     var	adapter_widgets = [];
 
 									// Set proto drodown to AUTO if autodetect_provider set is 1 (see /etc/tsmodem)
-									console.log("========",sim_data)
 									if(sim_data["autodetect_provider"] == "1") {
 										sim_data["provider"] = "00000"
 									}
@@ -165,32 +164,74 @@
 
                                     var timeout_reg = new ui.Textfield(sim_data["timeout_reg"], {
                                         datatype: "rangelength(1,4)",
-                                        optional: false
+                                        optional: false,
+										validate: function(inp) {
+											if (inp >= 60) {
+												return true;
+											} else {
+												return "60 sec. minimum!"
+											}
+										}
                                     });
 
                                     var timeout_signal = new ui.Textfield(sim_data["timeout_signal"], {
                                         datatype: "rangelength(1,4)",
-                                        optional: false
+                                        optional: false,
+										validate: function(inp) {
+											if (inp >= 60) {
+												return true;
+											} else {
+												return "60 sec. minimum!"
+											}
+										}
                                     });
 
                                     var timeout_bal = new ui.Textfield(sim_data["timeout_bal"], {
                                         datatype: "rangelength(1,4)",
-                                        optional: false
+                                        optional: false,
+										validate: function(inp) {
+											if (inp >= 60) {
+												return true;
+											} else {
+												return "60 sec. minimum!"
+											}
+										}
                                     });
 
 									var timeout_ping = new ui.Textfield(sim_data["timeout_ping"], {
 										datatype: "rangelength(1,4)",
-										optional: false
+										optional: false,
+										validate: function(inp) {
+											if (inp >= 60) {
+												return true;
+											} else {
+												return "60 sec. minimum!"
+											}
+										}
 									});
 
 									var timeout_sim_absent = new ui.Textfield(sim_data["timeout_sim_absent"], {
 										datatype: "rangelength(1,4)",
-										optional: false
+										optional: false,
+										validate: function(inp) {
+											if (inp >= 60) {
+												return true;
+											} else {
+												return "60 sec. minimum!"
+											}
+										}
 									});
 
 									var timeout_link = new ui.Textfield(sim_data["timeout_link"], {
 										datatype: "rangelength(1,4)",
-										optional: false
+										optional: false,
+										validate: function(inp) {
+											if (inp >= 60) {
+												return true;
+											} else {
+												return "60 sec. minimum!"
+											}
+										}
 									});
 
 
