@@ -1,20 +1,5 @@
 #!/bin/sh
 
-uci -q batch <<-EOF >/dev/null
-    set system.@system[0].hostname='BITCORD-RTR-02'
-    set system.@system[0].pubname='Роутер BITCORD RTR-02'
-    set system.@system[0].timezone='MSK-3'
-    set system.@system[0].zonename='Europe/Moscow'
-    commit system
-    set wireless.default_radio0.key='WFCLokm7Ls'
-    set wireless.default_radio0.ssid='BITCORD-RTR-02'
-    set wireless.default_radio0.encryption='psk2'
-    set wireless.radio0.disabled='0'
-    commit wireless
-    set dhcp.lan.ra_management='1'
-    commit dhcp
-EOF
-
 uci -q batch <<-EOF
     set network.loopback=interface
     set network.loopback.ifname='lo'
@@ -29,7 +14,6 @@ uci -q batch <<-EOF
     set network.lan.ipaddr='192.168.1.1'
     set network.lan.netmask='255.255.255.0'
     set network.lan.ip6assign='60'
-    set network.lan.ifname='3g-tsmodem eth0.1'
     set network.lan_eth0_1_dev=device
     set network.lan_eth0_1_dev.name='eth0.1'
     set network.lan_eth0_1_dev.macaddr='30:eb:1f:14:fa:98'
@@ -56,8 +40,20 @@ uci -q batch <<-EOF
     set network.@switch_vlan[1].device='switch0'
     set network.@switch_vlan[1].vlan='2'
     set network.@switch_vlan[1].ports='0 6t'
+	commit network
+EOF
+
+uci -q batch <<-EOF >/dev/null
+    set system.@system[0].hostname='BITCORD-RTR-02'
+    set system.@system[0].pubname='Роутер BITCORD RTR-02'
+    set system.@system[0].timezone='MSK-3'
+    set system.@system[0].zonename='Europe/Moscow'
+    commit system
+    set network.lan.ifname='eth0.1'
+    set network.lan.dns='8.8.8.8'
     set network.wwan=interface
     set network.wwan.proto='dhcp'
+    set network.tsmodem.ipv6='auto'
     set network.tsmodem=interface
     set network.tsmodem.username='root'
     set network.tsmodem.proto='3g'
@@ -66,9 +62,19 @@ uci -q batch <<-EOF
     set network.tsmodem.service='umts'
     set network.tsmodem.pppd_options='debug noipdefault'
     set network.tsmodem.keepalive='500 5'
-    set network.tsmodem.ipv6='0'
     set network.tsmodem.apn='internet
-	commit network
+    commit network
+    set wireless.default_radio0.network='wwan lan wan wan6'
+    set wireless.default_radio0.key='WFCLokm7Ls'
+    set wireless.default_radio0.ssid='BITCORD-RTR-02'
+    set wireless.default_radio0.encryption='psk2'
+    commit wireless
+    set firewall.@zone[0].network='lan'
+    set firewall.@zone[1].network='wan wan6 3g tsmodem wwan tsmodem'
+    commit firewall
+    set luci.main.lang='ru'
+    set luci.ccache.enable='0'
+    commit luci
 EOF
 
 VDATE=$(opkg info tsmodem | grep Version | awk '{
