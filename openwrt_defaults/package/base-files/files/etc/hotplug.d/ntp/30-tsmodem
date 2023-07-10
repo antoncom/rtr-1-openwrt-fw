@@ -1,0 +1,7 @@
+#!/bin/sh
+[ $ACTION = "step" ]    && {
+    logger -t ntpd Time set, stratum=$stratum interval=$poll_interval offset=$offset
+    ubus call tsmodem.driver clear_state &> /dev/null
+    logger -t ntpd Tsmodem state was cleared as System Time synced.
+}
+[ $ACTION = "stratum" ] && logger -t ntpd Stratum change, stratum=$stratum interval=$poll_interval offset=$offset

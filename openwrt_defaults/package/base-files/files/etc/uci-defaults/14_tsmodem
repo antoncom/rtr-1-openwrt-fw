@@ -70,7 +70,7 @@ uci -q batch <<-EOF >/dev/null
     set wireless.default_radio0.encryption='psk2'
     commit wireless
     set firewall.@zone[0].network='lan'
-    set firewall.@zone[1].network='wan wan6 3g tsmodem wwan tsmodem'
+    set firewall.@zone[1].network='wan wan6 tsmodem wwan tsmodem'
     commit firewall
     set luci.main.lang='ru'
     set luci.ccache.enable='0'
