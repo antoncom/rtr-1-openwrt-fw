@@ -526,14 +526,12 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 									self.balance_datetime = event_data.event_datetime || self.balance_datetime || " "
 									self.lowbalance_timer = event_data.lowbalance_timer || self.lowbalance_timer || 0
 
-									console.log("self.lowbalance_timer = ", self.lowbalance_timer)
-
 									// If Balance is a number
 									if(parseInt(event_data.sim_balance)) {
 										self.balance = parseInt(event_data.sim_balance)
 										self.chunk.btn_balance.removeAttribute("disabled");
 
-										if (self.lowbalance_timer > 0) {
+										if (self.lowbalance_timer > 10) {
 											chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap; color: red;" }, [
 												self.balance,
 												E('br'),
@@ -756,7 +754,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 										chunk_update = E('font', {class: "provider_detection", style: "color: black;"}, " - настроен: AUTO")
 									} else {
 										self.provider_code = event_data.old_provider_id
-										if (self.provider == self.provider_autodetected) {
+										if ((self.provider == self.provider_autodetected) || (self.provider_code == "CUSTOM_1") || (self.provider_code == "CUSTOM_2")) {
 											chunk_update = E('font', {class: "provider_detection", style: "color: black;"}, " - настроен: " + self.provider)
 										} else if (self.provider != "") {
 											chunk_update = E('font', {class: "provider_detection", style: "color: red;"}, " - настроен: " + self.provider)
@@ -843,7 +841,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
 								if(event_data["idle_time"] && event_data["idle_time"] >= 30) {
 									// Show countdown progress if modem is disconnected too long
-									if (!self.countdown["cdown-usb-timeout"]) {
+									if (!self.countdown["cdown-usb-timeout"] && self.countdown_many <= 0) {
 										var wbf = parseInt(event_data["idle_time"]/60)
 										if (wbf <= 0) { wbf = 1}
 										var title = "USB-порт не инициализирован дольше " + wbf + " мин."
