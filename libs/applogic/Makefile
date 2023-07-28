@@ -12,7 +12,8 @@ PKG_SOURCE_URL=https://github.com/antoncom/applogic-rules.git
 PKG_MIRROR_HASH:=28309612101c4a6dd20e8bb47accf04bbfdad751b5c867db27cb49e972bf99c3
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_DATE=2023-06-14
-PKG_SOURCE_VERSION:=03a0743bbfa6a0b6954e79d1c3fe72beb395e33d
+#PKG_SOURCE_VERSION:=a685edc31b26898da184a3ad171fb2e5a09c55af
+PKG_SOURCE_VERSION:=applogic-2.6.0-tsmodem
 
 include $(INCLUDE_DIR)/package.mk
 
