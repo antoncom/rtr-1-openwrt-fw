@@ -1,7 +1,0 @@
-#!/bin/sh
-uci batch <<-EOF
-	set luci.themes.Qtech=/luci-static/qtech
-	set luci.main.mediaurlbase=/luci-static/qtech
-	commit luci
-EOF
-exit 0
