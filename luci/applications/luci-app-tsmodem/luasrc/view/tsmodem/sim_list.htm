@@ -165,11 +165,6 @@ L.require("ui").then(function(ui){
 				var sim_0_providerName = uci.get("tsmodem_adapter_provider", sim_0_providerCode, "name")
 				var sim_0_providerAutoDetect = uci.get("tsmodem", "sim_0", "autodetect_provider")
 
-				var sim_1_memo = uci.get("tsmodem", "sim_1", "name")
-				sim_1_memo = (sim_1_memo == undefined) ? "" : sim_1_memo
-				var sim_1_providerCode = uci.get("tsmodem", "sim_1", "provider")
-				var sim_1_providerName = uci.get("tsmodem_adapter_provider", sim_1_providerCode, "name")
-				var sim_1_providerAutoDetect = uci.get("tsmodem", "sim_1", "autodetect_provider")
 
 				var sim_0 = new ui.Siminfo("Name 1", {
 					simid: "0",
@@ -183,22 +178,10 @@ L.require("ui").then(function(ui){
 					signal: " ",
 					balance: " ",
 				});
-				var sim_1 = new ui.Siminfo("Name 2", {
-					simid: "1",
-					name: sim_1_memo,
-					autodetection_mode: sim_1_providerAutoDetect,
-					provider: sim_1_providerName,
-					cpin: "false",
-					netreg: "7",
-					ping_status: " ",
-					netmode: " ",
-					signal: " ",
-					balance: " ",
-				});
+
 
 				var viewWrapper= document.getElementById('simcards_rows');
 				viewWrapper.appendChild(sim_0.render())
-				viewWrapper.appendChild(sim_1.render())
 
 
 

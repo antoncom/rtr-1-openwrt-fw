@@ -2,7 +2,8 @@
 
 local util = require "luci.util"
 local ubus_sim = util.ubus("tsmodem.driver", "sim", {})
-local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
+--local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
+local sim_id = 0
 
 %>
 
