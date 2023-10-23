@@ -188,7 +188,7 @@ L.require('ui').then(function(ui) {
 			});
 
 			ui["WebSocket"] = UIWebSocket;
-	        window.WebSocket = new ui.WebSocket("192.168.1.1", 7890)
+	        window.WebSocket = new ui.WebSocket(document.location.host, 7890)
 	        window.WebSocket_pseudo_widget = window.WebSocket.render()
 		});
 	});
