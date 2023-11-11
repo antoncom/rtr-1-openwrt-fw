@@ -21,6 +21,7 @@ local sim_id = 0
 						this.provider_autodetected = ""
 
 						this.cpin = options.cpin
+						this.cpin_comment = options.cpin_comment
 						this.netreg = options.netreg
 						this.lastreg_timer = 0
 						this.netreg_timeout = null
@@ -384,8 +385,8 @@ local sim_id = 0
 													// Show countdown progress if SIM isn't in slot
 													if (!self.countdown["cdown-cpin"] && self.countdown_many <= 0) {
 														var slot_name = ((self.simid == 0) ? "SIM-1" : "SIM-2")
-														var title = "Нет сим-карты в слоте " + slot_name
-														var description = "В слоте " + slot_name + " не обнаружена Сим-карта. Вставьте сим-карту до истечения таймера, или дождитесь переключения модема на другой слот."
+														var title = "Ошибка в слоте  " + slot_name
+														var description = "В слоте " + slot_name + " обнаружена ошибка Сим-карты <b>[" + event_data.sim_comment + "]</b> . Вставьте сим-карту до истечения таймера, или дождитесь переключения модема на другой слот."
 
 														self.countdown["cdown-cpin"] = new ui.Countdown("cdown-cpin", self.cpin_timeout, self.cpin_wait_timer, title, description)
 														$('#ui-countdown').append(self.countdown["cdown-cpin"].render())

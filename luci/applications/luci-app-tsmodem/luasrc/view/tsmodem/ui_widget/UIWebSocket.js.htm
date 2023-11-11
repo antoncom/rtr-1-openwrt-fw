@@ -112,6 +112,8 @@ L.require('ui').then(function(ui) {
 					window.EventBus.listenToASAP("UIModal", ["send-at-command"], function(ev) {
 						var event_data = ev.detail || {}
 
+						console.log("UIModal", event_data)
+
 						self.socket.send(JSON.stringify({
 							proto: "ubus",
 							uuid: event_data.uuid || "",
@@ -157,17 +159,27 @@ L.require('ui').then(function(ui) {
 							console.log("RUN DRIVER AUTOMATION ON PAGE REFRESH.")
 	                    };
 	                    this.socket.onmessage = function(event) {
+	                    	function jsonEscape(str)  {
+	                    		var s = str.replace(/^\s+|\s+$/g, '');
+	                    		//s = s.replace(/\n/g, "\\\\n").replace(/\r/g, "\\\\r").replace(/\t/g, "\\\\t");
+
+							    return s;
+							}
+
+							var event_data = jsonEscape(event.data)
 							if (event && event.data) {
-								var event_data = JSON.parse(event.data) || {}
+								console.log("==1==",event.data)
+								console.log("==2==",event_data)
+								var event_data = JSON.parse(event_data) || {}
 								if (event_data.ruleid) {
-									self.fireEvent(event_data.ruleid, JSON.parse(event.data))
+									self.fireEvent(event_data.ruleid, event_data)
 								}
 								if (event_data.proto && event_data.proto == "ubus") {
-									self.fireEvent("ubus", JSON.parse(event.data))
+									self.fireEvent("ubus", event_data)
 								}
 								if (event_data.module && event_data.module == "tsmconsole") {
 									console.log("Fire: tsmconsole")
-									self.fireEvent("tsmconsole", JSON.parse(event.data))
+									self.fireEvent("tsmconsole", event_data)
 								}
 							}
 	                    };

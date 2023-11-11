@@ -169,6 +169,7 @@ this.welcome = `
 
 							$.terminal.defaults.allowedAttributes.push('style');
 							$('#terminal').terminal(function(command, term) {
+								console.log("term", term)
 								self.term = term
 
 								term.pause();
