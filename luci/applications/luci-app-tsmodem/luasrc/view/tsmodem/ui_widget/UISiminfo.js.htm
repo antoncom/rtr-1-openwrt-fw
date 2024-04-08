@@ -528,7 +528,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 
 									// If Balance is a number
 									if(parseInt(event_data.sim_balance)) {
-										self.balance = parseInt(event_data.sim_balance)
+										self.balance = parseFloat(event_data.sim_balance).toFixed(2).toString() + " руб."
 										self.chunk.btn_balance.removeAttribute("disabled");
 
 										if (self.lowbalance_timer > 10) {
