@@ -44,7 +44,7 @@ define Package/tokyocabinet-lua/description
  conventional DBM products.
 endef
 
-CONFIGURE_ARGS += --prefix=/usr
+PKG_FIXUP:=autoreconf
     
 define Build/Compile
     $(MAKE) -C $(PKG_BUILD_DIR) \
