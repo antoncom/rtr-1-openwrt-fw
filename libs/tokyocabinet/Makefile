@@ -1,4 +1,5 @@
-
+# 
+# Copyright (C) 2007-2011 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tokyocabinet
-PKG_VERSION:=0.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.4.47
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/antoncom/tokyo-cabinet.git
@@ -20,43 +21,45 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/tokyocabinet
-    SUBMENU:=Lua
-    SECTION:=lang
-    CATEGORY:=Languages
-    TITLE:=TokyoCabinet
-    DEPENDS:=
+  SUBMENU:=database
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=A library of routines to manage databases
+  URL:=http://fallabs.com/tokyocabinet/
+  DEPENDS:=+zlib +bzip2 +libpthread +librt
+  MAINTAINER:=Obinou <obconseil@gmail.com>
 endef
 
 define Package/tokyocabinet/description
-  Tokyo Cabinet
+ Tokyo Cabinet is a library of routines for managing a database.
+ The database is a simple data file containing records, each
+ is a pair of a key and a value. Every key and value is serial bytes
+ with variable length. Both binary data and character string can be
+ used as a key and a value. There is neither concept of data tables
+ nor data types. Records are organized in hash table, B+ tree,
+ or fixed-length array.
+
+ Tokyo Cabinet is developed as the successor of GDBM and QDBM on the
+ following purposes. They are achieved and Tokyo Cabinet replaces
+ conventional DBM products.
 endef
 
-PKG_FIXUP:=autoreconf
-
-define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)
-	$(TAR) -xzf $(DL_DIR)/$(PKG_SOURCE) --strip=1 -C $(PKG_BUILD_DIR)
-	/usr/bin/autoreconf -fiv $(PKG_BUILD_DIR)
-endef
-
-define Build/Configure
-  $(call Build/Configure/Default,--with-linux-headers=$(LINUX_DIR))
-endef
-
+CONFIGURE_ARGS += --prefix=/usr
+    
 define Build/Compile
-    $(MAKE) -C $(PKG_BUILD_DIR) \
-		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS) -fPIC" \
-		LDFLAGS="$(TARGET_LDFLAGS)"
+	$(MAKE) -C $(PKG_BUILD_DIR)
+	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" install
+endef
+
+define Build/InstallDev
+	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(1)" install
 endef
 
 define Package/tokyocabinet/install
-	#$(INSTALL_DIR) $(1)/etc/init.d
-	#$(INSTALL_BIN) ./files/gwsocket.init $(1)/etc/init.d/gwsocket
-	#$(INSTALL_DIR) $(1)/usr/sbin
-	#$(INSTALL_BIN) ./files/gwsocket.sh $(1)/usr/sbin/gwsocket
-	#$(INSTALL_DIR) $(1)/usr/bin
-	#$(INSTALL_BIN) $(PKG_BUILD_DIR)/gwsocket $(1)/usr/bin/gwsocket
+	$(INSTALL_DIR)  $(1)/usr/lib
+	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyocabinet.so*  $(1)/usr/lib
+	$(INSTALL_DIR)   $(1)/usr/share/tokyocabinet
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyocabinet/tokyocabinet.idl $(1)/usr/share/tokyocabinet
 endef
 
 $(eval $(call BuildPackage,tokyocabinet))
