@@ -55,7 +55,7 @@ define Build/InstallDev
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(1)" install
 endef
 
-define Package/tokyocabinet/install
+define Package/tokyocabinet-lua/install
 	$(INSTALL_DIR)  $(1)/usr/lib
 	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyocabinet.so*  $(1)/usr/lib
 	$(INSTALL_DIR)   $(1)/usr/share/tokyocabinet
