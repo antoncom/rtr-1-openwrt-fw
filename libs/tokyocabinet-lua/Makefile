@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tokyocabinet-lua
 PKG_VERSION:=1.10
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/FomaD-95/tokyocabinet-lua-1.10.git
@@ -46,15 +46,21 @@ endef
 
 PKG_FIXUP:=autoreconf
     
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)
+	$(TAR) -xzf $(DL_DIR)/$(PKG_SOURCE) --strip=1 -C $(PKG_BUILD_DIR)
+	/usr/bin/autoreconf -fiv $(PKG_BUILD_DIR)
+endef
+
+define Build/Configure
+  $(call Build/Configure/Default,--with-linux-headers=$(LINUX_DIR))
+endef
+
 define Build/Compile
     $(MAKE) -C $(PKG_BUILD_DIR) \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS) -fPIC" \
 		LDFLAGS="$(TARGET_LDFLAGS)"
-endef
-
-define Build/InstallDev
-	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(1)" install
 endef
 
 define Package/tokyocabinet-lua/install
