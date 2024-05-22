@@ -62,4 +62,4 @@ define Package/tokyocabinet/install
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyocabinet/tokyocabinet.idl $(1)/usr/share/tokyocabinet
 endef
 
-$(eval $(call BuildPackage,tokyocabinet))
+$(eval $(call BuildPackage,tokyocabinet-lua))
