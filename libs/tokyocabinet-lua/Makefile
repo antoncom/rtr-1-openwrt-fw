@@ -47,8 +47,10 @@ endef
 CONFIGURE_ARGS += --prefix=/usr
     
 define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR)
-	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" install
+    $(MAKE) -C $(PKG_BUILD_DIR) \
+		CC="$(TARGET_CC)" \
+		CFLAGS="$(TARGET_CFLAGS) -fPIC" \
+		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
 
 define Build/InstallDev
