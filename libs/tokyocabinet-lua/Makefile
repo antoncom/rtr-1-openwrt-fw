@@ -7,30 +7,30 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=tokyocabinet-lua
-PKG_VERSION:=1.10
-PKG_RELEASE:=1
+PKG_NAME:=tokyocabinet
+PKG_VERSION:=1.4.47
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/FomaD-95/tokyocabinet-lua-1.10.git
-PKG_MIRROR_HASH:=28ddc70bec3affbb978dec631bf14960a83816d4a1453a8c816437c14337fcf0
-PKG_SOURCE_VERSION:=bd1d1ebee6f704247192d56fdfea9fedc3df4503
+PKG_SOURCE_URL:=https://github.com/antoncom/tokyo-cabinet.git
+PKG_MIRROR_HASH:=f00db96e81a001d6a619c681e91181abfbc3dc83ccb9593cf4e5104a7ca4fe47
+PKG_SOURCE_VERSION:=73a70cebcd26090ab59fd20f542140d12c44599f
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/tokyocabinet-lua
+define Package/tokyocabinet
   SUBMENU:=database
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A library of routines to manage databases
   URL:=http://fallabs.com/tokyocabinet/
-  DEPENDS:=+zlib +bzip2 +libpthread +librt +tokyocabinet
+  DEPENDS:=+zlib +bzip2 +libpthread +librt
   MAINTAINER:=Obinou <obconseil@gmail.com>
 endef
 
-define Package/tokyocabinet-lua/description
+define Package/tokyocabinet/description
  Tokyo Cabinet is a library of routines for managing a database.
  The database is a simple data file containing records, each
  is a pair of a key and a value. Every key and value is serial bytes
@@ -44,30 +44,22 @@ define Package/tokyocabinet-lua/description
  conventional DBM products.
 endef
 
-PKG_FIXUP:=autoreconf
+CONFIGURE_ARGS += --prefix=/usr
     
-define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)
-	$(TAR) -xzf $(DL_DIR)/$(PKG_SOURCE) --strip=1 -C $(PKG_BUILD_DIR)
-	/usr/bin/autoreconf -fiv $(PKG_BUILD_DIR)
-endef
-
-define Build/Configure
-  $(call Build/Configure/Default,--with-linux-headers=$(LINUX_DIR))
-endef
-
 define Build/Compile
-    $(MAKE) -C $(PKG_BUILD_DIR) \
-		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS) -fPIC" \
-		LDFLAGS="$(TARGET_LDFLAGS)"
+	$(MAKE) -C $(PKG_BUILD_DIR)
+	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" install
 endef
 
-define Package/tokyocabinet-lua/install
+define Build/InstallDev
+	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(1)" install
+endef
+
+define Package/tokyocabinet/install
 	$(INSTALL_DIR)  $(1)/usr/lib
-	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyocabinet-lua.so*  $(1)/usr/lib
-	$(INSTALL_DIR)   $(1)/usr/share/tokyocabinet-lua
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyocabinet/tokyocabinet-lua.idl $(1)/usr/share/tokyocabinet-lua
+	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyocabinet.so*  $(1)/usr/lib
+	$(INSTALL_DIR)   $(1)/usr/share/tokyocabinet
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyocabinet/tokyocabinet.idl $(1)/usr/share/tokyocabinet
 endef
 
-$(eval $(call BuildPackage,tokyocabinet-lua))
+$(eval $(call BuildPackage,tokyocabinet))
