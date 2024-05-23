@@ -21,10 +21,10 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/tokyocabinet-lua
-  SUBMENU:=database
-  SECTION:=libs
-  CATEGORY:=Libraries
-  TITLE:=A library of routines to manage databases
+  SUBMENU:=Lua
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=A LUA-library of routines to manage databases
   URL:=http://fallabs.com/tokyocabinet/
   DEPENDS:=+zlib +bzip2 +libpthread +librt
   MAINTAINER:=Obinou <obconseil@gmail.com>
