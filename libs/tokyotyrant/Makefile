@@ -57,9 +57,6 @@ endef
 
 define Package/tokyotyrant/install
 	$(INSTALL_DIR)  $(1)/usr/lib
-	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyotyrant.so*  $(1)/usr/lib
-	$(INSTALL_DIR)   $(1)/usr/share/tokyotyrant
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyotyrant/tokyotyrant.idl $(1)/usr/share/tokyotyrant
 endef
 
 $(eval $(call BuildPackage,tokyotyrant))
