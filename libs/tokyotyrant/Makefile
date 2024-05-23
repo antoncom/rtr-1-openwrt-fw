@@ -20,17 +20,17 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/tokyocabinet
+define Package/tokyotyrant
   SUBMENU:=database
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A library of routines to manage databases
   URL:=http://fallabs.com/tokyocabinet/
-  DEPENDS:=+zlib +bzip2 +libpthread +librt
+  DEPENDS:=+zlib +bzip2 +libpthread +librt +tokyocabinet +tokyocabinet-lua
   MAINTAINER:=Obinou <obconseil@gmail.com>
 endef
 
-define Package/tokyocabinet/description
+define Package/tokyotyrant/description
  Tokyo Cabinet is a library of routines for managing a database.
  The database is a simple data file containing records, each
  is a pair of a key and a value. Every key and value is serial bytes
@@ -55,11 +55,11 @@ define Build/InstallDev
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(1)" install
 endef
 
-define Package/tokyocabinet/install
+define Package/tokyotyrant/install
 	$(INSTALL_DIR)  $(1)/usr/lib
-	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyocabinet.so*  $(1)/usr/lib
-	$(INSTALL_DIR)   $(1)/usr/share/tokyocabinet
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyocabinet/tokyocabinet.idl $(1)/usr/share/tokyocabinet
+	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyotyrant.so*  $(1)/usr/lib
+	$(INSTALL_DIR)   $(1)/usr/share/tokyotyrant
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyotyrant/tokyotyrant.idl $(1)/usr/share/tokyotyrant
 endef
 
-$(eval $(call BuildPackage,tokyocabinet))
+$(eval $(call BuildPackage,tokyotyrant))
