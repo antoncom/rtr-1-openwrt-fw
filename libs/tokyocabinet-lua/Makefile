@@ -26,7 +26,7 @@ define Package/tokyocabinet-lua
   CATEGORY:=Languages
   TITLE:=A LUA-library of routines to manage databases
   URL:=http://fallabs.com/tokyocabinet/
-  DEPENDS:=+zlib +bzip2 +libpthread +librt
+  DEPENDS:=+zlib +bzip2 +libpthread +librt +tokyocabinet
   MAINTAINER:=Obinou <obconseil@gmail.com>
 endef
 
