@@ -63,7 +63,7 @@ endef
 
 define Package/tokyocabinet-lua/install
 	$(INSTALL_DIR)  $(1)/usr/lib
-	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyocabinet.so  $(1)/usr/lib
+	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/tokyocabinet-lua/libtokyocabinet.so  $(1)/usr/lib
 endef
 
 $(eval $(call BuildPackage,tokyocabinet-lua))
