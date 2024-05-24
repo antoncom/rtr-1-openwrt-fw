@@ -1,7 +1,7 @@
 diff -ru tokyotyrant-1.1.41/configure tokyotyrant-1.1.41-new/configure
 --- tokyotyrant-1.1.41/configure	2011-02-11 10:59:53.000000000 +0100
 +++ tokyotyrant-1.1.41-new/configure	2011-06-01 16:54:33.082157954 +0200
-@@ -2066,24 +2066,14 @@
+@@ -2066,31 +2066,14 @@
 
  # Building flags
  MYCFLAGS="-std=c99 -Wall -fPIC -fsigned-char -O2"
@@ -38,7 +38,7 @@ diff -ru tokyotyrant-1.1.41/configure tokyotyrant-1.1.41-new/configure
 diff -ru tokyotyrant-1.1.41/configure.in tokyotyrant-1.1.41-new/configure.in
 --- tokyotyrant-1.1.41/configure.in	2010-08-15 16:14:53.000000000 +0200
 +++ tokyotyrant-1.1.41-new/configure.in	2011-06-01 16:53:34.645989924 +0200
-@@ -32,25 +32,14 @@
+@@ -32,32 +32,14 @@
 
  # Building flags
  MYCFLAGS="-std=c99 -Wall -fPIC -fsigned-char -O2"
