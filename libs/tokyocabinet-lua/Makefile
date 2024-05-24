@@ -62,7 +62,7 @@ define Build/InstallDev
 endef
 
 define Package/tokyocabinet-lua/install
-	$(INSTALL_DIR)  $(1)/usr/lib
+	$(INSTALL_DIR)  $(1)/usr/lib/tokyocabinet-lua
 	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/lua/5.4/tokyocabinet.so  $(1)/usr/lib/tokyocabinet-lua
 endef
 
