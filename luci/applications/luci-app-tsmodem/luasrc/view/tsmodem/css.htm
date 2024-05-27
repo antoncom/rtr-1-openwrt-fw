@@ -1,8 +1,30 @@
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.css"/>
 <style type="text/css">
 	@import url('/luci-static/resources/tsmodem/fonts/fonts.css');
 	@import url('/luci-static/resources/tsmodem/jquery/jquery.highlight-within-textarea.css');
 	@import url('/luci-static/resources/tsmodem/jquery/jCProgress-1.0.3.css');
+	@import url('/luci-static/resources/tsmodem/jquery/paging.css');
 
+
+
+#journal_wrapper > div:nth-child(1) {
+    display: flex;
+}
+
+#journal_wrapper > div.row > div.col-sm-6 {
+    flex: 1;
+}
+
+#journal_wrapper > div:nth-child(1) > div.col-sm-6.text-left {
+    display: flex;
+    align-items: center;
+}
+
+#journal_wrapper > div:nth-child(1) > div.col-sm-6.text-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
 
 /* body {
   font-family: sans-serif;
@@ -229,7 +251,7 @@
 }
 
 .alert-setting .cbi-value-field .first-condition-row:nth-child(4) div.cbi-dropdown,
-.alert-setting .cbi-value-field .first-condition-row:nth-child(1) div.cbi-dropdown
+.alert-setting .cbi-value-field .first-condition-row:nth-child(1) div.cbi-dropdown {
 	min-width: 50px;
     width: 50px;
 }

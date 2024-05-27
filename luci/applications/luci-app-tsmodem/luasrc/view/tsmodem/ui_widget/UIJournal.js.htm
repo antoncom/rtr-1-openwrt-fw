@@ -1,0 +1,199 @@
+<%
+--local util = require "luci.util"
+--local ubus_sim = util.ubus("tsmodem.driver", "sim", {})
+--local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
+%>
+
+
+<script type="text/javascript">
+//<![CDATA[
+	L.require('ui').then(function(ui) {
+		L.require('dom').then(function(dom) {
+		// 	uci.load("tsmodem").then(function(out){
+				var UIJournal = ui.AbstractElement.extend({
+					__init__: function(simname, options) {
+		                this.date = "";
+		                this.event_name = "";
+						this.source;
+		                this.command;
+						this.response;
+						this.total_records = 0;
+						this.pagination_records = 5;
+
+						// Debounce helper
+						this.waitme = function() {
+							self.debounce = true;
+							if (self.timeoutId) {
+								clearTimeout(self.timeoutId)
+							}
+							self.timeoutId = setTimeout(function(){
+								self.debounce = false
+							}, 3000)
+						}
+
+						this.chunk = {
+							tblHeader: E('tr', {class: 'tr table-titles'}, [
+								E('th', {class: "th", style: "width: 150px"}, "<%:Date / time %>" ),
+								E('th', {class: "th", style: "width: 33%"}, "<%:Event %>" ),
+								E('th', {class: "th"}, "<%:Source %>" ),
+								E('th', {class: "th"}, "<%:Command %>" ),
+								E('th', {class: "th", style: "padding-left: 25px;"}, "<%:Responce %>" ),
+							]),
+							newRow: function(date, name, source, command, response) {
+								console.log("HAHAH", date)
+								return (
+								E('tr', {class: 'tr journal-row'}, [
+									E('td', {class: "td"}, date ),
+									E('td', {class: "td"}, name ),
+									E('td', {class: "td"}, source ),
+									E('td', {class: "td"}, command ),
+									E('td', {class: "td"}, response ),
+								]))
+							},
+
+							tblRawEmpty: E('tr', {class: 'tr journal-empty'}, [
+								E('td', {class: "td"}, "<%:Date / time %>" ),
+								E('td', {class: "td", style: "text-align: right; color: grey;"}, 
+									E('b', E('i', {}, "<%:System log is empty. %>" ))
+								),
+								E('td', {class: "td"}, "" ),
+								E('td', {class: "td"}, "" ),
+								E('td', {class: "td", style: "background-image: none;"}, "" ),
+							]),
+							btnClearLog: E('input', {type: "button", class: "cbi-button cbi-button-apply", onclick: "clearJournal()", value: "<%:Clear the log %>"}),
+							clearLogRaw: E('div', {class: "clear-journal", style: "margin-top: 20px; text-align: center;"}, [
+								E('input', {type: "button", class: "cbi-button cbi-button-apply", onclick: "clearJournal()", value: "<%:Clear the log %>"}),
+								]
+							),
+
+						}
+					},
+
+					render: function() {
+		                var container = E('h3', {}, '<%:System log %>') + E('table', { class: 'table journal' }, [
+		                    this.chunk.tblHeader,
+							this.chunk.tblRawEmpty,
+							this.chunk.clearLogRaw,
+		                ])
+
+
+						return this.bind(container);
+					},
+
+					// Fire events issued from UIJournal widget
+					fireEvent: function(event_name, event_data) {
+						var s = new CustomEvent(event_name, {
+							detail: event_data,
+							bubbles: true,
+						})
+						if(window.EventBus.busobjects["UIJournal"]) {
+							window.EventBus.busobjects["UIJournal"].dispatchEvent(s);
+						}
+					},
+
+					bind: function(container) {
+						this.node = container
+						var self = this
+						dom.bindClassInstance(container, this);
+
+						// Register events object which will represent UISiminfo widget on the Event Bus
+						window.EventBus.registerTo(this.node,"UIJournal")
+
+						if(this.chunk) {
+							this.chunk.btnClearLog.onclick = function(){
+								self.fireEvent("btn_clear_log_pressed", {})
+							}
+						}
+						
+
+						// ------------------------------------------------------------------
+						// Add record into the Journal web table as soon as new event occures
+						// ------------------------------------------------------------------
+						/*window.EventBus.listenToASAP("websocket", ["01_rule", 
+																    "02_rule", 
+																	"03_rule", 
+																	"04_rule", 
+																	"05_rule", 
+																	"06_rule", 
+																	"07_rule", 
+																	"08_rule", 
+																	"14_rule", 
+																	"15_rule", 
+																	"98_rule", 
+																	"99_rule"], function(ev) {
+							*/
+						window.EventBus.listenToASAP("websocket", ["01_rule"], function(ev) {
+
+							if (!self.is_switching && !self.debounce) {
+								var event_data = ev.detail || {}
+
+								if(event_data["journal"]) {
+
+									var event_date = event_data["journal"]["datetime"]  || "";
+									var event_name = event_data["journal"]["name"] || "";
+									var event_source = event_data["journal"]["source"] || "";
+									var event_command = event_data["journal"]["command"] || "";
+									var event_response = event_data["journal"]["response"] || "";
+
+									var new_row_chunk = self.chunk.newRow(event_date, event_name, event_source, event_command, event_response);
+
+									console.log(event_date, new_row_chunk);
+
+									var table = $('#journal').DataTable();
+									table.row.add([event_date, event_name, event_source, event_command, event_response]).draw();
+									table.columns.adjust().draw();
+								}
+							}
+						});
+
+						return container;
+					},
+
+				});
+				ui["Journal"] = UIJournal;
+				$(document).ready( function () {
+					$('#journal').DataTable({
+						"pageLength": 5, 
+						"language": {
+							"decimal":        "",
+							"emptyTable":     "нет доступных данных",
+							"info":           "Отображение от _START_ до _END_, _TOTAL_ Записи",
+							"infoEmpty":      "Отображение 0 до 0,  0 записи",
+							"infoFiltered":   "(отфильтровано по _MAX_ количеству записей)",
+							"infoPostFix":    "",
+							"thousands":      ",",
+							"lengthMenu": '<select>' +
+								'<option value="5">5</option>' +
+								'<option value="10">10</option>' +
+								'<option value="20">25</option>' +
+								'<option value="50">50</option>' +
+								'</select> Записи',
+							"loadingRecords": "Погрузка...",
+							"processing":     "",
+							"search": "Поиск :",
+							"zeroRecords":    "Совпадающих записей не найдено",
+							
+							"aria": {
+								"orderable":  "Упорядочивайте по этой колонке",
+								"orderableReverse": "Расположите этот столбец в обратном порядке"
+							}
+						} 
+					});
+				});
+
+				$(document).ready(function() {
+					$('#clearJournalButton').on('click', function() {
+						clearJournal();
+				});
+				function clearJournal() {
+						console.log("CLEARING TABLE");
+						var table = $('#journal').DataTable();
+						table.clear().draw();
+					}
+				});
+		// 	});
+		});
+	});
+
+//]]>
+</script>

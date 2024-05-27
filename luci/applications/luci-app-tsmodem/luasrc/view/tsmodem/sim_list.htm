@@ -12,6 +12,7 @@
 <%+tsmodem/ui_widget/UISimSettingModal.js%>
 <%+tsmodem/ui_widget/UICover.js%>
 <%+tsmodem/ui_widget/UICountdown.js%>
+<%+tsmodem/ui_widget/UIJournal.js%>
 
 <% 	--[[=========== STYLES ==========]] %>
 <%+tsmodem/css%>
@@ -106,7 +107,7 @@
 	</div>
 	<h3><%:GSM network channels (SIM cards states) %></h3>
 
-	<div class="table" id="simcards_rows">
+	<div id="simcards_rows" class="table">
 		<div class="tr table-titles">
 			<div class="th">N</div>
 			<div class="th">Слот</div>
@@ -121,34 +122,29 @@
 	</div>
 </div>
 
-<!--
+
 <h3><%:System log %></h3>
-<div class="table journal">
-	<div class="tr table-titles">
-		<div class="th" style="width: 150px;"><%:Date / time %></div>
-		<div class="th" style="width: 33%;"><%:Event %></div>
-		<div class="th"><%:Source %></div>
-		<div class="th"><%:Command %></div>
-		<div class="th" style="padding-left: 25px;"><%:Responce %></div>
-	</div>
-	<div class="tr journal-empty">
-		<div class="td"></div>
-		<div class="td" style="text-align: right; color: grey;">
-			<b><i><%:System log is empty. %></i></b>
-		</div>
-		<div class="td"></div>
-		<div class="td"></div>
-		<div class="td" style="background-image: none;"></div>
-	</div>
-</div>
+<!-- TODO make html page works //-->
+<table id="journal" class="table journal">
+	<thead class="table-titles">
+		<tr>
+		<th><%:Date / time %></th>
+		<th><%:Event %></th>
+		<th><%:Source %></th>
+		<th><%:Command %></th>
+		<th><%:Responce %></th>
+		</tr>
+	</thead>
+	<tbody id="journalBody"> 
+	</tbody>
+</table>
 <div class="clear-journal" style="margin-top: 20px; text-align: center;">
-	<input type="button" class="cbi-button cbi-button-apply"
-		onclick="clearJournal()"
+	<input type="button" id="clearJournalButton" class="cbi-button cbi-button-apply"
 		value="<%:Clear the log %>"
 	/>
-</div> -->
+</div>
 
-<span id="btn_enable_spinner" class="btn_spinner"></span>
+<span id="btn_enable_spinner" class="btn_spinner"></span> 
 
 <script type="text/javascript">
 //<![CDATA[
@@ -197,8 +193,8 @@ L.require("ui").then(function(ui){
 				});
 
 				var viewWrapper= document.getElementById('simcards_rows');
-				viewWrapper.appendChild(sim_0.render())
-				viewWrapper.appendChild(sim_1.render())
+				viewWrapper.appendChild(sim_0.render());
+				viewWrapper.appendChild(sim_1.render());
 
 
 
@@ -211,6 +207,11 @@ L.require("ui").then(function(ui){
 				});
 				var widget_ui_cover = ui_cover.render()
 				$("body").append(widget_ui_cover)
+
+				var jur = new ui.Journal("",{});
+				console.log("JUR", jur.render())
+				$("journalWrapper").append(jur.render());
+
 
 				var viewWrapper= document.getElementById('simcards_rows');
 				var widget_simsetting_0 = sim_0_setting.render()
@@ -225,10 +226,22 @@ L.require("ui").then(function(ui){
 	});
 });
 
-$( document ).ready(function() {
-    console.log( "ready!" );
-});
+// $( document ).ready(function() {
+//     console.log( "TD!" );
+//     new DataTable('#journal');
 
+// });
+/*
+$(document).ready( function () {
+	$('#journal').DataTable();
+} );
+*/
+/*
+$(document).ready(function() {
+	console.log("READY");
+	$('#journal').paging({limit:2	});
+});
+*/
 
 //]]>
 </script>
