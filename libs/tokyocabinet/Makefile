@@ -58,6 +58,8 @@ endef
 define Package/tokyocabinet/install
 	$(INSTALL_DIR)  $(1)/usr/lib/tokyocabinet
 	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyocabinet.so*  $(1)/usr/lib/tokyocabinet
+	$(INSTALL_DIR)  $(1)/usr/bin/tokyocabinet
+	$(CP)  $(PKG_INSTALL_DIR)/usr/bin/*  $(1)/usr/bin/tokyocabinet
 	$(INSTALL_DIR)   $(1)/usr/share/tokyocabinet
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyocabinet/tokyocabinet.idl $(1)/usr/share/tokyocabinet
 endef
