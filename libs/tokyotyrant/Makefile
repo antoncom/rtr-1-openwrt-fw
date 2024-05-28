@@ -62,9 +62,8 @@ define Package/tokyotyrant/install
 	$(CP)  $(PKG_INSTALL_DIR)/usr/bin/*  $(1)/usr/bin/tokyotyrant
 	$(INSTALL_DIR)  $(1)/usr/sbin/tokyotyrant
 	$(CP)  $(PKG_INSTALL_DIR)/usr/sbin/*  $(1)/usr/sbin/tokyotyrant
-	$(INSTALL_DIR)   $(1)/usr/share/tokytyrant/ext
+	$(INSTALL_DIR)   $(1)/usr/share/tokyotyrant/ext
 	$(CP)  $(PKG_INSTALL_DIR)/usr/share/tokyotyrant/ext/* $(1)/usr/share/tokyotyrant/ext
-	$(INSTALL_DIR)   $(1)/usr/share/tokytyrant
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyotyrant/tokyotyrant.idl $(1)/usr/share/tokyotyrant
 endef
 
