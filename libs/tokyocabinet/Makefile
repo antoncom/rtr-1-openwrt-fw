@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tokyocabinet
 PKG_VERSION:=1.4.47
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/antoncom/tokyo-cabinet.git
@@ -56,8 +56,10 @@ define Build/InstallDev
 endef
 
 define Package/tokyocabinet/install
-	$(INSTALL_DIR)  $(1)/usr/lib
-	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyocabinet.so*  $(1)/usr/lib
+	$(INSTALL_DIR)  $(1)/usr/lib/
+	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/libtokyocabinet.so*  $(1)/usr/lib/
+	$(INSTALL_DIR)  $(1)/usr/bin/
+	$(CP)  $(PKG_INSTALL_DIR)/usr/bin/*  $(1)/usr/bin/
 	$(INSTALL_DIR)   $(1)/usr/share/tokyocabinet
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyocabinet/tokyocabinet.idl $(1)/usr/share/tokyocabinet
 endef
