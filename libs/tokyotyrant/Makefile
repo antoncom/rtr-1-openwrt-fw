@@ -65,7 +65,7 @@ define Package/tokyotyrant/install
 	$(INSTALL_DIR)   $(1)/usr/share/tokytyrant
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyotyrant/tokyotyrant.idl $(1)/usr/share/tokyotyrant
 	$(INSTALL_DIR)   $(1)/usr/share/tokytyrant/ext
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR/usr/share/tokyotyrant/ext/* $(1)/usr/share/tokyotyrant/ext
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyotyrant/ext/* $(1)/usr/share/tokyotyrant/ext
 endef
 
 $(eval $(call BuildPackage,tokyotyrant))
