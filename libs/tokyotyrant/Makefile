@@ -56,12 +56,12 @@ define Build/InstallDev
 endef
 
 define Package/tokyotyrant/install
-	$(INSTALL_DIR)  $(1)/usr/lib/tokyotyrant
-	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/*.so*  $(1)/usr/lib/tokyotyrant
-	$(INSTALL_DIR)  $(1)/usr/bin/tokyotyrant
-	$(CP)  $(PKG_INSTALL_DIR)/usr/bin/*  $(1)/usr/bin/tokyotyrant
-	$(INSTALL_DIR)  $(1)/usr/sbin/tokyotyrant
-	$(CP)  $(PKG_INSTALL_DIR)/usr/sbin/*  $(1)/usr/sbin/tokyotyrant
+	$(INSTALL_DIR)  $(1)/usr/lib/
+	$(CP)  $(PKG_INSTALL_DIR)/usr/lib/*.so*  $(1)/usr/lib/
+	$(INSTALL_DIR)  $(1)/usr/bin/
+	$(CP)  $(PKG_INSTALL_DIR)/usr/bin/*  $(1)/usr/bin/
+	$(INSTALL_DIR)  $(1)/usr/sbin/
+	$(CP)  $(PKG_INSTALL_DIR)/usr/sbin/*  $(1)/usr/sbin/
 	$(INSTALL_DIR)   $(1)/usr/share/tokyotyrant/ext
 	$(CP)  $(PKG_INSTALL_DIR)/usr/share/tokyotyrant/ext/* $(1)/usr/share/tokyotyrant/ext
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/tokyotyrant/tokyotyrant.idl $(1)/usr/share/tokyotyrant
