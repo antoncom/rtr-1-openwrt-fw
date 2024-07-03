@@ -44,7 +44,7 @@ define Package/tokyocabinet/description
  conventional DBM products.
 endef
 
-CONFIGURE_ARGS += --prefix=/usr
+CONFIGURE_ARGS += --prefix=/usr --enable-off64
     
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)
