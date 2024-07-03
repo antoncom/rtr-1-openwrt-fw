@@ -44,9 +44,7 @@ define Package/tokyotyrant/description
  conventional DBM products.
 endef
 
-CONFIGURE_ARGS += \
-	--prefix=/usr \
-	--enable-off64
+CONFIGURE_ARGS += --prefix=/usr
     
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)
