@@ -46,7 +46,8 @@ endef
 
 CONFIGURE_ARGS += \
 	--prefix=/usr \
-	--enable-off64
+	--enable-off64 \
+	--enable-universal
     
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)
