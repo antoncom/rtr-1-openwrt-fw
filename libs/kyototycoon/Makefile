@@ -7,7 +7,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=tokyotyrant
+PKG_NAME:=kyototycoon
 PKG_VERSION:=1.1.41
 PKG_RELEASE:=1
 
