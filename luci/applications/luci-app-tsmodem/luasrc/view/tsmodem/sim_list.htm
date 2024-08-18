@@ -20,6 +20,8 @@
 <% 	--[[=========== TSMODEM.CONSOLE ==========]] %>
 
 <%+tsmconsole/ui_widgets/UIModal.js%>
+<%+tsmconsole/ui_widgets/UIModalSMS_send.js%>
+
 
 <% --[[=========== LUA BACKEND ==========]] %>
 
@@ -209,7 +211,7 @@ L.require("ui").then(function(ui){
 				$("body").append(widget_ui_cover)
 
 				var jur = new ui.Journal("",{});
-				console.log("JUR", jur.render())
+				//console.log("JUR", jur.render())
 				$("journalWrapper").append(jur.render());
 
 
@@ -219,6 +221,10 @@ L.require("ui").then(function(ui){
 
 				var console_modal = new ui.Modal();
 				$("body").append(console_modal.render())
+
+				var sms_send_modal = new ui.ModalSMS_send();
+				$("body").append(sms_send_modal.render())
+
 				console_modal.start_modem_automation()
 
 			});

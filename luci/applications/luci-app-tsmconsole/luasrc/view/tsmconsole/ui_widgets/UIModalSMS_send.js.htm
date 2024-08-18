@@ -1,0 +1,254 @@
+<%+tsmodem/ui_validator/tsmodem.validator.js%>
+
+<script type="text/javascript">
+//<![CDATA[
+
+console.log("UIModalSMS_send INCLUDED....")
+
+	L.require('ui').then(function(ui) {
+		L.require('dom').then(function(dom) {
+		// 	uci.load("tsmodem").then(function(out){
+				var UIModalSMS_send = ui.AbstractElement.extend({
+					__init__: function() {
+						this.term = null;
+						this.className = "webcon_term";
+						this.welcome = `
+███████ ███    ███ ███████     ███████ ███████ ███    ██ ██████  ███████ ██████  
+██      ████  ████ ██          ██      ██      ████   ██ ██   ██ ██      ██   ██ 
+███████ ██ ████ ██ ███████     ███████ █████   ██ ██  ██ ██   ██ █████   ██████  
+     ██ ██  ██  ██      ██          ██ ██      ██  ██ ██ ██   ██ ██      ██   ██ 
+███████ ██      ██ ███████     ███████ ███████ ██   ████ ██████  ███████ ██   ██ 
+`;
+						this.phone_valid = false;
+					},
+					render: function() {
+                        var container = document.createElement("div");
+                        container.classList.add(this.className);
+                        container.innerHTML = `
+                        <h4>Консоль отправки SMS-сообщений</h4>
+                        <div class="cbi-map">
+                            <div class="cbi-map-section">
+                                <div class="cbi-map-section-node">
+                                    <div class="cbi-value">
+                                        <div id="terminal_sms"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+
+						return this.bind(container);
+					},
+
+					bind: function(container) {
+						this.node = container
+						dom.bindClassInstance(container, this);
+                        var self = this
+
+						window.EventBus.registerTo(this.node,"UIModalSMS_send")
+
+
+                        // --------------------------------------------------------------------------------
+                        // Subscribe on UISiminfo widget, btn_sms_send_pressed event: Open SIM Setting modal
+                        // --------------------------------------------------------------------------------
+                        window.EventBus.listenToASAP("UISiminfo_0", ["btn_sms_send_pressed"], function(ev) {
+                            var event_data = ev.detail || {}
+                            self.simid = event_data.simid || self.simid || "simid-0"
+
+                            self.openModal()
+
+                        })
+
+                        window.EventBus.listenToASAP("UISiminfo_1", ["btn_sms_send_pressed"], function(ev) {
+                            var event_data = ev.detail || {}
+                            self.simid = event_data.simid || self.simid || "simid-1"
+
+                            self.openModal()
+
+                        })
+
+						// -----------------------------------------------------------
+						// Subscribe to UIWebSocket
+						// -----------------------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["tsmconsole"], function(ev) {
+							if (ev["detail"]) {
+								var data = ev["detail"]
+								if (data["SMS_send_answer"]) {
+									self.term.echo(data["SMS_send_answer"].replace("OK", "OK\r\n"));
+								}
+							}
+							self.term.resume();
+						})
+
+						return container;
+					},
+
+                    stop_modem_automation: function() {
+						var self = this
+                    	L.require("rpc").then(function(rpc){
+                    		var rpc_sess = rpc.getSessionID()
+							self.fireEvent("send-to-websocket", {
+								driver_command: "driver-stop-automation",
+								ubus_rpc_session: rpc_sess
+							});
+                    	})
+                    },
+
+                    start_modem_automation: function() {
+						var self = this
+                    	var rpc_sess = "";
+                    	L.require("rpc").then(function(rpc){
+                    		rpc_sess = rpc.getSessionID()
+							self.fireEvent("send-to-websocket", {
+								driver_command: "driver-start-automation",
+								ubus_rpc_session: rpc_sess
+							});
+                    	})
+                    },
+
+                    sms_validate: function(comm) {
+						var self = this
+    					if(comm.substring(0,4) == "help") {
+    						return { noerror: true, msg: `` }
+    					} else if(comm.length < 3) {
+    						return { noerror: false, msg: `[[;red;]Длина SMS-сообщения должна быть 2 и более символов. Для справки введите "help".`}
+    					} else if (self.phone_valid == false) {
+    						//self.phone.triggerValidation()
+    						return { noerror: false, msg: `[[;red;]Укажите корректный номер в графе 'Телефон получателя'.` }
+    					} else {
+    						console.log(self.phone_valid)
+    						return { noerror: true, msg: `[[;green;]&#91;Ok&#93; - SMS отправлено абоненту: ` + self.phone}
+    					}
+    				},
+
+                    close: function () {
+                        $(this.el).remove();
+                        $('body').removeClass('modal-overlay-active');
+                        this.start_modem_automation()
+                    },
+
+					fireEvent: function(event_name, event_data) {
+						var s = new CustomEvent(event_name, {
+							detail: event_data,
+							bubbles: true,
+						})
+						window.EventBus.busobjects["UIModalSMS_send"].dispatchEvent(s);
+					},
+
+					nearleyValidator: function(field, errormsg) {
+						var self = this
+						return function(user_input_text) {
+							var gramma = netping_luci_relay_adapter_http_valid(field)
+							const parser = new nearley.Parser(nearley.Grammar.fromCompiled(gramma));
+							try {
+								var pf = parser.feed(user_input_text)
+								if (pf.results.length > 0) {
+									self.phone = user_input_text
+									self.phone_valid = true
+									return true // it's a requirement of LuCI widget API
+								}
+								else {
+									self.phone_valid = false
+									return errormsg
+								}
+							}
+							catch (e) {
+								self.phone_valid = false
+								return errormsg
+							}
+						}
+					},
+
+
+                    openModal: function() {
+                        // Stop modem automation first
+						var self = this
+						self.phone_valid = false
+						self.phone = new ui.Textfield("", {
+							//datatype: "rangelength(11,12)",
+							id: "phone_for_sms",
+							optional: false,
+							validate: this.nearleyValidator("phone", "Телефон в формате: +79171234567")
+						});
+                        this.stop_modem_automation()
+
+                        L.require("ui").then(function(ui){
+                            L.showModal(_('Консоль отправки SMS-сообщений'), [
+                                E('div', { class: 'cbi-map' }, [
+                                    E('div', { class: 'cbi-map-section' }, [
+                                        E('div', { class: 'cbi-map-section-node' }, [
+                                        	E('div', { class: 'cbi-value' }, [
+                                        		E('label', { style: 'font-weight: bolder;' }, 'Телефон получателя:'),
+                                        		self.phone.render()
+                                            ]),
+                                            E('div', { class: 'cbi-value' }, [
+                                                E('div', { id: 'sms_console' }, "")
+                                            ]),
+                                        ])
+                                    ])
+                                ]),
+
+                                E('div', { class: 'cbi-value-field', style: "max-width: none; margin: 0px;" }, [
+                                    E('div', {
+										style: "float: right;",
+                                        class: 'btn',
+                                        click: function() {
+                                            // Start modem automation again
+                                            self.start_modem_automation()
+                                            L.hideModal()
+                                            $(".modal").empty()
+                                        }
+                                    }, _('Close')),
+                                ])
+                            ]);
+
+							$.terminal.defaults.allowedAttributes.push('style');
+							$('#sms_console').terminal(function(sms_text, term) {
+								self.term = term
+
+								term.pause();
+								var sms_check = self.sms_validate(sms_text);
+								if (sms_check["noerror"] && sms_text == "help")  {
+									term.echo(sms_check["msg"], {raw: true});
+									term.echo(` <dl class="attrs">
+													<dt>Телефон получателя:</dt><dd>` + ((self.phone_valid) ? self.phone : "ОШИБКА: заполните графу 'Телефон получателя'") + `</dd>
+													<dt>ENTER</dt><dd>Клавиша ENTER - отправит SMS сообщение.</dd>
+													<dt>------------------</dt><dd>-----------------------------------------------------------</dd>
+													<dt>Длина SMS-сообщения:</dt><dd>160 символов латиницей или 70 символов кириллицей. Более длинные сообщения отправляются по частям.</dd>
+												</dl>`, {raw: true});
+									term.resume();
+								}
+								// If sms text has error
+								else if (sms_check["noerror"] == false && sms_check["msg"].length > 0) {
+									term.echo(sms_check["msg"]);
+									term.resume();
+								}
+								else if (sms_check["noerror"] && sms_check["msg"].indexOf("[[;green;]&#91;Ok&#93;") == 0) {
+									self.fireEvent("send-sms", { ["sms_text"]: sms_text, ["phone_number"]: self.phone })
+									term.echo(sms_check["msg"]);
+									term.resume();
+								} else {
+									term.resume();
+								}
+							},
+							{
+								height: 400,
+								greetings: self.welcome + 'Консоль отправки SMS-сообщений\r\n',
+								prompt: "[[b;#ffffff;]&gt;] ",
+								tabcompletion: true,
+								completion: ['ATI']
+							});
+
+
+                        })
+                    },
+
+				});
+
+				ui["ModalSMS_send"] = UIModalSMS_send;
+		// 	});
+		});
+	});
+
+//]]>
+</script>

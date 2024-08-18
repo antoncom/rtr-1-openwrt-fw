@@ -1,0 +1,31 @@
+<script type="text/javascript">
+//<![CDATA[
+    var netping_luci_relay_adapter_http_valid = function (fieldname) {
+        var grammar = {
+            //  ---------------------------------------------------------------------
+            //  ADD field name as key and compiled grammar as value
+            //  Grammar compilation is created using this specification:
+            //  https://netping.atlassian.net/wiki/spaces/PROJ/pages/2809857522/html-
+            //  =====================================================================
+                phone: {
+                    Lexer: undefined,
+				    ParserRules: [
+					    {"name": "MAIN", "symbols": ["PREFIX", "CODE", "OPERATOR", "NUMBER"]},
+					    {"name": "PREFIX", "symbols": [{"literal":"+"}]},
+					    {"name": "CODE", "symbols": [/[1-9]/]},
+					    {"name": "CODE", "symbols": [/[1-9]/, /[0-9]/]},
+					    {"name": "OPERATOR", "symbols": [/[1-9]/, /[0-9]/, /[0-9]/]},
+					    {"name": "NUMBER", "symbols": [/[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/]}
+					],
+				  	ParserStart: "MAIN"
+
+                },
+                // The next field is followed by previous below:
+                // =============================================
+
+            }
+
+        return grammar[fieldname]
+    }
+//]]>
+</script>

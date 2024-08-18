@@ -121,6 +121,12 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 												value: _("AT console"),
 												style: "display: initial;"
 							}),
+							btn_sms_send: E('input',  {
+												type: "button", class: "cbi-button cbi-button-apply webconsole simid-" + this.simid,
+												["data-simid"]: this.simid,
+												value: _("SMS send"),
+												style: "display: initial;"
+							}),
 							btn_activate: E('input',  {
 												type: "button", class: "cbi-button cbi-button-apply sim-" + this.simid,
 												["data-simid"]: this.simid,
@@ -163,6 +169,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 								this.chunk.btn_balance,
 								this.chunk.btn_setting,
 								this.chunk.btn_console,
+								this.chunk.btn_sms_send,
 								this.chunk.btn_activate,
 		                    ])
 		                ])
@@ -222,8 +229,12 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 						$(".cbi-button.cbi-button-apply.sim-0-balance").prop( "disabled", true );
 						$(".cbi-button.cbi-button-apply.sim-1-balance").prop( "disabled", true );
 
-						// Disable AT-console button as soon as Sim activation buton pressed
+						// Disable AT-console button as soon as Sim activation button pressed
 						$(".webconsole").prop( "disabled", true );
+
+						// Disable AT-console button as soon as SMS sender button pressed
+						$(".webconsole").prop( "disabled", true );
+
 
 						// Remove all countdowns
 						if (self.countdown) {
@@ -293,6 +304,13 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 								// })
 								// self.chunk.btn_activate.disabled = true
 								self.fireEvent("btn_console_pressed", {
+									simid: self.simid
+								})
+							}
+
+							this.chunk.btn_sms_send.onclick = function(){
+								console.log("pressed 1")
+								self.fireEvent("btn_sms_send_pressed", {
 									simid: self.simid
 								})
 							}
