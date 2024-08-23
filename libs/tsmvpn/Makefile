@@ -8,8 +8,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=tsmvpn
 PKG_VERSION:=0.3
 
-PKG_SOURCE_URL=https://github.com/Makskuk/vpnconfig.git
 PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL=https://github.com/Makskuk/vpnconfig.git
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
