@@ -28,9 +28,9 @@ endef
 define Build/Compile
 endef
 
-define Package/tsmodem/install
+define Package/tsmvpn/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/
 	$(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)/usr/lib/lua/luci/
 endef
 
-$(eval $(call BuildPackage,tsmodem))
+$(eval $(call BuildPackage,tsmvpn))
