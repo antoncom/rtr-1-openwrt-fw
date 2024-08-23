@@ -20,6 +20,7 @@ define Package/tsmvpn
 	TITLE:=Vpnconfig
 	URL:=https://github.com/Makskuk/vpnconfig.git
 	DEPENDS:=+luci
+endef
 
 define Package/tsmvpn/description
   vpnconfig
