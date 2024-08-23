@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tsmvpn
-PKG_RELEASE:=0.3
+PKG_VERSION:=0.3
 
 PKG_SOURCE_URL=https://github.com/Makskuk/vpnconfig.git
 PKG_SOURCE_PROTO:=git
