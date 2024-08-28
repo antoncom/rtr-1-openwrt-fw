@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tsmvpn
-PKG_VERSION:=0.3
+PKG_VERSION:=0.4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/Makskuk/vpnconfig.git
@@ -34,6 +34,8 @@ endef
 define Package/tsmvpn/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/
 	$(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)/usr/lib/lua/luci/
+	$(INSTALL_DIR) $(1)/www/luci-static/resources/vpnconfig/
+	$(CP) $(PKG_BUILD_DIR)/resources/* $(1)/www/luci-static/resources/vpnconfig/
 endef
 
 $(eval $(call BuildPackage,tsmvpn))
