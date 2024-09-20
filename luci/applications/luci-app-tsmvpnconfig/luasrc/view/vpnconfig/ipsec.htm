@@ -1,0 +1,566 @@
+<% --[[=========== JS ==========]] %>
+<%+vpnconfig/vpnconfig.js%>
+
+<% --[[=========== LUA BACKEND ==========]] %>
+<%
+	local vpnType = "ipsec"
+%>
+
+<div id="view">
+    <h2><%:IPSec tunnels %></h2>
+
+	<div id="ipsec_rows" class="table">
+		<div class="tr table-titles">
+			<div class="th"><%:Name %></div>
+			<div class="th"><%:Active %></div>
+			<div class="th center nowrap cbi-section-actions"><%:Actions %></div>
+		</div>
+	</div>
+	<div class="cbi-page-actions">
+        <span id="btn_enable_spinner" class="btn_spinner"></span> 
+        <input class="cbi-button cbi-button-apply" type="button" value="<%:Add %>" onclick="showModal(new IpsecData())"> 
+    </div>
+</div>
+
+<script type="text/javascript">
+
+var localAddresses = get_list_interfaces();
+var authTypes = ['psk', 'pubkey'];
+var hashTypes = ['md5', 'sha1', 'sha256', 'sha512', 'sha384'];
+var encriptTypes = ['aes128', 'aes192', 'aes256', '3des'];
+var keyExchModes = ['ikev1', 'ikev2', 'ike'];
+var dhGroupsRFC = {
+	'0':	'NONE',
+	'2':	'1024-bit MODP Group',
+	'5':	'1536-bit MODP Group',
+	'14':	'2048-bit MODP Group',
+	'15':	'3072-bit MODP Group',
+	'16':	'4096-bit MODP Group',
+	'17':	'6144-bit MODP Group',
+	'18':	'8192-bit MODP Group',
+	'19':	'256-bit random ECP group',
+	'20':	'384-bit random ECP group',
+	'21':	'521-bit random ECP group',
+	'23':	'2048-bit MODP with 224-bit subgrout',
+	'24':	'2048-bit MODP with 256-bit subgrout',
+	'25':	'192-bit Random ECP Group',
+	'26':	'224-bit Random ECP Group',
+	'27':	'brainpoolP224r1',
+	'28':	'brainpoolP256r1',
+	'29':	'brainpoolP384r1',
+	'30':	'brainpoolP512r1',
+	'31':	'Curve25519',
+	'32':	'Curve448',
+	'33':	'GOST3410_2012_256',
+	'34':	'GOST3410_2012_512',
+}
+
+class IpsecData {
+	name = "";
+	type = '<%=vpnType%>';
+	options = {
+		localAddr: localAddresses[0],
+		remoteAddr: "",
+		dpdDelay: "0",
+		localId: "",
+		remoteId: "",
+		keyExchMode: "ikev2",
+		localSubnetes: "",
+		remoteSubnets: "",
+		authType: "psk",
+		presharedKey: "",
+		fileCaCertificate: "",
+		fileLocalCertificate: "",
+		filePubkey: "",
+		phase1_lifetime: "28800",
+		phase1_ikeEncript: "aes256",
+		phase1_ikeHash: "sha256",
+		phase1_dhGroup: "14",
+		phase2_lifetime: "3600",
+		phase2_espEncript: "aes256",
+		phase2_espHash: "sha256",
+		phase2_pfsGroup: "",
+	};
+}
+
+class MyFileUpload {
+	value = "";
+	valid = false;
+	input = null;
+	validate = function(input) {
+		if (input.length)
+			return true;
+		else
+			return false;
+	};
+	getValue = function() {
+		return this.value;
+	};
+	setValue = function(val) {
+		this.value = val;
+		if (this.input) {
+			this.input.val('');
+		}
+	};
+	isValid = function() {
+		return (this.valid == true);
+	};
+	triggerValidation = function() {
+		this.valid = this.validate(this.value);
+		if (!this.input)
+			return;
+
+		if (!this.valid)
+			this.input.addClass('cbi-input-invalid');
+		else
+			this.input.removeClass('cbi-input-invalid');
+	};
+	render = function(fieldName) {
+		var that = this;
+		var el = E('div', { class: 'modal-row modal-file-button' }, [
+					E('label', {
+						'class':"btn input-group-text", 
+						'for': fieldName
+					}, "<%:Choose file%>"),
+					E('input', {
+						'type': "file", 
+						'class': "modal-file-input",
+						'id': fieldName, 
+						'name': fieldName,
+						'change': function() {
+							that.value = this.value.split('\\').pop();
+							console.log(that.value);
+						},
+					})
+				]);
+		that.input = $(el);
+		return el;
+	}
+}
+
+getCfgData('<%=vpnType%>', function(sections) {
+	for (s in sections) {
+		var data = new IpsecData();
+		data.name = parse_string(sections[s]['.name']);
+		data.isActive = parse_bool(sections[s]['isActive']);
+		data.options.localAddr = parse_string(sections[s]['localAddr']);
+		data.options.remoteAddr = parse_string(sections[s]['remoteAddr']);
+		data.options.dpdDelay = parse_string(sections[s]['dpdDelay']);
+		data.options.localId = parse_string(sections[s]['localId']);
+		data.options.remoteId = parse_string(sections[s]['remoteId']);
+		data.options.keyExchMode = parse_string(sections[s]['keyExchMode']);
+		data.options.localSubnetes = parse_string(sections[s]['localSubnetes']);
+		data.options.remoteSubnets = parse_string(sections[s]['remoteSubnets']);
+		data.options.authType = parse_string(sections[s]['authType']);
+		data.options.presharedKey = parse_string(sections[s]['presharedKey']);
+		data.options.phase1_lifetime = parse_string(sections[s]['phase1_lifetime']);
+		data.options.phase1_ikeEncript = parse_string(sections[s]['phase1_ikeEncript']);
+		data.options.phase1_ikeHash = parse_string(sections[s]['phase1_ikeHash']);
+		data.options.phase1_dhGroup = parse_string(sections[s]['phase1_dhGroup']);
+		data.options.phase2_lifetime = parse_string(sections[s]['phase2_lifetime']);
+		data.options.phase2_espEncript = parse_string(sections[s]['phase2_espEncript']);
+		data.options.phase2_espHash = parse_string(sections[s]['phase2_espHash']);
+		data.options.phase2_pfsGroup = parse_string(sections[s]['phase2_pfsGroup']);
+
+		addRow("ipsec_rows", data);
+	}
+});
+
+function showModal(data) {
+	L.require('ui').then(function(ui) {
+		var form = {
+			name: new ui.Textfield(data.name, {
+				placeholder: "<%:Name%>",
+				optional: false,
+				readonly: data.name.length > 0,
+				validate: nearleyValidator('sectionName', '<%:Should contain letters, numbers and "_"%>')
+			}),
+			localAddr: new ui.Dropdown(data.options.localAddr, make_dropdown_options(localAddresses), {
+				multiple: false,
+				sort: false,
+				optional: false,
+			}),
+			remoteAddr: new ui.Textfield(data.options.remoteAddr, {
+				optional: false,
+				placeholder: "<%:Remote IP%>",
+				validate: nearleyValidator('ip4', '<%:Should contain numbers 0..255 and "."%>')
+			}),
+			dpdDelay: new ui.Textfield(data.options.dpdDelay, {
+				optional: false,
+				placeholder: "<%:Delay%>",
+				validate: nearleyValidator('number', '<%:Should contain only digits%>')
+			}),
+			localId: new ui.Textfield(data.options.localId, {
+				optional: true,
+				placeholder: "<%:Local ID%>",
+				validate: nearleyValidator('string', '<%:Should contain letters, numbers and no spaces%>')
+			}),
+			remoteId: new ui.Textfield(data.options.remoteId, {
+				optional: true,
+				placeholder: "<%:Remote ID%>",
+				validate: nearleyValidator('string', '<%:Should contain letters, numbers and no spaces%>')
+			}),
+			keyExchMode: new ui.Dropdown(data.options.keyExchMode, make_dropdown_options(keyExchModes), {
+				multiple: false,
+				sort: false,
+				optional: false,
+			}),
+			localSubnetes: new ui.Textfield(data.options.localSubnetes, {
+				optional: false,
+				placeholder: "<%:Subnets list%>",
+				validate: nearleyValidator('ip4_list', '<%:Should contain IPv4 separated by comma or space%>')
+			}),
+			remoteSubnets: new ui.Textfield(data.options.remoteSubnets, {
+				optional: false,
+				placeholder: "<%:Subnets list%>",
+				validate: nearleyValidator('ip4_list', '<%:Should contain IPv4 separated by comma or space%>')
+			}),
+			authType: new ui.Dropdown(data.options.authType, make_dropdown_options(authTypes), {
+				id: 'cbAuthType',
+				multiple: false,
+				sort: false,
+				optional: false,
+			}),
+			presharedKey: new ui.Textfield(data.options.presharedKey, {
+				optional: false,
+				password: true,
+				placeholder: "<%:Password%>",
+				validate: function(input) {
+					if (input.length)
+						return true;
+
+					return '<%:Can not be empty%>';
+				}
+			}),
+			fileCaCertificate: new MyFileUpload(),
+			fileLocalCertificate: new MyFileUpload(),
+			filePubkey: new MyFileUpload(),
+			phase1_lifetime: new ui.Textfield(data.options.phase1_lifetime, {
+				optional: false,
+				validate: function(input){
+					var v = nearleyValidator('integer', '<%:Should contain only digits%>');
+					var res = v(input);
+					if (res !== true)
+						return res;
+
+					if (Number(input) >= 60) {
+						return true;
+					} else {
+						return "<%:60 sec. minimum!%>"
+					}
+				}
+			}),
+			phase1_ikeEncript: new ui.Dropdown(data.options.phase1_ikeEncript, make_dropdown_options(encriptTypes), {
+				multiple: false,
+				sort: false,
+				optional: false,
+			}),
+			phase1_ikeHash: new ui.Dropdown(data.options.phase1_ikeHash, make_dropdown_options(hashTypes), {
+				multiple: false,
+				sort: false,
+				optional: false,
+			}),
+			phase1_dhGroup: new ui.Dropdown(data.options.phase1_dhGroup, dhGroupsRFC, {
+				multiple: false,
+				sort: false,
+				optional: false,
+			}),
+			phase2_lifetime: new ui.Textfield(data.options.phase2_lifetime, {
+				optional: false,
+				validate: function(input){
+					var v = nearleyValidator('integer', '<%:Should contain only digits%>');
+					var res = v(input);
+					if (res !== true)
+						return res;
+
+					if (Number(input) >= 60) {
+						return true;
+					} else {
+						return "<%:60 sec. minimum!%>"
+					}
+				}
+			}),
+			phase2_espEncript: new ui.Dropdown(data.options.phase2_espEncript, make_dropdown_options(encriptTypes), {
+				multiple: false,
+				sort: false,
+				optional: false,
+			}),
+			phase2_espHash: new ui.Dropdown(data.options.phase2_espHash, make_dropdown_options(hashTypes), {
+				multiple: false,
+				sort: false,
+				optional: false,
+			}),
+			phase2_pfsGroup: new ui.Dropdown(data.options.phase2_pfsGroup, dhGroupsRFC, {
+				multiple: false,
+				sort: false,
+				optional: false,
+			})
+		}
+
+		L.showModal('<%:Configure IPSec%>',[
+
+			E('div', {class: "modal-row"}, [
+				E('div', { class: 'modal-value' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Name%>'),
+					form.name.render()
+				]),	
+			]),
+	
+			E('div', {class: "modal-row"}, [
+				E('div', { class: 'modal-value' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Source address%>'),
+					form.localAddr.render()
+				]),	
+
+				E('div', { class: 'modal-value' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Remote address%>'),
+					form.remoteAddr.render()
+				]),	
+
+				E('div', { class: 'modal-value' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:DPD delay (sec)%>'),
+					form.dpdDelay.render()
+				]),	
+			]),
+	
+			E('div', {class: "modal-row"}, [
+				E('div', { class: 'modal-value' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Local ID%>'),
+					form.localId.render()
+				]),	
+
+				E('div', { class: 'modal-value' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Remote ID%>'),
+					form.remoteId.render()
+				]),	
+			]),
+	
+			E('div', {class: "modal-row"}, [
+				E('div', { class: 'modal-value' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Key exchange mode%>'),
+					form.keyExchMode.render()
+				]),	
+			]),
+	
+			E('div', {class: "modal-row"}, [
+				E('div', { class: 'modal-value' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Local subnets%>'),
+					form.localSubnetes.render()
+				]),	
+
+				E('div', { class: 'modal-value' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Remote subnets%>'),
+					form.remoteSubnets.render()
+				]),	
+			]),
+	
+			E('div', {class: "modal-row"}, [
+			
+				E('div', { class: 'modal-section' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Phase #1%>'),
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Lifetime%>'),
+						form.phase1_lifetime.render()
+					]),	
+
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:IKE Encription%>'),
+						form.phase1_ikeEncript.render()
+					]),	
+
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:IKE Hash%>'),
+						form.phase1_ikeHash.render()
+					]),	
+
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:DH group%>'),
+						form.phase1_dhGroup.render()
+					]),	
+				]),
+
+				E('div', { class: 'modal-section' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Phase #2%>'),
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Lifetime%>'),
+						form.phase2_lifetime.render()
+					]),	
+
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:ESP Encription%>'),
+						form.phase2_espEncript.render()
+					]),	
+
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:ESP Hash%>'),
+						form.phase2_espHash.render()
+					]),	
+
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:PFS group%>'),
+						form.phase2_pfsGroup.render()
+					]),	
+				]),
+			]),
+	
+			E('div', {class: "modal-row"}, [
+				E('div', { class: 'modal-value' }, [
+					E('label', { 'class': 'modal-val-title' }, '<%:Authentication method%>'),
+					form.authType.render()
+				]),	
+			]),
+	
+			E('div', {id: "psk-key", class: (form.authType.getValue() != 'psk' ? 'hidden' : '')}, [
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Pre-shared key%>'),
+						E('div', {class: 'modal-password'}, form.presharedKey.render())
+					]),	
+				]),
+			]),
+
+			E('div', {id: "pub-key", class: (form.authType.getValue() != 'pubkey' ? 'hidden' : '')}, [
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:CA PEM Certificate%>'),
+						form.fileCaCertificate.render('fileCaCertificate'),
+					]),	
+				]),
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Local certificate%>'),
+						form.fileLocalCertificate.render('fileLocalCertificate'),
+					]),
+				]),
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:PEM key%>'),
+						form.filePubkey.render('filePubkey'),
+					]),
+				]),
+			]),
+	
+			E('div', { class: 'modal-buttons' }, [
+				E('div', {
+					class: 'btn',
+					click: function() {
+						L.hideModal()
+					}
+				}, '<%:Close%>'),
+				E('div', {
+					class: 'btn',
+					click: function() {
+						for (i in form) {
+							form[i].setValue(data[i] != undefined ? data[i] : data.options[i]);
+							form[i].triggerValidation();
+						}
+						showKeyFields(form.authType.getValue());
+					}
+				}, '<%:Reset%>'),
+				E('div', {
+					class: 'btn primary',
+					click: function() {
+						var isFormValid = true;
+						var authType = form.authType.getValue();
+
+						for (i in form) {
+							switch(authType) {
+								case 'pubkey':
+									if (i == 'presharedKey') continue;
+									break;
+								case 'psk':
+									if (i == 'fileCaCertificate') continue;
+									if (i == 'fileLocalCertificate') continue;
+									if (i == 'filePubkey') continue;
+									break;
+							}
+							var field = form[i];
+							field.triggerValidation();
+							isFormValid &= field.isValid();
+						}
+
+						if (!isFormValid)
+							return;
+
+						data.name = form.name.getValue();
+						data.options['localAddr'] = form.localAddr.getValue();
+						data.options['remoteAddr'] = form.remoteAddr.getValue();
+						data.options['dpdDelay'] = form.dpdDelay.getValue();
+						data.options['localId'] = form.localId.getValue();
+						data.options['remoteId'] = form.remoteId.getValue();
+						data.options['keyExchMode'] = form.keyExchMode.getValue();
+						data.options['localSubnetes'] = form.localSubnetes.getValue();
+						data.options['remoteSubnets'] = form.remoteSubnets.getValue();
+						data.options['phase1_lifetime'] = form.phase1_lifetime.getValue();
+						data.options['phase1_ikeEncript'] = form.phase1_ikeEncript.getValue();
+						data.options['phase1_ikeHash'] = form.phase1_ikeHash.getValue();
+						data.options['phase1_dhGroup'] = form.phase1_dhGroup.getValue();
+						data.options['phase2_lifetime'] = form.phase2_lifetime.getValue();
+						data.options['phase2_espEncript'] = form.phase2_espEncript.getValue();
+						data.options['phase2_espHash'] = form.phase2_espHash.getValue();
+						data.options['phase2_pfsGroup'] = form.phase2_pfsGroup.getValue();
+						data.options['authType'] = authType;
+
+						if (authType == 'pubkey') {
+							sendFile('fileCaCertificate', data);
+							sendFile('fileLocalCertificate', data);
+							sendFile('filePubkey', data);
+
+							data.options['presharedKey'] = "";
+							data.options['fileCaCertificate'] = form.fileCaCertificate.getValue();
+							data.options['fileLocalCertificate'] = form.fileLocalCertificate.getValue();
+							data.options['filePubkey'] = form.filePubkey.getValue();
+						}
+
+						if (authType == 'psk') {
+							data.options['presharedKey'] = form.presharedKey.getValue();
+							data.options['fileCaCertificate'] = "";
+							data.options['fileLocalCertificate'] = "";
+							data.options['filePubkey'] = "";
+						}
+
+						commitConfig(data);
+						L.hideModal()
+					}
+				}, '<%:Save%>'),
+			]),
+		]);
+
+		$('#cbAuthType').on('click', function(e){
+			showKeyFields(this.value);
+		});
+	});
+}
+
+function showKeyFields(type) {
+	switch(type) {
+		case 'psk': 
+			$("#pub-key").addClass('hidden');
+			$("#psk-key").removeClass('hidden');
+			break;
+		case 'pubkey': 
+			$("#pub-key").removeClass('hidden');
+			$("#psk-key").addClass('hidden');
+			break;
+		default:
+			break;
+	}
+}
+
+function sendFile(inputId, ipsecData) {
+	var fileData = new FormData();
+	var input = document.querySelector('#'+inputId);
+
+	if (!input || !input.files || !input.files.length) {
+		console.log('no file for ' + inputId);
+		return;
+	}
+
+	fileData.append('type', ipsecData.type);
+	fileData.append('name', ipsecData.name);
+	fileData.append(inputId, input.files[0]);
+	uploadFile(fileData);
+}
+
+
+</script>

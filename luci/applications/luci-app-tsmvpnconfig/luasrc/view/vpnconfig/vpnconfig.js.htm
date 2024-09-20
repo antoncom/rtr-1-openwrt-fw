@@ -1,0 +1,227 @@
+<% --[[=========== LUA BACKEND ==========]] %>
+<%
+	local config = "vpnconfig"
+
+	local uci = require "luci.model.uci".cursor()
+
+	local function getInterfaces()
+		uci:foreach('network', 'interface', function(a)
+			print("'" ..  a['.name'] .. "',")
+		end)
+	end
+
+	local function getBridges()
+		print("'none',")
+		uci:foreach('network', 'interface', function(a)
+			if a['type'] == 'bridge' then
+				print("'" ..  a['.name'] .. "',")
+			end
+		end)
+	end
+
+	local function getFirewallZones()
+		print("'none',")
+		uci:foreach('firewall', 'zone', function(a)
+			print("'" ..  a['name'] .. "',")
+		end)
+	end
+%>
+
+<% --[[=========== STYLES ==========]] %>
+<%+vpnconfig/vpnconfig.css%>
+
+<script src="<%=resource%>/vpnconfig/jquery/jquery-3.5.1.min.js"
+		type="text/javascript"
+		charset="utf-8"></script>
+
+<script src="<%=resource%>/vpnconfig/nearley/nearley.js?v=1.5.2"
+		type="text/javascript"
+		charset="utf-8"></script>
+
+<%+vpnconfig/ui_validator/index.js%>
+
+<script type="text/javascript">
+
+
+function nearleyValidator(fieldType, errormsg) {
+	return function(user_input_text) {
+		// this function is declared at "ui_validator/index.js.htm"
+		var gramma = nearley_validator(fieldType);
+		if (!gramma) {
+			console.log('Unexpected fieldType', fieldType);
+			return "unknown grammar";
+		}
+
+		const parser = new nearley.Parser(nearley.Grammar.fromCompiled(gramma));
+		try {
+			var pf = parser.feed(user_input_text)
+			if (pf.results.length > 0)
+				return true; // it's a requirement of LuCI widget API
+			else
+				return errormsg;
+		}
+		catch (e) {
+			return errormsg;
+		}
+	}
+}
+
+function spinner(state) {
+	var element = document.getElementById("btn_enable_spinner");
+	if (state === true) {
+		element.style.width = "16px";
+		element.innerHTML = '<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" width="16" height="16" style="vertical-align:middle" />';
+	}
+	else {
+		element.style.width = "0px";
+		element.innerHTML = '';
+	}
+}
+
+function getCfgData(vpnType, callback) {
+	spinner(true);
+	L.require("uci").then(function(uci) {
+		uci.load("<%=config%>").then(function(out){
+			var sections = uci.sections('<%=config%>', vpnType);
+			if (callback) {
+				callback(sections);
+			}
+			spinner(false);
+		});
+	});
+}
+
+function addRow(elementId, data) {
+	var container = E('div', { id: data.name, class: 'tr '}, [
+		E('div', {class: 'td'}, E('div', {}, data.name)),
+		E('div', {class: 'td'}, E('div', {id: data.name+'-active'}, (data.isActive == true ? '<%:yes%>' : '<%:no%>'))),
+		E('div', {class: "nowrap cbi-section-actions td", style: "text-align: center;"}, [
+			E('div', {class: 'cbi-button cbi-button-neutral ', style: "display: initial;", click: function() {activateConfig(data);}}, (data.isActive == true ? '<%:Disable%>' : '<%:Enable%>')),' ',
+			E('div', {class: 'cbi-button cbi-button-edit', style: "display: initial;", click: function() {showModal(data);}}, '<%:Edit%>'),' ',
+			E('div', {class: 'cbi-button cbi-button-remove', style: "display: initial;", click: function() {deleteConfig(data);}}, '<%:Delete%>'),
+		])
+	])
+				
+	var viewWrapper= document.getElementById(elementId);
+	viewWrapper.appendChild(container);
+}
+
+function commitConfig(data) {
+	L.require('uci').then(function(uci){
+		var section = uci.get('<%=config%>', data.name);
+		if (!section) {
+			sendAction("add", data, handleActionResult);
+		} else {
+			sendAction("edit", data, handleActionResult);
+		}
+	});
+}
+
+function activateConfig(data) {
+	data.isActive = !data.isActive; 
+	sendAction("enable", data, handleActionResult);
+}
+
+function deleteConfig(data) {
+	sendAction("delete", data, handleActionResult);
+}
+
+function uploadFile(data) {
+	// sendAction() cant send files
+	var xhr = new XMLHttpRequest();
+	var url = '<%=luci.dispatcher.build_url("admin", "services", config, "action")%>/'+ '%h/%h'.format('upload_file');
+	xhr.open('POST', url, true);
+	xhr.onload = function () {
+		if (xhr.status === 200) {
+			console.log('File successfully uploaded');
+		} else {
+			alert('File upload failed!');
+		}
+	};
+	xhr.send(data);
+}
+
+function sendAction(action, data, callback) {
+	var xhr = new XHR(false);
+	var url = '<%=luci.dispatcher.build_url("admin", "services", config, "action")%>/'+ '%h/%h'.format(action);
+	spinner(true);
+
+	xhr.post(url, data, function(resp) {
+		if (!resp) {
+			return;
+		}
+		var result = JSON.parse(resp.response);
+		spinner(false);
+
+        if(callback) 
+			callback(result);
+	});
+}
+
+function handleActionResult(result) {
+	if (!result) return;
+
+	switch(result.status) {
+		case 'success':
+			console.log(result.action, result.status);
+			location.reload();
+			break;
+		case 'error':
+			console.log(result);
+			showMessageWindow('<%:Error%>', result.message);
+			break;
+		default:
+			console.log('unexpected status', result);
+	}
+}
+
+function showMessageWindow(title, message) {
+	L.require('ui').then(function(ui) {
+		L.showModal(title, [
+			E('span', message),
+			E('div', { class: 'modal-buttons' }, [
+				E('div', {
+					class: 'btn',
+					click: function() {
+						L.hideModal();
+						location.reload(); //reload page to restore form data
+					}
+				}, '<%:Close%>')
+			])
+		]);
+	});
+}
+
+function parse_bool(value) {
+    return value == 'true' || value == 1;
+}
+
+function parse_string(value) {
+	return !value ? "" : String(value);
+}
+
+function make_dropdown_options(list) {
+    var result = {};
+    var item = "";
+
+    for(i in list) {
+        item = list[i];
+        result[item] = item;
+    }
+
+    return result;
+}
+
+function get_list_firewall_zone() {
+	return [<% getFirewallZones() %>];
+}
+
+function get_list_bridges() {
+	return [<% getBridges() %>];
+}
+
+function get_list_interfaces() {
+	return [<% getInterfaces() %>];
+}
+
+</script>
