@@ -1,6 +1,7 @@
 # Lets describe the rules for phone number, e.g.: +79030507255
 
 MAIN 			-> PREFIX CODE OPERATOR NUMBER
+				   | ""
 
 PREFIX 			->  "+"
 
