@@ -1,0 +1,541 @@
+<%
+
+local util = require "luci.util"
+
+%>
+
+<script type="text/javascript">
+//<![CDATA[
+	L.require('request').then(function(request) {
+		L.require('ui').then(function(ui) {
+			L.require('dom').then(function(dom) {
+			// 	uci.load("tsmodem").then(function(out){
+					var UISMScommand = ui.AbstractElement.extend({
+						__init__: function(simname, options) {
+			                this.sms_command = options.sms_command
+			                this.shell_command = options.shell_command
+			                this.uci_id = options.uci_id
+
+			                this.cb_add = null
+			                this.cb_save = null
+			                this.cb_delete = null
+
+			                this.tId_connection_error_add = null
+			                this.tId_connection_error_save = null
+			                this.tId_connection_error_delete = null
+			                this.xhr_resp = ""
+
+			                console.log("__INIT", simname, this.sms_command, this.shell_command)
+
+							var self = this
+
+							this.chunk = {
+
+	                            smscomm: new ui.TextFieldStyled(this.sms_command, {
+	                                        optional: false,
+	                                        htmlStyle: "margin-top: 7px;",
+	                                        //validate: this.nearleyValidator("phone", "Введите короткую SMS-команду, напр.: ifstatus")
+	                            }),
+
+	                            shellcomm: new ui.TextFieldStyled(this.shell_command, {
+	                                        optional: true,
+	                                        htmlStyle: "margin-top: 7px;",
+	                                        //validate: this.nearleyValidator("email", "Введите действительную SHELL-команду, напримрер: /sbin/ifstatus tsmodem")
+	                            }),
+
+	                            btn_add: E('input',  {
+									type: "button", class: "cbi-button cbi-button-apply comm-add",
+									["data-smscomm"]: "",
+									["data-shellcomm"]: "",
+									["data-uci_id"]: "",
+									value: _("Добавить"),
+									style: "display: initial;",
+								}),
+
+								btn_save: E('input',  {
+									type: "button", class: "cbi-button cbi-button-apply comm-save",
+									["data-smscomm"]: this.sms_command,
+									["data-shellcomm"]: this.shell_command,
+									["data-uci_id"]: this.uci_id,
+									value: _("Сохранить"),
+									style: "display: initial;",
+								}),
+
+								btn_delete: E('input',  {
+									type: "button", class: "cbi-button cbi-button-apply comm-delete",
+									["data-smscomm"]: this.smscomm,
+									["data-shellcomm"]: this.shellcomm,
+									["data-uci_id"]: this.uci_id,
+									value: _("Удалить"),
+									style: "display: initial;",
+								}),
+							}
+						},
+
+						alert: function(icon, message, confirmBtn) {
+							Swal.fire({
+							  position: "center-end",
+							  icon: icon,	// for example: "success",
+							  text: message,
+							  width: "250px",
+							  showConfirmButton: confirmBtn, // true or false
+							  timer: 2000
+							});
+						},
+
+						render: function() {
+			                var container = E('div', { id: 'uci-' + this.uci_id, class: 'tr cbi-rowstyle' }, [
+			                	E('div', {class: 'td', ["data-title"]: 'N'}, E('div', {}, parseInt("1"))),
+			                	E('div', {class: 'td', ["data-title"]: 'SMScomm'}, this.chunk.smscomm.render()),
+			                	E('div', {class: 'td', ["data-title"]: 'SHELLcomm'}, this.chunk.shellcomm.render()),
+			                    E('div', {class: "nowrap cbi-section-actions td", style: "text-align: right;"}, [
+			                    	this.chunk.btn_add,
+									this.chunk.btn_save,
+									this.chunk.btn_delete,
+			                    ])
+			                ])
+
+
+							return this.bind(container);
+						},
+
+						// Fire events issued from UISMScommand widget
+						fireEvent: function(event_name, event_data) {
+							var self = this
+							var s = new CustomEvent(event_name, {
+								detail: event_data,
+								bubbles: true,
+							})
+							var UISMScommand_name = "UISMScommand_" + self.uci_id
+							if(window.EventBus.busobjects[UISMScommand_name]) {
+								window.EventBus.busobjects[UISMScommand_name].dispatchEvent(s);
+							}
+						},
+
+						rejected: function(slf) {
+							return function(res) {
+								var self = slf
+								console.log(res)
+								self.alert("error", res, true)
+							}
+						},
+
+						cbRequestDone_command_add: function(slf) {
+							return function(x) {
+								var self = slf
+
+								if (!x) {
+									return;
+								}
+
+								if(self.tId_connection_error_add) {
+									clearTimeout(self.tId_connection_error_add)
+								}
+
+								self.alert("success", "SMS-команда добавлена.", false)
+
+								// удалить строку ввода и вставить на её место строку с реально записанными в UCI данными
+								self.xhr_resp = JSON.parse(x.responseText)
+
+								if (self.xhr_resp.uci_id) {
+
+									var command_saved_widget = new ui.SMScommand(self.xhr_resp.smscomm, {
+										sms_command: self.xhr_resp.smscomm,
+										shell_command: self.xhr_resp.shellcomm,
+										uci_id: self.xhr_resp.uci_id,
+									});
+
+									self.node.replaceWith(command_saved_widget.render())
+					                self.smscomm = self.xhr_resp.smscomm
+					                self.shellcomm = self.xhr_resp.shellcomm
+					                self.uci_id = self.xhr_resp.uci_id
+								}
+								var viewWrapper = document.getElementById('sms_commands_rows');
+
+								// Add empty row to the table in order to user is able to add new phone/email
+								var smscomm_widget_empty = new ui.SMScommand("", {
+									sms_command: "",
+									shell_command: "",
+									uci_id: "new",
+								});
+								
+								viewWrapper.appendChild(smscomm_widget_empty.render());
+
+								// а также отключить кнопку "Добавить" и активировать кн. "Удалить"
+								self.chunk.btn_add.disabled = true;
+								self.chunk.btn_save.disabled = true;
+								self.chunk.btn_delete.disabled = false;
+
+								request.removeInterceptor(self.cb_add)
+							}
+
+						},
+
+
+
+						// Добавить SMS-команду / SHELL-команду в список разрешённых
+						command_add: function(payload) {
+							var self = this
+							var xhrResponse;
+
+							var action = "action_sms"
+
+							// Если процедура добавления SMS/SHELL команду в список разрешёных была не удачна -
+							// показать на экране пользователя уведомление об ошибке
+							self.tId_connection_error_add = setTimeout(function(){
+								request.removeInterceptor(self.cb_add)
+								xhrResponse.then(null, self.rejected(self))
+							}, 4000);
+
+
+							// регистрируем callback-функцию
+							self.cb_add = self.cbRequestDone_command_add(self)
+							request.addInterceptor(self.cb_add)
+
+							// отправляем данные формы на роутер методом POST
+							xhrResponse = request.post('<%=luci.dispatcher.build_url("admin", "system", "sms_commands", "action")%>/'+ '%h'.format(action), payload,
+								{timeout: 2000}
+							);
+						},
+
+
+						// После сохранения SMS/SHELL-команд в список разрешённых -
+						// показать на экране пользователя уведомление
+						cbRequestDone_comm_save: function(slf) {
+							return function(x) {
+								var self = slf
+								if (!x) {
+									return;
+								}
+
+								if(self.tId_connection_error_save) {
+									clearTimeout(self.tId_connection_error_save)
+								}
+								self.alert("success", "SMS и SHELL команды сохранены в списке разрешённых.", false)
+
+								// удалить строку ввода и вставить на её место строку с реально записанными в UCI данными
+								self.xhr_resp = JSON.parse(x.responseText)
+								if (self.xhr_resp.uci_id) {
+									var comm_updated_widget = new ui.SMScommand(self.xhr_resp.smscomm, {
+										sms_command: self.xhr_resp.smscomm,
+										shell_command: self.xhr_resp.shellcomm,
+										uci_id: self.xhr_resp.uci_id,
+									});
+									var old = document.getElementById("uci-" + self.xhr_resp["uci_id"]);
+									if (old) {
+										old.replaceWith(comm_updated_widget.render())
+
+										// а также отключить кнопку "Добавить" и активировать кн. "Удалить"
+										self.chunk.btn_add.disabled = true;
+										self.chunk.btn_save.disabled = true;
+										self.chunk.btn_delete.disabled = false;
+									}
+								} else {
+									console.log("DEBUG: cbRequestDone_comm_save: self.xhr_resp.uci_id not defined")
+								}
+							}
+
+						},
+
+						// Обновить SMS/SHELL команды в списке разрешённых
+						// при нажатии SAVE или UPDATE в веб-интерфейсе		
+						//
+						command_save: function(payload) {
+							var self = this
+							var action = "action_sms"
+							var xhrResponse;
+
+							// Если процедура сохранениятелефона/имэйла в списке разрешёных была не удачна -
+							// показать на экране пользователя уведомление об ошибке
+							self.tId_connection_error_save = setTimeout(function(){
+								request.removeInterceptor(self.cb_save)
+								xhrResponse.then(null, self.rejected(self))
+							}, 4000);
+
+
+							// регистрируем callback-функцию
+							self.cb_save = self.cbRequestDone_comm_save(self)
+							request.addInterceptor(self.cb_save)
+
+							// отправляем данные формы на роутер методом POST
+							xhrResponse = request.post('<%=luci.dispatcher.build_url("admin", "system", "sms_commands", "action")%>/'+ '%h'.format(action), payload,
+								{timeout: 2000}
+							);
+						},
+
+
+						// После успешного удаления записи -
+						// показать на экране пользователя уведомление
+						cbRequestDone_command_delete: function(slf) {
+							return function(x) {
+								var self = slf
+								if (!x) {
+									return;
+								}
+								self.xhr_resp = JSON.parse(x.responseText)
+								if(self.tId_connection_error_delete) {
+									clearTimeout(self.tId_connection_error_delete)
+								}
+								self.alert("success", "SMS и SHELL команды удалены из списка разрешённых.", false)
+
+								request.removeInterceptor(self.cb_delete)
+								var raw = document.getElementById('uci-' + self.xhr_resp["uci_id"])
+								if(raw) {
+									raw.parentNode.removeChild(raw)
+								}
+							}
+						},
+
+
+						// Удалить SMS/SHELL команду из списка разрешённых
+						// при нажатии DELETE в веб-интерфейсе		
+						//
+						command_delete: function(payload) {
+							var self = this
+
+							var action = "action_sms"
+							var xhrResponse;
+
+							// Если процедура удаления SMS/SHELL команды в списке разрешёных была не удачна -
+							// показать на экране пользователя уведомление об ошибке
+							self.cb_delete = self.cbRequestDone_command_delete(self)
+							self.tId_connection_error_delete = setTimeout(function(){
+								request.removeInterceptor(self.cb_delete)
+								self.alert("error", self.xhr_resp, true)
+								xhrResponse.then(null, self.rejected(self))
+							}, 3000);
+
+
+							// регистрируем callback-функцию
+							self.cb_delete = self.cbRequestDone_command_delete(self)
+							request.addInterceptor(self.cb_delete)
+							// отправляем данные формы на роутер методом POST
+							xhrResponse = request.post('<%=luci.dispatcher.build_url("admin", "system", "sms_commands", "action")%>/'+ '%h'.format(action), payload,
+								{timeout: 1000}
+							);
+						},
+
+						nearleyValidator: function(field, errormsg) {
+							return function(user_input_text) {
+								// this function is declared at "ui_adapter/"netping_luci_relay_adapter_http.valid.js.htm"
+								var gramma = sms_send_validator(field)
+								const parser = new nearley.Parser(nearley.Grammar.fromCompiled(gramma));
+								try {
+									var pf = parser.feed(user_input_text)
+									if (pf.results.length > 0)
+										return true // it's a requirement of LuCI widget API
+									else
+										return errormsg
+								}
+								catch (e) {
+									return errormsg
+								}
+							}
+						},
+
+						cbShellCommChanged: function(slf, event_type_shellcomm_changed) {
+							return function(ev) {
+								var self = slf
+								var smscomm_empty = (self.chunk.smscomm.getValue() == "")
+								var smscomm_not_valid = (self.chunk.smscomm.isValid() != true)
+								var shellcomm_valid = ((self.chunk.shellcomm.isValid() == true) || (self.chunk.shellcomm.getValue() == ""))
+
+								if (ev.type == event_type_shellcomm_changed) {
+									self.chunk.btn_delete.disabled = true;
+									// Если SMS-команда пуста или невалидна
+									// то деактивируем все кнопки и подсвечиваем незаполненную графу SMS-команда
+									if(smscomm_empty || smscomm_not_valid) {
+										self.chunk.btn_add.disabled = true;
+										self.chunk.btn_save.disabled = true;
+										self.chunk.smscomm.triggerValidation()
+									// Если SMS-команда заполнена
+									// то обрабатываем заполнение SHELL-команды
+									} else {
+										// Если обновляется старая запись
+										// то активируем кн. Save при условии, что SHELL-команда валидна
+										if(self.uci_id != "new") {
+											self.chunk.btn_add.disabled = true;
+											if (shellcomm_valid) {
+												self.chunk.btn_save.disabled = false;
+											} else {
+												self.chunk.btn_save.disabled = true;
+											}
+										} else {
+											// Если добавляется новая запись
+											// то активируем кн. Add при условии, что SHELL-команда валидна
+											if (shellcomm_valid) {
+												self.chunk.btn_add.disabled = false;												
+											} else {
+												self.chunk.btn_add.disabled = true;
+											}
+										}
+									}
+								}
+							}
+						},
+
+						cbSMScommChanged: function(slf, event_type_smscomm_changed) {
+							return function(ev) {
+								var self = slf
+								var smscomm_empty = (self.chunk.smscomm.getValue() == "")
+								var smscomm_not_valid = (self.chunk.smscomm.isValid() != true)
+
+								if(self.uci_id == "new") {
+									self.chunk.btn_save.disabled = true
+									self.chunk.btn_delete.disabled = true
+									if (ev.type == event_type_smscomm_changed) {
+										if (smscomm_empty || smscomm_not_valid) {
+											self.chunk.btn_add.disabled = true
+										} else {
+											self.chunk.btn_add.disabled = false
+										}
+									}
+								} else {
+									if (ev.type == event_type_smscomm_changed) {
+										if (smscomm_empty || smscomm_not_valid) {
+											self.chunk.btn_save.disabled = true
+											self.chunk.btn_delete.disabled = true
+										} else {
+											self.chunk.btn_save.disabled = false
+											self.chunk.btn_delete.disabled = true
+										}
+									}
+								}
+							}
+						},
+
+
+						bind: function(container) {
+							this.node = container
+							var self = this
+
+
+
+							// Make buttons disabled according to UI logic
+
+							dom.bindClassInstance(container, this);
+
+
+							// Register events object which will represent UISiminfo widget on the Event Bus
+							window.EventBus.registerTo(this.node,"UISMScommand_" + this.uci_id)
+
+							if(this.chunk) {
+
+								if((this.sms_command && this.sms_command.length && this.sms_command.length > 0) || (this.uci_id == "new")) {
+									this.chunk.btn_add.disabled = true;
+									if(this.uci_id == "new") {
+										this.chunk.btn_delete.disabled = true;
+									}
+								}
+								this.chunk.btn_save.disabled = true;
+
+
+								this.chunk.btn_save.onclick = function(){
+									let id = self.chunk.btn_save.dataset["uci_id"]
+
+									self.fireEvent("btn_save", {
+										smscomm: self.chunk.smscomm.getValue(),
+										shellcomm: self.chunk.shellcomm.getValue(),
+										uci_id: id,
+										action: "save"
+									})
+								}
+
+								this.chunk.btn_delete.onclick = function(){
+									let id = self.chunk.btn_save.dataset["uci_id"]
+
+									self.fireEvent("btn_delete", {
+										smscomm: self.smscomm,
+										action: "delete",
+										uci_id: id,
+									})
+								}
+
+								this.chunk.btn_add.onclick = function(){
+									let id = self.chunk.btn_save.dataset["uci_id"]
+									self.fireEvent("btn_add", {
+										smscomm: self.chunk.smscomm.getValue(),
+										shellcomm: self.chunk.shellcomm.getValue(),
+										action: "save",
+										uci_id: id,
+									})
+								}
+
+								// ---------------------
+								// SHELL command change UI logic
+								// ---------------------
+
+								// If SHELL command changed:
+								// - enable Save button if adding
+								// - disable Delete button
+								var event_type_shellcomm_changed = 'shellcomm-changed-' + self.uci_id
+								window.EventBus.register(this.chunk.shellcomm.node, event_type_shellcomm_changed, ["keyup"], self.cbShellCommChanged(self, event_type_shellcomm_changed))
+
+								// ---------------------
+								// SMS command change UI logic
+								// ---------------------
+								// If SMS-command is empty or not valid:
+								// - disable Save button
+								// - disable Delete button
+								var event_type_smscomm_changed = 'smscomm-valid-' + self.uci_id
+								window.EventBus.register(this.chunk.smscomm.node, event_type_smscomm_changed, ["keyup"], self.cbSMScommChanged(self, event_type_smscomm_changed))
+							}
+
+
+
+
+							// ---------------------------------------------------
+							// SMS command SAVE pressed on some UISMScommand widget
+							// ---------------------------------------------------
+							if(self.uci_id == "new") {
+								window.EventBus.listenToASAP("UISMScommand_new", ["btn_add"], function(ev) {
+
+									var event_data = ev.detail || {}
+									// Реагировать на событие SAVE только для данного экземпляра виджета
+									var raw = document.getElementById('uci-new')
+									if (raw && event_data["uci_id"] == "new") {
+										self.command_add(event_data);
+									}
+
+								})
+							}
+
+							// ---------------------------------------------------
+							// SMS command UPDATE pressed on some UISMScommand widget
+							// ---------------------------------------------------
+							window.EventBus.listenToASAP("UISMScommand_" + self.uci_id, ["btn_save"], function(ev) {
+								var event_data = ev.detail || {}
+
+								// Реагировать на событие UPDATE только для данного экземпляра виджета
+								var raw = document.getElementById('uci-' + event_data["uci_id"])
+								if(raw && self.uci_id != "new") {
+									self.command_save(event_data);
+								}
+
+							})
+
+							// ---------------------------------------------------
+							// SMS command DELETE pressed on some UISMScommand widget
+							// ---------------------------------------------------
+							window.EventBus.listenToASAP("UISMScommand_" + self.uci_id, ["btn_delete"], function(ev) {
+								var event_data = ev.detail || {}
+								var raw = document.getElementById('uci-' + event_data["uci_id"])
+
+								if(raw && self.uci_id != "new") {
+									self.command_delete(event_data);	
+								}
+							})
+
+							return container;
+						},
+
+					});
+
+					ui["SMScommand"] = UISMScommand;
+			// 	});
+			});
+		});
+	});
+
+//]]>
+</script>

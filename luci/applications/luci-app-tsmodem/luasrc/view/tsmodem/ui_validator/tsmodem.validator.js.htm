@@ -1,30 +1,52 @@
 <script type="text/javascript">
 //<![CDATA[
-    var netping_luci_relay_adapter_http_valid = function (fieldname) {
+    var sms_send_validator = function (fieldname) {
         var grammar = {
             //  ---------------------------------------------------------------------
             //  ADD field name as key and compiled grammar as value
             //  Grammar compilation is created using this specification:
             //  https://netping.atlassian.net/wiki/spaces/PROJ/pages/2809857522/html-
             //  =====================================================================
-                phone: {
-                    Lexer: undefined,
-				    ParserRules: [
-					    {"name": "MAIN", "symbols": ["PREFIX", "CODE", "OPERATOR", "NUMBER"]},
-					    {"name": "PREFIX", "symbols": [{"literal":"+"}]},
-					    {"name": "CODE", "symbols": [/[1-9]/]},
-					    {"name": "CODE", "symbols": [/[1-9]/, /[0-9]/]},
-					    {"name": "OPERATOR", "symbols": [/[1-9]/, /[0-9]/, /[0-9]/]},
-					    {"name": "NUMBER", "symbols": [/[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/]}
-					],
-				  	ParserStart: "MAIN"
 
-                },
-                // The next field is followed by previous below:
-                // =============================================
+            phone: {
+                Lexer: undefined,
+			    ParserRules: [
+				    {"name": "MAIN", "symbols": ["PREFIX", "CODE", "OPERATOR", "NUMBER"]},
+				    {"name": "PREFIX", "symbols": [{"literal":"+"}]},
+				    {"name": "CODE", "symbols": [/[1-9]/]},
+				    {"name": "CODE", "symbols": [/[1-9]/, /[0-9]/]},
+				    {"name": "OPERATOR", "symbols": [/[1-9]/, /[0-9]/, /[0-9]/]},
+				    {"name": "NUMBER", "symbols": [/[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/, /[0-9]/]}
+				],
+			  	ParserStart: "MAIN"
 
+            },
+            // The next field is followed by previous below:
+            // =============================================
+
+            email: {
+                Lexer: undefined,
+                ParserRules: [
+                    {"name": "MAIN$ebnf$1", "symbols": []},
+                    {"name": "MAIN$ebnf$1", "symbols": ["MAIN$ebnf$1", "EMAIL"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+                    {"name": "MAIN", "symbols": ["MAIN$ebnf$1"]},
+                    {"name": "EMAIL", "symbols": ["NAME", {"literal":"@"}, "DOMAIN", {"literal":"."}, "ZONE"]},
+                    {"name": "NAME$ebnf$1", "symbols": [/[a-zA-Z]/]},
+                    {"name": "NAME$ebnf$1", "symbols": ["NAME$ebnf$1", /[a-zA-Z]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+                    {"name": "NAME$ebnf$2", "symbols": []},
+                    {"name": "NAME$ebnf$2", "symbols": ["NAME$ebnf$2", /[0-9a-zA-Z.]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+                    {"name": "NAME", "symbols": ["NAME$ebnf$1", "NAME$ebnf$2"]},
+                    {"name": "DOMAIN$ebnf$1", "symbols": [/[0-9a-zA-Z.]/]},
+                    {"name": "DOMAIN$ebnf$1", "symbols": ["DOMAIN$ebnf$1", /[0-9a-zA-Z.]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+                    {"name": "DOMAIN", "symbols": ["DOMAIN$ebnf$1"]},
+                    {"name": "ZONE$ebnf$1", "symbols": [/[a-zA-z]/]},
+                    {"name": "ZONE$ebnf$1", "symbols": ["ZONE$ebnf$1", /[a-zA-z]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+                    {"name": "ZONE", "symbols": ["ZONE$ebnf$1"]}
+                ],
+                ParserStart: "MAIN"
             }
 
+        }
         return grammar[fieldname]
     }
 //]]>

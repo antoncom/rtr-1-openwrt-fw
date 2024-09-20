@@ -122,7 +122,27 @@ L.require('ui').then(function(ui) {
 
 					})
 
+					window.EventBus.listenToASAP("UIModalSMS_send", ["send-sms"], function(ev) {
+						var event_data = ev.detail || {}
+
+						console.log(event_data)
+
+						self.socket.send(JSON.stringify({
+							proto: "ubus",
+							uuid: event_data.uuid || "",
+							obj: "tsmodem.driver",
+							method: "send_sms",
+							params: { command: event_data["sms_text"], value: event_data["phone_number"] }
+						}));
+
+					})
+
 					window.EventBus.listenToASAP("UIModal", ["send-to-websocket"], function(ev) {
+						var event_data = ev.detail || {}
+						self.socket.send(JSON.stringify(event_data));
+					})
+
+					window.EventBus.listenToASAP("UIModalSMS_send", ["send-to-websocket"], function(ev) {
 						var event_data = ev.detail || {}
 						self.socket.send(JSON.stringify(event_data));
 					})
@@ -188,7 +208,7 @@ L.require('ui').then(function(ui) {
 			});
 
 			ui["WebSocket"] = UIWebSocket;
-	        window.WebSocket = new ui.WebSocket("192.168.1.1", 7890)
+	        window.WebSocket = new ui.WebSocket(window.location.hostname, 7890)
 	        window.WebSocket_pseudo_widget = window.WebSocket.render()
 		});
 	});

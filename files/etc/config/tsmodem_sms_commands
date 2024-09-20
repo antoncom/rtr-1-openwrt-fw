@@ -1,0 +1,23 @@
+
+config debug 'debug'
+	option enable '0'
+	option type 'all'
+
+config remote_control
+	option trusted_phone '+78005002010'
+	option trusted_email 'abc@ac.com'
+
+config sms_command
+	option sms_command 'pwd'
+	option shell_command '/sbin/pwd'
+
+config sms_command
+	option sms_command 'reboot'
+	option shell_command '/sbin/reboot'
+
+config sms_command
+	option sms_command 'log'
+	option shell_command '/sbin/logread'
+
+config sms_command
+
