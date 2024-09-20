@@ -1,0 +1,413 @@
+<% --[[=========== LUA BACKEND ==========]] %>
+<%
+	local config = "tsmgpio"
+
+	local uci = require "luci.model.uci".cursor()
+
+%>
+
+<% --[[=========== STYLES ==========]] %>
+<%+tsmgpio/gpio.css%>
+<%+tsmgpio/ui_override/TextFieldStyled.js%>
+
+<script src="<%=resource%>/tsmodem/jquery/jquery-3.5.1.min.js"
+		type="text/javascript"
+		charset="utf-8"></script>
+
+<script src="<%=resource%>/tsmodem/sweetalert/sweetalert.min.js"
+		type="text/javascript"
+		charset="utf-8"></script>
+
+<script type="text/javascript">
+//<![CDATA[
+L.require('request').then(function(request) {
+	L.require('ui').then(function(ui) {
+
+
+	class Gpio {
+	    type = "gpio";
+	    name = "";
+	    options = {
+	        direction: "",
+	        value: "",
+	        action: "",
+	        action_value: "",
+	        trigger: "",
+	        debounce: "",
+	    };
+	}
+
+	class GpioData {
+		general = {
+		    isActive: false
+		};
+		gpio = new Array(/* Gpio() */)
+	}
+
+
+	var directionType = ['IN','OUT'];
+	var valueType = ['LOW','HIGH'];
+	var actionType = ['none','command'];
+	var triggerType = ['RISE','FALL', 'BOTH'];
+
+	var cb_save = null
+	var tId_connection_error = null
+
+	function getCfgData(gpioType, callback) {
+		spinner(true);
+		L.require("uci").then(function(uci) {
+			uci.load("<%=config%>").then(function(out){
+				var sections = uci.sections('<%=config%>', gpioType);
+				if (callback) {
+					callback(sections);
+				}
+				spinner(false);
+			});
+		});
+	}
+
+	function initForm(data) {
+		var form = {}
+	    form['isActive'] = new ui.Checkbox(data.isActive);
+	    return form;
+	}
+
+	function initFormRow(data) {
+		var form_row = {}
+		form_row['name'] = data.name;
+	    form_row['direction'] = new ui.Select(data.options.direction, make_dropdown_options(directionType), {
+	        multiple: false,
+	        optional: false,
+	        sort: false,
+	    })
+	    form_row['value'] = new ui.Select(data.options.value, make_dropdown_options(valueType), {
+	        multiple: false,
+	        optional: false,
+	        sort: false,
+	    })
+	    form_row['action'] = new ui.Select(data.options.action, make_dropdown_options(actionType), {
+	    	id: data.name,
+	        multiple: false,
+	        optional: false,
+	        sort: false,
+	    })
+	    form_row['trigger'] = new ui.Select(data.options.trigger, make_dropdown_options(triggerType), {
+	        multiple: false,
+	        optional: false,
+	        sort: false,
+	    })
+	    form_row['debounce'] = new ui.TextFieldStyled(data.options.debounce, {
+	        optional: false,
+	        htmlStyle: "width: 60px;"
+			//validate: nearleyValidator('number', "<%:Should contain digits nad ',' or '.'%>")
+	    })
+	    form_row['action_value'] = new ui.TextFieldStyled(data.options.action_value, {
+	        optional: false,
+			htmlStyle: "width: 350px;"
+			//validate: nearleyValidator('number', "<%:Should contain digits nad ',' or '.'%>")
+	    })
+	    return form_row
+	}
+
+	function renderForm(form) {
+	    var container = E('div', {class: 'tr table', style: 'width: 100%;'}, [
+	        E('div', { class: 'cbi-value' }, [
+	            E('label', { 'class': 'cbi-value-title' }, '<%:Enable GPIO%>'),
+	            E('div', { class: 'cbi-value-field' }, [form.isActive.render()])
+	        ]),
+	        E('div', { 'id': 'formContent' }, ''),
+	        
+		])
+					
+		var viewWrapper= document.getElementById('pageContent');
+		viewWrapper.appendChild(container);
+	}
+
+	function renderFormRow(formRow) {
+			L.require('ui').then(function(ui) {
+				var id_action = formRow.name;
+				var id_action_value = formRow.name + '_value';
+				var id_action_trigger = formRow.name + '_trigger';
+				var id_action_debouce = formRow.name + '_debounce';
+
+				var container = E('div', {class: "tr"}, [
+					E('div', { class: 'td' }, [
+			            E('legend', { class: '' }, formRow.name)
+			        ]),
+					E('div', { class: 'td' }, [
+			            E('label', { 'class': 'cbi-value-title' }, '<%:Direction%>'),
+			            E('div', { class: '' }, [formRow.direction.render()])
+			        ]),
+			        E('div', { class: 'td' }, [
+			            E('label', { 'class': 'cbi-value-title' }, '<%:Value%>'),
+			            E('div', { class: '' }, [formRow.value.render()])
+			        ]),
+			        E('div', { class: 'td' }, [
+			            E('label', { 'class': 'cbi-value-title' }, '<%:Action%>'),
+			            E('div', { class: '' }, [formRow.action.render()]),
+			        ]),
+
+			        E('div', { class: 'table' }, [
+			        	E('div', { class: 'tr' }, [
+					        E('div', { class: 'td' }, [
+						        E('div', { id: id_action_trigger, class: '', style: '' }, [
+						            E('label', { 'class': 'cbi-value-title' }, '<%:Trigger%>'),
+						            E('div', { class: ''}, [formRow.trigger.render()]),
+						        ]),
+						    ]),
+
+							E('div', { class: 'td' }, [
+						        E('div', { id: id_action_debouce, class: '', style: '' }, [
+						            E('label', { 'class': 'cbi-value-title' }, '<%:Debounce%>'),
+						            E('div', { class: ''}, [formRow.debounce.render()]),
+						        ]),
+						    ]),
+
+							E('div', { class: 'table' }, [
+								E('div', { class: 'tr' }, [
+									E('div', { id: id_action_value, class: 'td', }, [
+							            E('label', { 'class': 'cbi-value-title' }, '<%:Action parameters%>'),
+							            E('div', { class: '' }, [formRow.action_value.render()])
+							        ]),
+								])
+							])
+						])
+					])
+
+				]);
+
+
+				var viewWrapper= document.getElementById('formContent');
+				viewWrapper.appendChild(container);
+
+
+				if (formRow.action.values[0] == "command") {
+					$("#"+id_action_value).show()
+					$("#"+id_action_trigger).show()
+					$("#"+id_action_debouce).show()
+				} else {
+					$("#"+id_action_value).hide()
+					$("#"+id_action_trigger).hide()
+					$("#"+id_action_debouce).hide()
+				}
+
+
+				// If action = "command", then show action_value text field
+				$("#"+id_action).on("click", function(e){
+					var id = e.target.id.substr(7)
+					// var action_value_node = e.targ
+					var act_el_id = id + "_value"
+					var trigger_el_id = id + "_trigger"
+					var debounce_el_id = id + "_debounce"
+
+					// var action_value_node = e.target.parentElement.parentElement.parentElement.nextSibling || null;
+				 	if(e.target.value == "command") {
+				 		$("#"+act_el_id).show()
+				 		$("#"+trigger_el_id).show()
+				 		$("#"+debounce_el_id).show()
+				 	} else {
+				 		$("#"+act_el_id).hide()
+				 		$("#"+trigger_el_id).hide()
+				 		$("#"+debounce_el_id).hide()
+				 	}
+				});
+			})
+
+	}
+
+	getCfgData('<%=gpioType%>', function(sections) {
+		var g_gpioData = new GpioData();
+		var g_form = {}
+		g_form["general"] = null;
+		g_form["gpio"] = new Array()
+
+		sections.forEach(function(element) {
+			var g_form_row = {};
+			if(element[".name"] == "general") { 
+				g_gpioData.isActive = parse_bool(element['isActive']);
+				g_form["general"] = initForm(g_gpioData);
+				renderForm(g_form["general"]);
+			} else {
+				var g_gpio = new Gpio();
+				g_gpio['name'] = parse_string(element['.name']);
+			    g_gpio.options['direction'] = parse_string(element['direction']);
+			    g_gpio.options['value'] = parse_string(element['value']);
+			    g_gpio.options['action'] = parse_string(element['action']);
+			    g_gpio.options['action_value'] = parse_string(element['action_value']);
+			    g_gpio.options['trigger'] = parse_string(element['trigger']);
+			    g_gpio.options['debounce'] = parse_string(element['debounce']);
+
+			    g_gpioData.gpio.push(g_gpio);
+
+			    g_form_row = initFormRow(g_gpio);
+
+			    g_form["gpio"].push(g_form_row);
+
+
+	    		renderFormRow(g_form_row);
+			}
+		});
+
+	 
+	    $('#btnReset').on('click', function(){ reset_fields(g_form, g_gpioData); });
+	    $('#btnApply').on('click', function(){ apply(g_form); });
+	});
+
+	function reset_fields(form, data) {
+		form["general"].isActive.setValue(data.isActive);
+		var indx = 0;
+		form["gpio"].forEach(function(gpio){
+			var gpio_setting = {}
+			for (var param in gpio) {
+	  			var gp = gpio[param]
+	  			if (param != "name") {
+	  				gp.setValue(data["gpio"][indx]["options"][param])
+	  			}
+	  			var id_action = data["gpio"][indx].name;
+				var id_action_value =id_action + '_value';
+				var id_action_trigger = id_action + '_trigger';
+				var id_action_debouce = id_action + '_debounce';
+	  			if(data["gpio"][indx]["options"][param] == "command") {
+	  				$("#"+id_action_value).show()
+					$("#"+id_action_trigger).show()
+					$("#"+id_action_debouce).show()
+	  			} else if(data["gpio"][indx]["options"][param] == "none") {
+	  				$("#"+id_action_value).hide()
+					$("#"+id_action_trigger).hide()
+					$("#"+id_action_debouce).hide()
+	  			}
+			}
+			indx += 1;
+		})
+	}
+
+	function apply(form) {
+	    var gpioData = new GpioData();
+		gpioData.general['isActive'] = form["general"].isActive.getValue();
+		gpioData.gpio = new Array()
+		form["gpio"].forEach(function(gpio){
+			var gpio_setting = {}
+			for (var param in gpio) {
+	  			var gp = gpio[param]
+	  			if(typeof gp.getValue == 'function') {
+	  				gpio_setting[param] = gp.getValue()
+	  			} else if(typeof gp == 'string') {
+	  				gpio_setting[param] = gp
+	  			} else {
+	  				console.log("GPIO unknow data type of form field: ", param)
+	  			}
+			}
+			gpioData.gpio.push(gpio_setting)
+		})
+
+	    sendAction("save", gpioData, function(resp){
+	    	var r = JSON.parse(resp.response)
+	    	if (r && r.general && r.general.isActive == "1") {
+	    		show_alert("success", "GPIO настройки активированы!", false)
+	    	} else if (r && r.general && r.general.isActive == "0") {
+	    		show_alert("warning", "Настройки сохранены, но GPIO отключен!", false)
+	    	} else {
+	    		show_alert("error", "Ошибка сохранения настроек GPIO", true)
+	    	}
+	    });
+	}
+
+	function show_alert(icon, message, confirmBtn,) {
+		Swal.fire({
+		  position: "center-end",
+		  icon: icon,	// for example: "success",
+		  text: message,
+		  width: "250px",
+		  showConfirmButton: confirmBtn, // true or false
+		  timer: (confirmBtn) ? null : 3000
+		});
+	}
+
+	function rejected() {
+		return function(res) {
+			spinner(false);
+			show_alert("error", res, true)
+		}
+	}
+
+	function sendAction(action, data, callback) {
+		var xhrResponse;
+		spinner(true);
+
+		// Если процедура сохранения GPIO настроек была не удачна -
+		// показать на экране пользователя уведомление об ошибке
+		tId_connection_error = setTimeout(function(){
+			request.removeInterceptor(cb_add)
+			xhrResponse.then(null, rejected())
+		}, 4000);
+
+		// регистрируем callback-функцию
+		cb_add = handleActionResult()
+		request.addInterceptor(cb_add)
+
+		// отправляем данные формы на роутер методом POST	
+		var url = '<%=luci.dispatcher.build_url("admin", "services", "tsmgpio_set", "action")%>/'+ '%h'.format(action);
+		xhrResponse = request.post(url, data, {timeout: 2000});
+
+	}
+
+	function handleActionResult() {
+		return function(result) {
+			if (result && result.xhr) {
+				var answer = JSON.parse(result.xhr.response)
+				if(answer.general && answer.general.isActive) {
+					switch(answer.general.isActive) {
+						case '1':
+							show_alert("success", "GPIO настройки активированы!", false)
+							break;
+						case '0':
+							show_alert("warning", "Настройки сохранены, но GPIO отключен!", false)
+							break;
+						default:
+							show_alert("error", "Ошибка сохранения настроек GPIO", true)
+					}
+				}
+			}
+			spinner(false);
+		}
+	}
+
+
+	function make_dropdown_options(list) {
+	    var result = {};
+	    var item = "";
+
+	    for(i in list) {
+	        item = list[i];
+	        result[item] = item;
+	    }
+
+	    return result;
+	}
+
+	function parse_bool(value) {
+	    return value == 'true' || value == 1;
+	}
+
+	function parse_string(value) {
+		return !value ? "" : String(value);
+	}
+
+	function spinner(state) {
+		var element = document.getElementById("btn_enable_spinner");
+		if (element && element.style) {
+			if (state === true) {
+				element.style.width = "16px";
+				element.innerHTML = '<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" width="16" height="16" style="vertical-align:middle;" />';
+			}
+			else {
+				element.style.width = "0px";
+				element.innerHTML = '';
+			}
+		}
+	}
+
+	});
+});
+//]]>
+</script>

@@ -1,0 +1,26 @@
+<% --[[=========== JS ==========]] %>
+<%+tsmgpio/gpio.js%>
+
+<% --[[=========== LUA BACKEND ==========]] %>
+<%
+	local gpioType = "gpio"
+%>
+
+<div id="view">
+    <h2><%:General Pupose I/O %></h2>
+
+    <div class="cbi-map">
+        <div class="cbi-map-section">
+            <div class="cbi-map-section-node" id="pageContent">
+               
+            </div>
+        </div>
+    </div>
+    
+    
+    <div class="cbi-page-actions">
+        <span id="btn_enable_spinner" class="btn_spinner"></span> 
+        <input id="btnApply" class="cbi-button cbi-button-apply" type="button" value="<%:Save%>"> 
+        <input id="btnReset" class="cbi-button cbi-button-reset" type="button" value="<%:Reset%>"> 
+    </div>
+</div>

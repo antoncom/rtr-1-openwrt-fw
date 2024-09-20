@@ -1,0 +1,29 @@
+
+config gpio 'general'
+	option debug '0'
+	option isActive '0'
+
+config gpio 'IO_1'
+	option value 'LOW'
+	option action 'command'
+	option direction 'IN'
+	option debounce '100'
+	option trigger 'RISE'
+	option action_value '/bin/pwd'
+
+config gpio 'IO_2'
+	option direction 'OUT'
+	option value 'HIGH'
+	option action 'command'
+	option debounce '200'
+	option trigger 'FALL'
+	option action_value '/bin/ls -l'
+
+config gpio 'IO_3'
+	option direction 'IN'
+	option value 'LOW'
+	option trigger 'BOTH'
+	option debounce '300'
+	option action_value '/sbin/reboot'
+	option action 'none'
+
