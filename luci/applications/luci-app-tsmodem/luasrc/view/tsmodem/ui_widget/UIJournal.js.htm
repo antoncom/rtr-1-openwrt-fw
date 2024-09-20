@@ -3,6 +3,27 @@
 --local ubus_sim = util.ubus("tsmodem.driver", "sim", {})
 --local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 %>
+<%
+    -- Lua variables and dependencies
+    local config = "tsmodem"
+    local journal_config = "tsmodem_journal_provider"
+    local uci = require "luci.model.uci".cursor()
+    local util = require "luci.util"
+    local log = require "tsmodem.util.log"
+
+    -- Fetch the journal entries (using a function similar to `read_saved_items`)
+    local journal_list = require "luci.model.tsmodem.journal_list"
+    local journal_data = uci:get_all(journal_config) or {}
+    local journal_entries = journal_list:fetch() or {}
+
+    -- You can serialize and print it out in JSON format to pass to the front-end
+    local serialized_journal = util.serialize_json(journal_entries)
+
+    -- Use prints to expose the data to the HTML/JavaScript side
+    print(journal_list:render("cssfile"))
+    print(journal_list:render("validator"))
+    print(journal_list:render("widgetfile"))
+%>
 
 
 <script type="text/javascript">
@@ -19,6 +40,11 @@
 						this.response;
 						this.total_records = 0;
 						this.pagination_records = 5;
+
+						this.debounce = false
+						this.timeoutId = undefined
+
+						var self = this
 
 						// Debounce helper
 						this.waitme = function() {
@@ -40,7 +66,6 @@
 								E('th', {class: "th", style: "padding-left: 25px;"}, "<%:Responce %>" ),
 							]),
 							newRow: function(date, name, source, command, response) {
-								console.log("HAHAH", date)
 								return (
 								E('tr', {class: 'tr journal-row'}, [
 									E('td', {class: "td"}, date ),
@@ -70,7 +95,7 @@
 					},
 
 					render: function() {
-		                var container = E('h3', {}, '<%:System log %>') + E('table', { class: 'table journal' }, [
+		                var container = E('h3', {}, '<%:System log %>') + E('table', { class: 'table journal', id: 'journal' }, [
 		                    this.chunk.tblHeader,
 							this.chunk.tblRawEmpty,
 							this.chunk.clearLogRaw,
@@ -96,7 +121,7 @@
 						var self = this
 						dom.bindClassInstance(container, this);
 
-						// Register events object which will represent UISiminfo widget on the Event Bus
+						// Register events object which will represent UIJournal widget on the Event Bus
 						window.EventBus.registerTo(this.node,"UIJournal")
 
 						if(this.chunk) {
@@ -122,11 +147,23 @@
 																	"98_rule", 
 																	"99_rule"], function(ev) {
 							*/
-						window.EventBus.listenToASAP("websocket", ["01_rule"], function(ev) {
+
+						window.EventBus.listenToASAP("websocket", ["01_rule", 
+																    "02_rule", 
+																	"03_rule", 
+																	"04_rule", 
+																	"05_rule", 
+																	"06_rule", 
+																	"07_rule", 
+																	"08_rule", 
+																	"14_rule", 
+																	"15_rule", 
+																	"98_rule", 
+																	"99_rule"], function(ev) {
+
 
 							if (!self.is_switching && !self.debounce) {
 								var event_data = ev.detail || {}
-
 								if(event_data["journal"]) {
 
 									var event_date = event_data["journal"]["datetime"]  || "";
@@ -146,6 +183,46 @@
 							}
 						});
 
+						window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
+							var event_data = ev.detail || {}
+ 							var simid = event_data.simid || "simid-0"
+
+ 							var event_date = "2024-06-13";
+							var event_name = "Активация слота SIM пользователем";
+							var event_source = "Web-интерфейс";
+							var event_command = "Активировать";
+							var event_response = (simid == 0) ? "SIM-1" : "SIM-2";
+
+							var new_row_chunk = self.chunk.newRow(event_date, event_name, event_source, event_command, event_response);
+
+							console.log("simid", simid);
+
+							var table = $('#journal').DataTable();
+							table.row.add([event_date, event_name, event_source, event_command, event_response]).draw();
+							table.columns.adjust().draw();
+
+						})
+
+						window.EventBus.listenToASAP("UISiminfo_1", ["btn_activate_pressed"], function(ev) {
+							var event_data = ev.detail || {}
+ 							var simid = event_data.simid || ""
+
+ 							var event_date = "2024-06-13";
+							var event_name = "Активация слота SIM пользователем";
+							var event_source = "Web-интерфейс";
+							var event_command = "Активировать";
+							var event_response = (simid == 1) ? "SIM-2" : "SIM-1";
+
+							var new_row_chunk = self.chunk.newRow(event_date, event_name, event_source, event_command, event_response);
+
+							console.log("simid", simid);
+
+							var table = $('#journal').DataTable();
+							table.row.add([event_date, event_name, event_source, event_command, event_response]).draw();
+							table.columns.adjust().draw();
+
+						})
+
 						return container;
 					},
 
@@ -154,6 +231,7 @@
 				$(document).ready( function () {
 					$('#journal').DataTable({
 						"pageLength": 5, 
+						"order": [[0, "desc"]],
 						"language": {
 							"decimal":        "",
 							"emptyTable":     "нет доступных данных",
@@ -197,3 +275,44 @@
 
 //]]>
 </script>
+
+<script type="text/javascript">
+	// Load the required libraries (UI and UCI)
+	L.require("ui").then(function(ui) {
+		L.require("uci").then(function(uci) {
+			uci.load("<%=config%>").then(function(out) {
+				// Fetch the journal entries serialized in Lua and passed to the front-end
+				var journal_data = <%= serialized_journal %>;
+	
+				// Example initialization of the journal table
+				var table = $('#journal').DataTable();
+
+				
+	
+				// Iterate over the journal entries and add them to the table
+				journal_data.forEach(function(entry) {
+					// Parse the nested 'journal' field if it exists and is a string
+					var journal_entry = {};
+					if (typeof entry.journal === 'string') {
+						try {
+							journal_entry = JSON.parse(entry.journal); // Parse the nested JSON string
+						} catch (e) {
+							console.error('Error parsing journal entry:', e);
+						}
+					}
+
+					// Extract the fields from the parsed 'journal_entry'
+					var date = journal_entry.datetime || "";
+					var name = journal_entry.name || "";
+					var source = journal_entry.source || "";
+					var command = journal_entry.command || "";
+					var response = journal_entry.response || "";
+
+					// Add the journal entry to the DataTable
+					table.row.add([date, name, source, command, response]).draw();
+				});
+			});
+		});
+	});
+	</script>
+	
