@@ -421,7 +421,7 @@ local util = require "luci.util"
 
 							if(this.chunk) {
 
-								if((this.sms_command.length > 0) || (this.uci_id == "new")) {
+								if((this.sms_command && this.sms_command.length && this.sms_command.length > 0) || (this.uci_id == "new")) {
 									this.chunk.btn_add.disabled = true;
 									if(this.uci_id == "new") {
 										this.chunk.btn_delete.disabled = true;
