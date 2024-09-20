@@ -1,0 +1,83 @@
+<style type="text/css">
+    .modal-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .modal-value {
+        width: inherit;
+        padding: 0 5px;
+    }
+
+    .modal-value > div > .cbi-input-text,
+    .modal-value > .cbi-dropdown,
+    .modal-value > div > div > .cbi-input-password {
+        width: 100% !important;
+        max-width: unset !important;
+        min-width: unset !important;
+    }
+
+    .modal-password {
+        padding-right: 23px;
+    }
+    
+    .modal-val-title {
+        font-weight: bold;
+        display: block;
+        padding: 7px 1px;
+    }
+    
+    .modal-checkbox > * {
+        display: inline;
+        vertical-align: middle;
+    }
+
+    .modal-checkbox > .modal-val-title {
+        padding-left: 5px;
+    }
+
+    .modal-buttons {
+        display:flex;
+        justify-content: flex-end;
+        padding-top: 10px;
+    }    
+    
+    .modal-buttons > .btn {
+        margin: 0 5px;
+    }
+
+    .modal-section {
+        width: inherit;
+        border: 1px, solid, #ddd;
+        margin: 0px 5px;
+        padding: 0px 5px 10px 5px;
+    }
+
+    .modal-file-button input[type=file] {
+        width: 100% !important;
+        border: 1px solid #ccc;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);;
+        padding: 0.5em;
+        margin-left: -2px !important;
+    }
+
+    .modal-file-button input[type="file"]::-webkit-file-upload-button {
+        display: none;
+    }
+    .modal-file-button input[type="file"]::file-selector-button {
+        display: none;
+    }
+    .modal-file-button label {
+        width: 150px;
+        text-align: center;
+    }
+
+    .modal-file-button:hover label {
+        background-color: #dde0e3;
+        cursor: pointer;
+    }
+
+    .cbi-input-invalid input[type="file"] {
+        border: 1px solid red;
+    }
+</style>

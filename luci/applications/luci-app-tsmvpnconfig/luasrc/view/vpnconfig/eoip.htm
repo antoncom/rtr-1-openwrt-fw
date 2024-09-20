@@ -1,0 +1,223 @@
+<% --[[=========== JS ==========]] %>
+<%+vpnconfig/vpnconfig.js%>
+
+<% --[[=========== LUA BACKEND ==========]] %>
+<%
+	local vpnType = "eoip"
+%>
+
+<div id="view">
+    <h2><%:EoIP tunnels %></h2>
+
+	<div id="eoip_rows" class="table">
+		<div class="tr table-titles">
+			<div class="th"><%:Name %></div>
+			<div class="th"><%:Active %></div>
+			<div class="th center nowrap cbi-section-actions"><%:Actions %></div>
+		</div>
+	</div>
+	<div class="cbi-page-actions">
+        <span id="btn_enable_spinner" class="btn_spinner"></span> 
+        <input class="cbi-button cbi-button-apply" type="button" value="<%:Add %>" onclick="showModal(new EoIPData())"> 
+    </div>
+</div>
+
+<script type="text/javascript">
+	
+	var localAddresses = get_list_interfaces();
+	var bridges = get_list_bridges();
+	var firewallZones = get_list_firewall_zone();
+
+	class EoIPData {
+		name = "";
+		type = '<%=vpnType%>';
+		isActive = false;
+		options = {
+			localAddr: localAddresses[0],
+			remoteAddr: "",
+			bridge: bridges[0],
+			tunnelIp: "",
+			tunnelMask: "",
+			tunnelId: "",
+			zone: firewallZones[0],
+		};
+	}
+
+	getCfgData('<%=vpnType%>', function(sections) {
+		for (s in sections) {
+			var newEoIP = new EoIPData();
+			newEoIP.name = parse_string(sections[s]['.name']);
+			newEoIP.isActive = parse_bool(sections[s]['isActive']);
+			newEoIP.options['localAddr'] = parse_string(sections[s]['localAddr']);
+			newEoIP.options['remoteAddr'] = parse_string(sections[s]['remoteAddr']);
+			newEoIP.options['bridge'] = parse_string(sections[s]['bridge']);
+			newEoIP.options['tunnelIp'] = parse_string(sections[s]['tunnelIp']);
+			newEoIP.options['tunnelMask'] = parse_string(sections[s]['tunnelMask']);
+			newEoIP.options['tunnelId'] = parse_string(sections[s]['tunnelId']);
+			newEoIP.options['zone'] = parse_string(sections[s]['zone']);
+			addRow('eoip_rows', newEoIP);
+		}
+	});
+	
+	function showModal(eoipData) {
+		L.require('ui').then(function(ui) {
+			var form = {
+				name: new ui.Textfield(eoipData.name, {
+					placeholder: "<%:Name%>",
+					optional: false,
+					readonly: eoipData.name.length > 0,
+					validate: nearleyValidator('sectionName', '<%:Should contain letters, numbers and "_"%>')
+				}),
+				localAddr: new ui.Dropdown(eoipData.options.localAddr, make_dropdown_options(localAddresses), {
+					multiple: false,
+					sort: false,
+					optional: false
+				}),
+				remoteAddr: new ui.Textfield(eoipData.options.remoteAddr, {
+					placeholder: "<%:Remote IP%>",
+					optional: false,
+					validate: nearleyValidator('ip4', '<%:Should contain numbers 0..255 and "."%>')
+				}),
+				bridge: new ui.Dropdown(eoipData.options.bridge, make_dropdown_options(bridges), {
+					multiple: false,
+					optional: false,
+					sort: false,
+					create: true,
+					validate: nearleyValidator('string', '<%:Should contain letters, numbers and "_"%>')
+				}),
+				tunnelIp: new ui.Textfield(eoipData.options.tunnelIp, {
+					optional: false,
+					placeholder: "<%:Local IP for tunnel%>",
+					validate: nearleyValidator('ip4', '<%:Should contain numbers 0..255 and "."%>')
+				}),
+				tunnelMask: new ui.Textfield(eoipData.options.tunnelMask, {
+					optional: false,
+					placeholder: "<%:Netmask%>",
+					validate: nearleyValidator('netmask', '<%:Should contain numbers 0..255 and "." or bits count 0..32%>')
+				}),
+				tunnelId: new ui.Textfield(eoipData.options.tunnelId, {
+					optional: true,
+					placeholder: "<%:Tunnel ID%>",
+					validate: function(input){
+						var v = nearleyValidator('integer', '<%:Should contain only digits%>');
+						var res = v(input);
+						if (res !== true)
+							return res;
+
+						if (!input.length)
+							return true;
+
+						if (Number(input) > 0 && Number(input) < 0xFFFF) {
+							return true;
+						} else {
+							return "<%:out of range%>"
+						}
+					}
+				}),
+				zone: new ui.Dropdown(eoipData.options.zone, make_dropdown_options(firewallZones), {
+					multiple: false,
+					create: true,
+					sort: false,
+					optional: false,
+					validate: nearleyValidator('string', '<%:Should contain letters, numbers and "_"%>')
+				})
+			}
+	
+			L.showModal('<%:Configure EoIP tunnel%>',[
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Name%>'),
+						form.name.render()
+					]),
+				]),
+	
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Local address%>'),
+						form.localAddr.render()
+					]),
+		
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Remote address%>'),
+						form.remoteAddr.render()
+					]),
+				]),
+	
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Add to Bridge or create new%>'),
+						form.bridge.render()
+					]),
+				]),
+	
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Tunnel IP%>'),
+						form.tunnelIp.render()
+					]),
+		
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Tunnel netmask%>'),
+						form.tunnelMask.render()
+					]),
+				]),
+	
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Tunnel ID%>'),
+						form.tunnelId.render()
+					]),
+		
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Firewall zone%>'),
+						form.zone.render()
+					]),
+				]),
+	
+				E('div', { class: 'modal-buttons' }, [
+					E('div', {
+						class: 'btn',
+						click: function() {
+							L.hideModal()
+						}
+					}, '<%:Close%>'),
+					E('div', {
+						class: 'btn',
+						click: function() {
+							for (i in form) {
+								form[i].setValue(eoipData[i] != undefined ? eoipData[i] : eoipData.options[i]);
+								form[i].triggerValidation();
+							}
+						}
+					}, '<%:Reset%>'),
+					E('div', {
+						class: 'btn primary',
+						click: function() {
+							var isFormValid = true;
+							for (i in form) {
+								var field = form[i];
+								field.triggerValidation();
+								isFormValid &= field.isValid();
+							}
+
+							if (!isFormValid)
+								return;
+							
+							eoipData.name = form.name.getValue(); 
+							eoipData.options['localAddr'] = form.localAddr.getValue(); 
+							eoipData.options['remoteAddr'] = form.remoteAddr.getValue(); 
+							eoipData.options['bridge'] = form.bridge.getValue(); 
+							eoipData.options['tunnelIp'] = form.tunnelIp.getValue(); 
+							eoipData.options['tunnelMask'] = form.tunnelMask.getValue(); 
+							eoipData.options['tunnelId'] = form.tunnelId.getValue(); 
+							eoipData.options['zone'] = form.zone.getValue(); 
+							commitConfig(eoipData);
+							L.hideModal()
+						}
+					}, '<%:Save%>'),
+				]),
+			]);
+		});
+	}
+	
+</script>

@@ -1,0 +1,283 @@
+<% --[[=========== JS ==========]] %>
+<%+vpnconfig/vpnconfig.js%>
+
+<% --[[=========== LUA BACKEND ==========]] %>
+<%
+	local vpnType = "l2tpv3"
+%>
+
+<div id="view">
+    <h2><%:L2TPv3 tunnels %></h2>
+
+	<div id="l2tpv3_rows" class="table">
+		<div class="tr table-titles">
+			<div class="th"><%:Name %></div>
+			<div class="th"><%:Active %></div>
+			<div class="th center nowrap cbi-section-actions"><%:Actions %></div>
+		</div>
+	</div>
+	<div class="cbi-page-actions">
+        <span id="btn_enable_spinner" class="btn_spinner"></span> 
+        <input class="cbi-button cbi-button-apply" type="button" value="<%:Add %>" onclick="showModal(new L2ptv3Data())"> 
+    </div>
+</div>
+
+
+<script type="text/javascript">
+	
+	var localAddresses = get_list_interfaces();
+	var bridges = get_list_bridges();
+	var firewallZones = get_list_firewall_zone();
+	var encapsulationTypes = ["ip", "udp"];
+	var l2HeaderTypes = ["none", "default", "ATM", "MPT", "PSP"];
+
+	class L2ptv3Data {
+		name = "";
+		type = '<%=vpnType%>';
+		isActive = false;
+		options = {
+			localAddr: localAddresses[0],
+			remoteAddr: "",
+			bridge: bridges[0],
+			zone: firewallZones[0],
+			tunnelIp: "",
+			tunnelMask: "",
+			tunnelId: "0",
+			remoteTunnelId: "",
+			sessionId: "0",
+			remoteSessionId: "",
+			encapsulation: encapsulationTypes[0],
+			l2HeaderType: l2HeaderTypes[0],
+		};
+	}
+	
+	getCfgData('<%=vpnType%>', function(sections) {
+		for (s in sections) {
+			var l2ptv3Data = new L2ptv3Data();
+			l2ptv3Data.name = parse_string(sections[s]['.name']);
+			l2ptv3Data.isActive = parse_bool(sections[s]['isActive']);
+			l2ptv3Data.options['localAddr'] = parse_string(sections[s]['localAddr']);
+			l2ptv3Data.options['remoteAddr'] = parse_string(sections[s]['remoteAddr']);
+			l2ptv3Data.options['bridge'] = parse_string(sections[s]['bridge']);
+			l2ptv3Data.options['zone'] = parse_string(sections[s]['zone']);
+			l2ptv3Data.options['tunnelIp'] = parse_string(sections[s]['tunnelIp']);
+			l2ptv3Data.options['tunnelMask'] = parse_string(sections[s]['tunnelMask']);
+			l2ptv3Data.options['tunnelId'] = parse_string(sections[s]['tunnelId']);
+			l2ptv3Data.options['remoteTunnelId'] = parse_string(sections[s]['remoteTunnelId']);
+			l2ptv3Data.options['sessionId'] = parse_string(sections[s]['sessionId']);
+			l2ptv3Data.options['remoteSessionId'] = parse_string(sections[s]['remoteSessionId']);
+			l2ptv3Data.options['encapsulation'] = parse_string(sections[s]['encapsulation']);
+			l2ptv3Data.options['l2HeaderType'] = parse_string(sections[s]['isNotCachel2HeaderType']);
+				
+			addRow('l2tpv3_rows', l2ptv3Data);
+		}
+	});
+	
+	function showModal(l2ptv3Data) {
+		L.require('ui').then(function(ui) {
+			var form = {
+				name: new ui.Textfield(l2ptv3Data.name, {
+					placeholder: "<%:Name%>",
+					optional: false,
+					readonly: l2ptv3Data.name.length > 0,
+					validate: nearleyValidator('sectionName', '<%:Should contain letters, numbers and "_"%>')
+				}),		
+				localAddr: new ui.Dropdown(l2ptv3Data.options.localAddr, make_dropdown_options(localAddresses), {
+					multiple: false,
+					sort: false,
+					optional: false
+				}),		
+				remoteAddr: new ui.Textfield(l2ptv3Data.options.remoteAddr, {
+					placeholder: "<%:Remote IP%>",
+					optional: false,
+					validate: nearleyValidator('ip4', '<%:Should contain numbers 0..255 and "."%>')
+				}),
+				bridge: new ui.Dropdown(l2ptv3Data.options.bridge, make_dropdown_options(bridges), {
+					multiple: false,
+					sort: false,
+					optional: false,
+					create: true,
+					validate: nearleyValidator('string', '<%:Should contain letters, numbers and "_"%>')
+				}),		
+				zone: new ui.Dropdown(l2ptv3Data.options.zone, make_dropdown_options(firewallZones), {
+					multiple: false,
+					sort: false,
+					create: true,
+					optional: false,
+					validate: nearleyValidator('string', '<%:Should contain letters, numbers and "_"%>')
+				}),
+				tunnelIp: new ui.Textfield(l2ptv3Data.options.tunnelIp, {
+					optional: false,
+					placeholder: "<%:Local IP for tunnel%>",
+					validate: nearleyValidator('ip4', '<%:Should contain numbers 0..255 and "."%>')
+				}),		
+				tunnelMask: new ui.Textfield(l2ptv3Data.options.tunnelMask, {
+					optional: false,
+					placeholder: "<%:Tunnel netmask%>",
+					validate: nearleyValidator('netmask', '<%:Should contain numbers 0..255 and "." or bits count 0..32%>')
+				}),				
+				tunnelId: new ui.Textfield(l2ptv3Data.options.tunnelId, {
+					optional: false,
+					placeholder: "<%:Tunnel ID%>",
+					validate: nearleyValidator('integer', '<%:Should contain only digits%>')
+				}),		
+				remoteTunnelId: new ui.Textfield(l2ptv3Data.options.remoteTunnelId, {
+					optional: false,
+					placeholder: "<%:Tunnel ID%>",
+					validate: nearleyValidator('integer', '<%:Should contain only digits%>')
+				}),		
+				sessionId: new ui.Textfield(l2ptv3Data.options.sessionId, {
+					optional: false,
+					placeholder: "<%:Session ID%>",
+					validate: nearleyValidator('integer', '<%:Should contain only digits%>')
+				}),		
+				remoteSessionId: new ui.Textfield(l2ptv3Data.options.remoteSessionId, {
+					optional: true,
+					placeholder: "<%:Session ID%>",
+					validate: nearleyValidator('integer', '<%:Should contain only digits%>')
+				}),		
+				encapsulation: new ui.Dropdown(l2ptv3Data.options.encapsulation, make_dropdown_options(encapsulationTypes), {
+					multiple: false,
+					sort: false,
+					optional: false
+				}),		
+				l2HeaderType: new ui.Dropdown(l2ptv3Data.options.l2HeaderType, make_dropdown_options(l2HeaderTypes), {
+					multiple: false,
+					sort: false,
+					optional: false
+				})
+			}
+	
+			L.showModal('<%:Configure L2TPv3 tunnel%>',[
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Name%>'),
+						form.name.render()
+					]),
+				]),
+	
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Local address%>'),
+						form.localAddr.render()
+					]),
+		
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Remote address%>'),
+						form.remoteAddr.render()
+					]),
+				]),
+	
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Add to bridge or create new%>'),
+						form.bridge.render()
+					]),
+
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Firewall zone%>'),
+						form.zone.render()
+					]),
+				]),
+	
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Tunnel IP%>'),
+						form.tunnelIp.render()
+					]),
+		
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Tunnel netmask%>'),
+						form.tunnelMask.render()
+					]),
+				]),
+	
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Tunnel ID%>'),
+						form.tunnelId.render()
+					]),
+		
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Remote tunnel ID%>'),
+						form.remoteTunnelId.render()
+					]),
+				]),
+	
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Session ID%>'),
+						form.sessionId.render()
+					]),
+
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Remote Session ID%>'),
+						form.remoteSessionId.render()
+					]),
+				]),
+	
+				E('div', {class: "modal-row"}, [
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:Encapsulation%>'),
+						form.encapsulation.render()
+					]),
+		
+					E('div', { class: 'modal-value' }, [
+						E('label', { 'class': 'modal-val-title' }, '<%:L2 Specific Header type%>'),
+						form.l2HeaderType.render()
+					]),
+				]),
+	
+				E('div', { class: 'modal-buttons' }, [
+					E('div', {
+						class: 'btn',
+						click: function() {
+							L.hideModal()
+						}
+					}, '<%:Close%>'),
+					E('div', {
+						class: 'btn',
+						click: function() {
+							for (i in form) {
+								form[i].setValue(l2ptv3Data[i] != undefined ? l2ptv3Data[i] : l2ptv3Data.options[i]);
+								form[i].triggerValidation();
+							}
+						}
+					}, '<%:Reset%>'),
+					E('div', {
+						class: 'btn primary',
+						click: function() {
+							var isFormValid = true;
+							for (i in form) {
+								var field = form[i];
+								field.triggerValidation();
+								isFormValid &= field.isValid();
+							}
+
+							if (!isFormValid)
+								return;
+							
+							l2ptv3Data.name = form.name.getValue(); 
+							l2ptv3Data.options['localAddr'] = form.localAddr.getValue(); 
+							l2ptv3Data.options['remoteAddr'] = form.remoteAddr.getValue();
+							l2ptv3Data.options['bridge'] = form.bridge.getValue(); 
+							l2ptv3Data.options['zone'] = form.zone.getValue(); 
+							l2ptv3Data.options['tunnelIp'] = form.tunnelIp.getValue(); 
+							l2ptv3Data.options['tunnelMask'] = form.tunnelMask.getValue(); 
+							l2ptv3Data.options['tunnelId'] = form.tunnelId.getValue(); 
+							l2ptv3Data.options['remoteTunnelId'] = form.remoteTunnelId.getValue(); 
+							l2ptv3Data.options['sessionId'] = form.sessionId.getValue(); 
+							l2ptv3Data.options['remoteSessionId'] = form.remoteSessionId.getValue();
+							l2ptv3Data.options['encapsulation'] = form.encapsulation.getValue();
+							l2ptv3Data.options['l2HeaderType'] = form.l2HeaderType.getValue();
+	
+							commitConfig(l2ptv3Data);
+							L.hideModal()
+						}
+					}, '<%:Save%>'),
+				]),
+			]);
+		});
+	}
+	
+</script>

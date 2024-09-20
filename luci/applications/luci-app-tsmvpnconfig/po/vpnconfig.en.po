@@ -1,0 +1,517 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:156
+msgid "3 by default"
+msgstr "3 by default"
+
+#: luasrc/view/vpnconfig/ipsec.htm:249 luasrc/view/vpnconfig/ipsec.htm:279
+msgid "60 sec. minimum!"
+msgstr "60 sec. minimum!"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:16 luasrc/view/vpnconfig/gre.htm:16
+#: luasrc/view/vpnconfig/ipsec.htm:16 luasrc/view/vpnconfig/eoip.htm:16
+#: luasrc/view/vpnconfig/l2tpv3.htm:16
+msgid "Actions"
+msgstr "Actions"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:15 luasrc/view/vpnconfig/gre.htm:15
+#: luasrc/view/vpnconfig/ipsec.htm:15 luasrc/view/vpnconfig/eoip.htm:15
+#: luasrc/view/vpnconfig/l2tpv3.htm:15
+msgid "Active"
+msgstr "Active"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:22 luasrc/view/vpnconfig/gre.htm:21
+#: luasrc/view/vpnconfig/ipsec.htm:21 luasrc/view/vpnconfig/eoip.htm:21
+#: luasrc/view/vpnconfig/l2tpv3.htm:21
+msgid "Add"
+msgstr "Add"
+
+#: luasrc/view/vpnconfig/eoip.htm:148 luasrc/view/vpnconfig/gre.htm:168
+msgid "Add to Bridge or create new"
+msgstr "Add to Bridge or create new"
+
+#: luasrc/view/vpnconfig/l2tpv3.htm:173
+msgid "Add to bridge or Create new"
+msgstr "Add to bridge or Create new"
+
+#: luasrc/view/vpnconfig/l2tp.htm:74 luasrc/view/vpnconfig/l2tp.htm:118
+#: luasrc/view/vpnconfig/pptp.htm:76 luasrc/view/vpnconfig/pptp.htm:119
+msgid "Additional options"
+msgstr "Additional options"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:146
+msgid "Address to check connection"
+msgstr "Address to check connection"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:242
+msgid "Allow shortcuts"
+msgstr "Allow shortcuts"
+
+#: luasrc/view/vpnconfig/ipsec.htm:408
+msgid "Authentication method"
+msgstr "Authentication method"
+
+#: luasrc/view/vpnconfig/l2tp.htm:114 luasrc/view/vpnconfig/pptp.htm:115
+msgid "Authentication type"
+msgstr "Authentication type"
+
+#: luasrc/view/vpnconfig/ipsec.htm:425
+msgid "CA PEM Certificate"
+msgstr "CA PEM Certificate"
+
+#: luasrc/view/vpnconfig/l2tp.htm:70 luasrc/view/vpnconfig/ipsec.htm:232
+#: luasrc/view/vpnconfig/pptp.htm:72
+msgid "Can not be empty"
+msgstr "Can not be empty"
+
+#: luasrc/view/vpnconfig/ipsec.htm:124
+msgid "Choose file"
+msgstr "Choose file"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:263 luasrc/view/vpnconfig/gre.htm:208
+#: luasrc/view/vpnconfig/ipsec.htm:449 luasrc/view/vpnconfig/eoip.htm:183
+#: luasrc/view/vpnconfig/l2tpv3.htm:237
+#: luasrc/view/vpnconfig/vpnconfig.js.htm:189
+msgid "Close"
+msgstr "Close"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:165
+msgid "Configure DMVPN tunnel"
+msgstr "Configure DMVPN tunnel"
+
+#: luasrc/view/vpnconfig/eoip.htm:126
+msgid "Configure EoIP tunnel"
+msgstr "Configure EoIP tunnel"
+
+#: luasrc/view/vpnconfig/gre.htm:139
+msgid "Configure GRE tunnel"
+msgstr "Configure GRE tunnel"
+
+#: luasrc/view/vpnconfig/ipsec.htm:300
+msgid "Configure IPSec"
+msgstr "Configure IPSec"
+
+#: luasrc/view/vpnconfig/l2tpv3.htm:151
+msgid "Configure L2TPv3 tunnel"
+msgstr "Configure L2TPv3 tunnel"
+
+#: luasrc/view/vpnconfig/ipsec.htm:377
+msgid "DH group"
+msgstr "DH group"
+
+#: luasrc/controller/vpnconfig/index.lua:27
+msgid "DMVPN Tunnels"
+msgstr "DMVPN Tunnels"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:10
+msgid "DMVPN tunnels"
+msgstr "DMVPN tunnels"
+
+#: luasrc/view/vpnconfig/ipsec.htm:321
+msgid "DPD delay (sec)"
+msgstr "DPD delay (sec)"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:151
+msgid "Default 30 sec."
+msgstr "Default 30 sec."
+
+#: luasrc/view/vpnconfig/dmvpn.htm:110
+msgid "Default 7200 sec."
+msgstr "Default 7200 sec."
+
+#: luasrc/view/vpnconfig/ipsec.htm:190
+msgid "Delay"
+msgstr "Delay"
+
+#: luasrc/view/vpnconfig/vpnconfig.js.htm:101
+msgid "Delete"
+msgstr "Delete"
+
+#: luasrc/view/vpnconfig/vpnconfig.js.htm:99
+msgid "Disable"
+msgstr "Disable"
+
+#: luasrc/view/vpnconfig/gre.htm:199
+msgid "Dont fragment packets"
+msgstr "Dont fragment packets"
+
+#: luasrc/view/vpnconfig/ipsec.htm:390
+msgid "ESP Encription"
+msgstr "ESP Encription"
+
+#: luasrc/view/vpnconfig/ipsec.htm:395
+msgid "ESP Hash"
+msgstr "ESP Hash"
+
+#: luasrc/view/vpnconfig/vpnconfig.js.htm:100
+msgid "Edit"
+msgstr "Edit"
+
+#: luasrc/view/vpnconfig/vpnconfig.js.htm:99
+msgid "Enable"
+msgstr "Enable"
+
+#: luasrc/view/vpnconfig/l2tp.htm:90
+msgid "Enable L2TP client"
+msgstr "Enable L2TP client"
+
+#: luasrc/view/vpnconfig/pptp.htm:91
+msgid "Enable PPTP client"
+msgstr "Enable PPTP client"
+
+#: luasrc/view/vpnconfig/l2tpv3.htm:221
+msgid "Encapsulation"
+msgstr "Encapsulation"
+
+#: luasrc/controller/vpnconfig/index.lua:28
+msgid "EoIP Tunnels"
+msgstr "EoIP Tunnels"
+
+#: luasrc/view/vpnconfig/eoip.htm:10
+msgid "EoIP tunnels"
+msgstr "EoIP tunnels"
+
+#: luasrc/view/vpnconfig/vpnconfig.js.htm:171
+msgid "Error"
+msgstr "Error"
+
+#: luasrc/view/vpnconfig/eoip.htm:172 luasrc/view/vpnconfig/dmvpn.htm:212
+#: luasrc/view/vpnconfig/gre.htm:192 luasrc/view/vpnconfig/l2tpv3.htm:178
+msgid "Firewall zone"
+msgstr "Firewall zone"
+
+#: luasrc/controller/vpnconfig/index.lua:26
+msgid "GRE Client"
+msgstr "GRE Client"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:207 luasrc/view/vpnconfig/gre.htm:187
+msgid "GRE key"
+msgstr "GRE key"
+
+#: luasrc/view/vpnconfig/gre.htm:10
+msgid "GRE tunnels"
+msgstr "GRE tunnels"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:249
+msgid "HUB is Sisco"
+msgstr "HUB is Sisco"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:100 luasrc/view/vpnconfig/dmvpn.htm:185
+msgid "HUB tunnel address"
+msgstr "HUB tunnel address"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:105 luasrc/view/vpnconfig/dmvpn.htm:190
+msgid "HUB tunnel netmask"
+msgstr "HUB tunnel netmask"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:195
+msgid "Holding time (sec.)"
+msgstr "Holding time (sec.)"
+
+#: luasrc/view/vpnconfig/ipsec.htm:367
+msgid "IKE Encription"
+msgstr "IKE Encription"
+
+#: luasrc/view/vpnconfig/ipsec.htm:372
+msgid "IKE Hash"
+msgstr "IKE Hash"
+
+#: luasrc/controller/vpnconfig/index.lua:30
+msgid "IPSec Tunnels"
+msgstr "IPSec Tunnels"
+
+#: luasrc/view/vpnconfig/ipsec.htm:10
+msgid "IPSec tunnels"
+msgstr "IPSec tunnels"
+
+#: luasrc/view/vpnconfig/ipsec.htm:340
+msgid "Key exchange mode"
+msgstr "Key exchange mode"
+
+#: luasrc/view/vpnconfig/l2tpv3.htm:226
+msgid "L2 Specific Header type"
+msgstr "L2 Specific Header type"
+
+#: luasrc/controller/vpnconfig/index.lua:25 luasrc/view/vpnconfig/l2tp.htm:10
+msgid "L2TP Client"
+msgstr "L2TP Client"
+
+#: luasrc/controller/vpnconfig/index.lua:29
+msgid "L2TPv3 Tunnels"
+msgstr "L2TPv3 Tunnels"
+
+#: luasrc/view/vpnconfig/l2tpv3.htm:10
+msgid "L2TPv3 tunnels"
+msgstr "L2TPv3 tunnels"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:120 luasrc/view/vpnconfig/gre.htm:110
+msgid "Leave blank if not used"
+msgstr "Leave blank if not used"
+
+#: luasrc/view/vpnconfig/ipsec.htm:362 luasrc/view/vpnconfig/ipsec.htm:385
+msgid "Lifetime"
+msgstr "Lifetime"
+
+#: luasrc/view/vpnconfig/vpnconfig.js.htm:73
+msgid "Loading"
+msgstr "Loading"
+
+#: luasrc/view/vpnconfig/ipsec.htm:195 luasrc/view/vpnconfig/ipsec.htm:328
+msgid "Local ID"
+msgstr "Local ID"
+
+#: luasrc/view/vpnconfig/eoip.htm:90 luasrc/view/vpnconfig/dmvpn.htm:115
+#: luasrc/view/vpnconfig/l2tpv3.htm:111
+msgid "Local IP for tunnel"
+msgstr "Local IP for tunnel"
+
+#: luasrc/view/vpnconfig/gre.htm:100
+msgid "Local IP for tunnel %."
+msgstr "Local IP for tunnel %."
+
+#: luasrc/view/vpnconfig/dmvpn.htm:173
+msgid "Local NBMA address"
+msgstr "Local NBMA address"
+
+#: luasrc/view/vpnconfig/eoip.htm:136 luasrc/view/vpnconfig/gre.htm:149
+#: luasrc/view/vpnconfig/l2tpv3.htm:161
+msgid "Local address"
+msgstr "Local address"
+
+#: luasrc/view/vpnconfig/ipsec.htm:431
+msgid "Local certificate"
+msgstr "Local certificate"
+
+#: luasrc/view/vpnconfig/ipsec.htm:347
+msgid "Local subnets"
+msgstr "Local subnets"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:14 luasrc/view/vpnconfig/dmvpn.htm:83
+#: luasrc/view/vpnconfig/dmvpn.htm:168 luasrc/view/vpnconfig/gre.htm:14
+#: luasrc/view/vpnconfig/eoip.htm:66 luasrc/view/vpnconfig/eoip.htm:129
+#: luasrc/view/vpnconfig/gre.htm:71 luasrc/view/vpnconfig/gre.htm:142
+#: luasrc/view/vpnconfig/ipsec.htm:14 luasrc/view/vpnconfig/ipsec.htm:173
+#: luasrc/view/vpnconfig/ipsec.htm:304 luasrc/view/vpnconfig/eoip.htm:14
+#: luasrc/view/vpnconfig/l2tpv3.htm:154
+#: luasrc/view/vpnconfig/l2tpv3.htm:14 luasrc/view/vpnconfig/l2tpv3.htm:80
+msgid "Name"
+msgstr "Name"
+
+#: luasrc/view/vpnconfig/eoip.htm:95 luasrc/view/vpnconfig/gre.htm:105
+msgid "Netmask"
+msgstr "Netmask"
+
+#: luasrc/view/vpnconfig/gre.htm:161
+msgid "Network type"
+msgstr "Network type"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:237
+msgid "No caching"
+msgstr "No caching"
+
+#: luasrc/view/vpnconfig/ipsec.htm:437
+msgid "PEM key"
+msgstr "PEM key"
+
+#: luasrc/view/vpnconfig/ipsec.htm:400
+msgid "PFS group"
+msgstr "PFS group"
+
+#: luasrc/controller/vpnconfig/index.lua:24 luasrc/view/vpnconfig/pptp.htm:10
+msgid "PPTP Client"
+msgstr "PPTP Client"
+
+#: luasrc/view/vpnconfig/ipsec.htm:227 luasrc/view/vpnconfig/pptp.htm:65
+#: luasrc/view/vpnconfig/l2tp.htm:64 luasrc/view/vpnconfig/l2tp.htm:106
+#: luasrc/view/vpnconfig/pptp.htm:107
+msgid "Password"
+msgstr "Password"
+
+#: luasrc/view/vpnconfig/ipsec.htm:360
+msgid "Phase #1"
+msgstr "Phase #1"
+
+#: luasrc/view/vpnconfig/ipsec.htm:383
+msgid "Phase #2"
+msgstr "Phase #2"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:229
+msgid "Ping Attempts"
+msgstr "Ping Attempts"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:219
+msgid "Ping address"
+msgstr "Ping address"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:224
+msgid "Ping interval (sec.)"
+msgstr "Ping interval (sec.)"
+
+#: luasrc/view/vpnconfig/ipsec.htm:416
+msgid "Pre-shared key"
+msgstr "Pre-shared key"
+
+#: luasrc/view/vpnconfig/ipsec.htm:200 luasrc/view/vpnconfig/ipsec.htm:333
+msgid "Remote ID"
+msgstr "Remote ID"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:94 luasrc/view/vpnconfig/gre.htm:82
+#: luasrc/view/vpnconfig/ipsec.htm:185 luasrc/view/vpnconfig/eoip.htm:77
+#: luasrc/view/vpnconfig/l2tpv3.htm:91
+msgid "Remote IP"
+msgstr "Remote IP"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:178
+msgid "Remote NBMA address"
+msgstr "Remote NBMA address"
+
+#: luasrc/view/vpnconfig/l2tpv3.htm:214
+msgid "Remote Session ID"
+msgstr "Remote Session ID"
+
+#: luasrc/view/vpnconfig/gre.htm:154 luasrc/view/vpnconfig/l2tpv3.htm:166
+#: luasrc/view/vpnconfig/ipsec.htm:316 luasrc/view/vpnconfig/eoip.htm:141
+msgid "Remote address"
+msgstr "Remote address"
+
+#: luasrc/view/vpnconfig/ipsec.htm:352
+msgid "Remote subnets"
+msgstr "Remote subnets"
+
+#: luasrc/view/vpnconfig/l2tpv3.htm:202
+msgid "Remote tunnel ID"
+msgstr "Remote tunnel ID"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:272 luasrc/view/vpnconfig/gre.htm:218
+#: luasrc/view/vpnconfig/eoip.htm:192 luasrc/view/vpnconfig/pptp.htm:24
+#: luasrc/view/vpnconfig/l2tp.htm:22 luasrc/view/vpnconfig/ipsec.htm:459
+#: luasrc/view/vpnconfig/l2tpv3.htm:246
+msgid "Reset"
+msgstr "Reset"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:306 luasrc/view/vpnconfig/gre.htm:246
+#: luasrc/view/vpnconfig/eoip.htm:217 luasrc/view/vpnconfig/pptp.htm:23
+#: luasrc/view/vpnconfig/l2tp.htm:21 luasrc/view/vpnconfig/ipsec.htm:525
+#: luasrc/view/vpnconfig/l2tpv3.htm:277
+msgid "Save"
+msgstr "Save"
+
+#: luasrc/view/vpnconfig/l2tp.htm:94 luasrc/view/vpnconfig/pptp.htm:95
+msgid "Server"
+msgstr "Server"
+
+#: luasrc/view/vpnconfig/l2tp.htm:54 luasrc/view/vpnconfig/pptp.htm:55
+msgid "Server address"
+msgstr "Server address"
+
+#: luasrc/view/vpnconfig/l2tpv3.htm:209
+#: luasrc/view/vpnconfig/l2tpv3.htm:131 luasrc/view/vpnconfig/l2tpv3.htm:136
+msgid "Session ID"
+msgstr "Session ID"
+
+#: luasrc/view/vpnconfig/l2tp.htm:56 luasrc/view/vpnconfig/pptp.htm:57
+msgid "Should contain IPv4 or URL"
+msgstr "Should contain IPv4 or URL"
+
+#: luasrc/view/vpnconfig/ipsec.htm:211 luasrc/view/vpnconfig/ipsec.htm:216
+msgid "Should contain IPv4 separated by comma or space"
+msgstr "Should contain IPv4 separated by comma or space"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:157
+#: luasrc/view/vpnconfig/dmvpn.htm:111 luasrc/view/vpnconfig/dmvpn.htm:152
+msgid "Should contain digits nad ',' or '.'"
+msgstr "Should contain digits nad ',' or '.'"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:86 luasrc/view/vpnconfig/dmvpn.htm:142
+#: luasrc/view/vpnconfig/eoip.htm:86 luasrc/view/vpnconfig/eoip.htm:122
+#: luasrc/view/vpnconfig/gre.htm:132 luasrc/view/vpnconfig/l2tpv3.htm:83
+#: luasrc/view/vpnconfig/gre.htm:74 luasrc/view/vpnconfig/gre.htm:96
+#: luasrc/view/vpnconfig/ipsec.htm:176 luasrc/view/vpnconfig/eoip.htm:69
+#: luasrc/view/vpnconfig/l2tpv3.htm:100 luasrc/view/vpnconfig/l2tpv3.htm:107
+msgid "Should contain letters, numbers and \"_\""
+msgstr "Should contain letters, numbers and \"_\""
+
+#: luasrc/view/vpnconfig/ipsec.htm:196 luasrc/view/vpnconfig/ipsec.htm:201
+msgid "Should contain letters, numbers and no spaces"
+msgstr "Should contain letters, numbers and no spaces"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:101 luasrc/view/vpnconfig/dmvpn.htm:116
+#: luasrc/view/vpnconfig/dmvpn.htm:147 luasrc/view/vpnconfig/gre.htm:84
+#: luasrc/view/vpnconfig/eoip.htm:91 luasrc/view/vpnconfig/dmvpn.htm:96
+#: luasrc/view/vpnconfig/gre.htm:101 luasrc/view/vpnconfig/l2tpv3.htm:93
+#: luasrc/view/vpnconfig/ipsec.htm:186 luasrc/view/vpnconfig/eoip.htm:79
+#: luasrc/view/vpnconfig/l2tpv3.htm:112
+msgid "Should contain numbers 0..255 and \".\""
+msgstr "Should contain numbers 0..255 and \".\""
+
+#: luasrc/view/vpnconfig/eoip.htm:96 luasrc/view/vpnconfig/dmvpn.htm:106
+#: luasrc/view/vpnconfig/gre.htm:106 luasrc/view/vpnconfig/l2tpv3.htm:117
+msgid "Should contain numbers 0..255 and \".\" or bits count 0..32"
+msgstr "Should contain numbers 0..255 and \".\" or bits count 0..32"
+
+#: luasrc/view/vpnconfig/dmvpn.htm:122 luasrc/view/vpnconfig/gre.htm:112
+#: luasrc/view/vpnconfig/ipsec.htm:191 luasrc/view/vpnconfig/ipsec.htm:241
+#: luasrc/view/vpnconfig/ipsec.htm:271 luasrc/view/vpnconfig/eoip.htm:102
+#: luasrc/view/vpnconfig/l2tpv3.htm:122 luasrc/view/vpnconfig/l2tpv3.htm:127
+#: luasrc/view/vpnconfig/l2tpv3.htm:132 luasrc/view/vpnconfig/l2tpv3.htm:137
+msgid "Should contain only digits"
+msgstr "Should contain only digits"
+
+#: luasrc/view/vpnconfig/l2tp.htm:61 luasrc/view/vpnconfig/pptp.htm:62
+msgid "Should not contain letters, numbers and \"_\""
+msgstr "Should not contain letters, numbers and \"_\""
+
+#: luasrc/view/vpnconfig/ipsec.htm:311
+msgid "Source address"
+msgstr "Source address"
+
+#: luasrc/view/vpnconfig/ipsec.htm:210 luasrc/view/vpnconfig/ipsec.htm:215
+msgid "Subnets list"
+msgstr "Subnets list"
+
+#: luasrc/view/vpnconfig/eoip.htm:100 luasrc/view/vpnconfig/eoip.htm:167
+#: luasrc/view/vpnconfig/l2tpv3.htm:197
+#: luasrc/view/vpnconfig/l2tpv3.htm:121 luasrc/view/vpnconfig/l2tpv3.htm:126
+msgid "Tunnel ID"
+msgstr "Tunnel ID"
+
+#: luasrc/view/vpnconfig/eoip.htm:155 luasrc/view/vpnconfig/dmvpn.htm:202
+#: luasrc/view/vpnconfig/gre.htm:175 luasrc/view/vpnconfig/l2tpv3.htm:185
+msgid "Tunnel IP"
+msgstr "Tunnel IP"
+
+#: luasrc/view/vpnconfig/eoip.htm:160 luasrc/view/vpnconfig/gre.htm:180
+#: luasrc/view/vpnconfig/l2tpv3.htm:116 luasrc/view/vpnconfig/l2tpv3.htm:190
+msgid "Tunnel netmask"
+msgstr "Tunnel netmask"
+
+#: luasrc/view/vpnconfig/l2tp.htm:122 luasrc/view/vpnconfig/dmvpn.htm:254
+msgid "Use IPSec protection"
+msgstr "Use IPSec protection"
+
+#: luasrc/view/vpnconfig/l2tp.htm:110 luasrc/view/vpnconfig/pptp.htm:111
+msgid "Use MPPE (MS-CHAP-V2 auth)"
+msgstr "Use MPPE (MS-CHAP-V2 auth)"
+
+#: luasrc/view/vpnconfig/l2tp.htm:98 luasrc/view/vpnconfig/pptp.htm:99
+msgid "Use as default route"
+msgstr "Use as default route"
+
+#: luasrc/view/vpnconfig/l2tp.htm:59 luasrc/view/vpnconfig/l2tp.htm:102
+#: luasrc/view/vpnconfig/pptp.htm:60 luasrc/view/vpnconfig/pptp.htm:103
+msgid "Username"
+msgstr "Username"
+
+#: luasrc/view/vpnconfig/vpnconfig.js.htm:97
+msgid "no"
+msgstr "no"
+
+#: luasrc/view/vpnconfig/eoip.htm:113 luasrc/view/vpnconfig/dmvpn.htm:133
+#: luasrc/view/vpnconfig/gre.htm:123
+msgid "out of range"
+msgstr "out of range"
+
+#: luasrc/view/vpnconfig/vpnconfig.js.htm:97
+msgid "yes"
+msgstr "yes"
