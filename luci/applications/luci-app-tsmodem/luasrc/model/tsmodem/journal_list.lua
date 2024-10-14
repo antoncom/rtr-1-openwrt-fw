@@ -1,26 +1,26 @@
-local leveldb = require 'lualeveldb'
+--local leveldb = require 'lualeveldb'
 local json = require "cjson"
 
 local journal_list = {}
 
 -- Initialize LevelDB options
-local opt = leveldb.options()
-opt.createIfMissing = true
-opt.errorIfExists = false
+--local opt = leveldb.options()
+--opt.createIfMissing = true
+--opt.errorIfExists = false
 
 -- Open the LevelDB database
-local db_path = "/etc/leveldb/output.db" -- Database path
-local db = leveldb.open(opt, db_path)
+--local db_path = "/etc/leveldb/output.db" -- Database path
+--local db = leveldb.open(opt, db_path)
 
-if not leveldb.check(db) then
-    error("Failed to open LevelDB database")
-end
+-- if not leveldb.check(db) then
+--     error("Failed to open LevelDB database")
+-- end
 
 -- Function to fetch journal entries from LevelDB
 function journal_list:fetch()
     local journal_entries = {}
     
-    -- Iterate through all keys in the database
+    --[[-- Iterate through all keys in the database
     local it = db:iterator()
     -- it:seek("journal_") -- Optionally seek to a specific prefix if needed
     it:seekToFirst()
@@ -38,27 +38,27 @@ function journal_list:fetch()
         it:next()
     end
 
-    it:del()
+    it:del()--]]
 
     return journal_entries
 end
 
 -- Optional: Render journal elements (if you want to provide additional CSS, validation, etc.)
 function journal_list:render(what)
-    if what == "cssfile" then
-        return [[<link rel="stylesheet" href="/css/journal.css" />]]
-    elseif what == "validator" then
-        -- You can return custom validators if needed
-        return ""
-    elseif what == "widgetfile" then
-        -- Return a widget file if necessary
-        return ""
-    end
+    -- if what == "cssfile" then
+    --     return [[<link rel="stylesheet" href="/css/journal.css" />]]
+    -- elseif what == "validator" then
+    --     -- You can return custom validators if needed
+    --     return ""
+    -- elseif what == "widgetfile" then
+    --     -- Return a widget file if necessary
+    --     return ""
+    -- end
 end
 
 -- Close the database connection when done
 function journal_list:close()
-    leveldb.close(db)
+    --leveldb.close(db)
 end
 
 return journal_list

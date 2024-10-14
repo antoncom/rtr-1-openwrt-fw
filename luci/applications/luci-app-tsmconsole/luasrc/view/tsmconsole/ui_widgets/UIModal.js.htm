@@ -9,8 +9,10 @@
 		// 	uci.load("tsmodem").then(function(out){
 				var UIModal = ui.AbstractElement.extend({
 					__init__: function() {
+						console.log("UIModal INIT....")
 						this.term = null;
 						this.className = "webcon_term"
+						this.last_at_command = ""
 this.welcome = `
 ██████  ██ ████████  ██████  ██████  ██████  ██████
 ██   ██ ██    ██    ██      ██    ██ ██   ██ ██   ██
@@ -48,7 +50,6 @@ this.welcome = `
 						this.node = container
 						dom.bindClassInstance(container, this);
                         var self = this
-
 						window.EventBus.registerTo(this.node,"UIModal")
 
 
@@ -78,10 +79,15 @@ this.welcome = `
 							if (ev["detail"]) {
 								var data = ev["detail"]
 								if (data["AT_answer"]) {
-									self.term.echo(data["AT_answer"].replace("\r\nOK\r\n", "OK\r\n"));
+									// Проверить, если возврат от АТ-команды оканчивается символом Ctrl-Z (\u001a)
+									// значит это было отправленное СМС-сообщение и не нужно его выводить повторно в терминал
+									let mlen = data["AT_answer"].length
+									if(data["AT_answer"].substring(mlen-1) != "\u001a") {
+										self.term.echo(data["AT_answer"].replace("\r\nOK\r\n", "OK\r\n"));
+									}
 								}
 							}
-							self.term.resume();
+							//self.term.resume();
 						})
 
 						return container;
@@ -111,7 +117,8 @@ this.welcome = `
                     },
 
                     at_validate: function(comm) {
-    					if(comm.substring(0,2) == "AT" || comm.substring(0,2) == "at") {
+    					if(comm.substring(0,2) == "AT" || comm.substring(0,2) == "at" || this.last_at_command.indexOf("AT+CMGS=") > -1) {
+    						this.last_at_command = comm
     						return { noerror: true, msg: `` }
     					} else if(comm.substring(0,4) == "help") {
     						return { noerror: true, msg: `` }
@@ -184,6 +191,8 @@ this.welcome = `
 													<dt>AT+CUSD=1,#100#,15</dt><dd>Запрос баланса Мегафон, МТС (подробнее: AT+CUSD help)</dd>
 													<dt>AT+COPS?</dt><dd>Узнать идентификатор GSM-оператора для текущего соединения</dd>
 													<dt>AT+CNSMOD?</dt><dd>Узнать тип соединения: 2G/3G/4G и т.п.</dd>
+													<dt>AT+CMGF=0</dt><dd>Перевести модем в режим PDU (для отправки SMS)</dd>
+													<dt>AT+CMGS=N</dt><dd>Отправить SMS длиной N (в формате PDU). После выполнения необходимо сразу ввести PDU-строку сообщения.</dd>
 													<dt>------------------</dt><dd>-----------------------------------------------------------</dd>
 													<dt>&lt;TAB&gt;</dt><dd>Клавиша &lt;TAB&gt; - для автодополнения команды.<br />Двойной &lt;TAB&gt; покажет список вариантов.</dd>
 													<dt>&lt;команда&gt; help</dt><dd>Выводит описание значений AT-команды, например введите: "AT+CSQ help"</dd>
@@ -314,6 +323,10 @@ this.welcome = `
 												</dl>`, {raw: true});
 									term.resume();
 								}
+								// else if (at_check["noerror"] && command.indexOf("AT+CMGS=") > -1)  {
+								// 	console.log(":::", command)
+								// 	term.resume();
+								// }
 								else if (at_check["noerror"] && command.substring(command.length-4) == "help")  {
 									term.echo(` <dl class="attrs">
 														<table class="bordered">
@@ -341,7 +354,7 @@ this.welcome = `
 								greetings: self.welcome + 'Терминал доступа к модему по протоколу АТ\r\n',
 								prompt: "[[b;#ffffff;]&gt;] ",
 								tabcompletion: true,
-								completion: ['ATI', 'ATD+','AT+CREG?', 'AT+CSQ', 'AT+CUSD=1,#100#,15', 'AT+CUSD=1,#102#,15', 'AT+COPS?', 'AT+CNSMOD?']
+								completion: ['ATI', 'ATD+','AT+CREG?', 'AT+CSQ', 'AT+CUSD=1,#100#,15', 'AT+CUSD=1,#102#,15', 'AT+COPS?', 'AT+CNSMOD?', 'AT+CMGF=0']
 							});
 
 

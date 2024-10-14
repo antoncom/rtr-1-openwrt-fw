@@ -1,0 +1,139 @@
+<%
+
+local util = require "luci.util"
+
+%>
+
+<script type="text/javascript">
+//<![CDATA[
+	L.require('ui').then(function(ui) {
+		L.require('dom').then(function(dom) {
+		// 	uci.load("tsmsmscomm").then(function(out){
+				var UIPhone = ui.AbstractElement.extend({
+					__init__: function(simname, options) {
+		                this.phone = options.phone
+						var self = this
+
+						this.chunk = {
+							phone: E('div', {class: 'td phone_number', style: "white-space: nowrap;", ["data-title"]: this.phone}, []),
+
+							btn_phone_save: E('input',  {
+								type: "button", class: "cbi-button cbi-button-apply phone-save",
+								["data-phone"]: this.phone,
+								value: _("Сохранить"),
+								style: "display: initial;",
+							}),
+
+							btn_phone_delete: E('input',  {
+								type: "button", class: "cbi-button cbi-button-apply phone-delete",
+								["data-phone"]: this.phone,
+								value: _("Удалить"),
+								style: "display: initial;",
+							}),
+
+							btn_phone_add: E('input',  {
+								type: "button", class: "cbi-button cbi-button-apply phone-add",
+								["data-phone"]: "",
+								value: _("Добавить"),
+								style: "display: initial;",
+							}),
+						}
+
+					},
+
+					render: function() {
+		                var container = E('div', { id: 'simid-' + this.simid, class: 'tr cbi-rowstyle-' + this.simid }, [
+		                    this.chunk.phone,
+		                    E('div', {class: "nowrap cbi-section-actions td", style: "text-align: right;"}, [
+								this.chunk.btn_phone_save,
+								this.chunk.btn_phone_delete,
+								this.chunk.btn_phone_add,
+		                    ])
+		                ])
+
+
+						return this.bind(container);
+					},
+
+					// Fire events issued from UISiminfo widget
+					fireEvent: function(event_name, event_data) {
+						var s = new CustomEvent(event_name, {
+							detail: event_data,
+							bubbles: true,
+						})
+						if(window.EventBus.busobjects["UIPhone"]) {
+							window.EventBus.busobjects["UIPhone"].dispatchEvent(s);
+						}
+					},
+
+					bind: function(container) {
+						this.node = container
+						var self = this
+						dom.bindClassInstance(container, this);
+
+						// Register events object which will represent UISiminfo widget on the Event Bus
+						window.EventBus.registerTo(this.node,"UIPhone")
+
+						if(this.chunk) {
+							this.chunk.btn_phone_save.onclick = function(){
+								self.fireEvent("btn_phone_save", {
+									phone: self.phone
+								})
+							}
+
+							this.chunk.btn_phone_update.onclick = function(){
+								self.fireEvent("btn_phone_update", {
+									phone: self.phone
+								})
+							}
+
+							this.chunk.btn_phone_add.onclick = function(){
+								self.fireEvent("btn_phone_delete", {
+									phone: self.phone
+								})
+							}
+
+						}
+
+						// ---------------------------------------------------
+						// Phone SAVE pressed on some UIPhone widget
+						// ---------------------------------------------------
+						window.EventBus.listenToASAP("UIPhone", ["btn_phone_save"], function(ev) {
+							var event_data = ev.detail || {}
+
+							// TODO
+
+						})
+
+						// ---------------------------------------------------
+						// Phone UPDATE pressed on some UIPhone widget
+						// ---------------------------------------------------
+						window.EventBus.listenToASAP("UIPhone", ["btn_phone_update"], function(ev) {
+							var event_data = ev.detail || {}
+
+							// TODO
+
+						})
+
+						// ---------------------------------------------------
+						// Phone DELETE pressed on some UIPhone widget
+						// ---------------------------------------------------
+						window.EventBus.listenToASAP("UIPhone", ["btn_phone_delete"], function(ev) {
+							var event_data = ev.detail || {}
+
+							// TODO
+
+						})
+
+						return container;
+					},
+
+				});
+
+				ui["Phone"] = UIPhone;
+		// 	});
+		});
+	});
+
+//]]>
+</script>

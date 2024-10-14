@@ -70,15 +70,44 @@ console.log("UIModalSMS_send INCLUDED....")
 						// -----------------------------------------------------------
 						// Subscribe to UIWebSocket
 						// -----------------------------------------------------------
-						window.EventBus.listenToASAP("websocket", ["tsmconsole"], function(ev) {
+						// window.EventBus.listenToASAP("websocket", ["tsmconsole"], function(ev) {
+						// 	if (ev["detail"]) {
+						// 		var data = ev["detail"]
+						// 		if (data["SMS_send_answer"]) {
+						// 			self.term.echo(data["SMS_send_answer"].replace("OK", "OK\r\n"));
+						// 		}
+						// 	}
+						// 	//self.term.resume();
+						// })
+
+
+						window.EventBus.listenToASAP("websocket", ["tsmsms"], function(ev) {
+							console.log("SELF", self)
 							if (ev["detail"]) {
 								var data = ev["detail"]
-								if (data["SMS_send_answer"]) {
-									self.term.echo(data["SMS_send_answer"].replace("OK", "OK\r\n"));
+								if (data["AT_answer"] && data["AT_answer"].indexOf("AT+CMGS: ") >= 0)  {
+									var at_answer = data["AT_answer"]
+									var regex = /(\d+)/;
+									var match = regex.exec(at_answer);
+									if(match) {
+										var sent_OK_length = match[1];
+										if (parseInt(sent_OK_length)) {
+											var echo_answer = at_answer.replace("\r\n\r\nOK\r\n", "\r\n")
+											echo_answer = echo_answer.replace(/\r\n$/, " OK\r\n")
+											//self.term.echo(echo_answer);
+											console.log("SELF 2", self)
+										} else {
+											//self.term.echo(echo_answer + " ERROR: NOT OK");
+											return
+										}
+									} else {
+										//self.term.echo(echo_answer + " ERROR: NO CMGS ANSWER");
+										return
+									}
 								}
 							}
-							self.term.resume();
 						})
+
 
 						return container;
 					},
@@ -113,11 +142,10 @@ console.log("UIModalSMS_send INCLUDED....")
     					} else if(comm.length < 3) {
     						return { noerror: false, msg: `[[;red;]Длина SMS-сообщения должна быть 2 и более символов. Для справки введите "help".`}
     					} else if (self.phone_valid == false) {
-    						//self.phone.triggerValidation()
+    						self.phone.triggerValidation()
     						return { noerror: false, msg: `[[;red;]Укажите корректный номер в графе 'Телефон получателя'.` }
     					} else {
-    						console.log(self.phone_valid)
-    						return { noerror: true, msg: `[[;green;]&#91;Ok&#93; - SMS отправлено абоненту: ` + self.phone}
+    						return { noerror: true, msg: `[[;green;]&#91;Ok&#93; - SMS отправлено абоненту: ` + self.phone.getValue()}
     					}
     				},
 
@@ -138,12 +166,12 @@ console.log("UIModalSMS_send INCLUDED....")
 					nearleyValidator: function(field, errormsg) {
 						var self = this
 						return function(user_input_text) {
-							var gramma = netping_luci_relay_adapter_http_valid(field)
+							var gramma = sms_send_validator(field)
 							const parser = new nearley.Parser(nearley.Grammar.fromCompiled(gramma));
 							try {
 								var pf = parser.feed(user_input_text)
 								if (pf.results.length > 0) {
-									self.phone = user_input_text
+									//self.phone = user_input_text
 									self.phone_valid = true
 									return true // it's a requirement of LuCI widget API
 								}
@@ -163,7 +191,7 @@ console.log("UIModalSMS_send INCLUDED....")
                     openModal: function() {
                         // Stop modem automation first
 						var self = this
-						self.phone_valid = false
+						self.phone_valid = true
 						self.phone = new ui.Textfield("", {
 							//datatype: "rangelength(11,12)",
 							id: "phone_for_sms",
@@ -224,7 +252,7 @@ console.log("UIModalSMS_send INCLUDED....")
 									term.resume();
 								}
 								else if (sms_check["noerror"] && sms_check["msg"].indexOf("[[;green;]&#91;Ok&#93;") == 0) {
-									self.fireEvent("send-sms", { ["sms_text"]: sms_text, ["phone_number"]: self.phone })
+									self.fireEvent("send-sms", { ["sms_text"]: sms_text, ["phone_number"]: self.phone.getValue() })
 									term.echo(sms_check["msg"]);
 									term.resume();
 								} else {

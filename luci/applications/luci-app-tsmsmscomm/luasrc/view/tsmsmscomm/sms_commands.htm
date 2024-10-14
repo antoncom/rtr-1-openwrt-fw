@@ -1,0 +1,139 @@
+<% --[[=========== JS ==========]] %>
+<%+tsmsmscomm/ui_utils/external.js%>
+
+<% --[[=========== UI WIDGETS ==========]] %>
+<%+tsmsmscomm/ui_validator/tsmsmscomm.validator.js%>
+<%+tsmsmscomm/ui_widget/UIPhone.js%>
+<%+tsmsmscomm/ui_widget/UISMScommand.js%>
+
+<% 	--[[=========== STYLES ==========]] %>
+
+
+<% --[[=========== LUA BACKEND ==========]] %>
+
+<%
+	local config = "tsmsmscomm"
+	local uci = require "luci.model.uci".cursor()
+	local util = require "luci.util"
+
+
+	local sms_phones = {} 	-- got from UCI config
+	local sms_commands = {} 	-- got from UCI config
+
+	uci:foreach(config, "remote_control", function(a)
+		sms_phones[#sms_phones + 1] = a
+	end)
+
+	util.perror("=========== sms_phones ==============")
+	util.dumptable(sms_phones)
+
+	
+
+	uci:foreach(config, "sms_command", function(a)
+		sms_commands[#sms_commands + 1] = a
+	end)
+
+	util.perror("=========== sms_commands ==============")
+	util.dumptable(sms_commands)
+
+	
+%>
+
+<% --[[=========== HTML ==========]] %>
+<div id="view">
+	<h2 name="content">Управление роутером по SMS</h2>
+	<div class="table cbi-map-descr">
+		<div class="td">
+			<p>Роутер BITCORD RTR-02 может управляться по SMS.<br>Перечень разрешённых SMS-команд расширяется/редактируется путём добавления в таблицу ниже двух значений:</p>
+				<ul>
+					<li><b>Короткая SMS-команда</b>, которую пользователь будет отправлять роутеру с разрешённого номера телефона;</li>
+					<li><b>Системная команда</b> (фактическая bash-строка), выполняемая роутером в ответ на получение короткой SMS-команды.</li>
+				</ul>
+			</p>
+			<p>Например, пользователь отправляет с телефна SMS с текстом <b>log</b>, а на роутере выполняется фактическая системная команда <b>/sbin/logread</b></p> 
+		</div>
+	</div>
+
+	<h3>Список разрешённых телефонов</h3>
+	<div id="phones_rows" class="table" style="width: auto;">
+		<div class="tr table-titles">
+			<div class="th">N</div>
+			<div class="th">Номер телефона</div>
+			<div class="th">Email</div>
+			<div class="th center nowrap cbi-section-actions"><%:Actions %></div>
+		</div>
+
+	</div>
+
+	<h3>Список разрешённых SMS-команд</h3>
+
+	<div id="sms_commands_rows" class="table" style="width: auto;">
+		<div class="tr table-titles">
+			<div class="th">N</div>
+			<div class="th">SMS-команда</div>
+			<div class="th">Фактическая bash-команда</div>
+			<div class="th center nowrap cbi-section-actions"><%:Actions %></div>
+		</div>
+	</div>
+</div>
+
+
+<script type="text/javascript">
+//<![CDATA[
+
+L.require("ui").then(function(ui){
+	L.require('dom').then(function(dom) {
+		L.require("uci").then(function(uci) {
+			uci.load("tsmsmscomm").then(function(out){
+
+				//
+				// ТАБЛИЦА РАЗРЕШЁННЫХ ТЕЛ/ИМЭЙЛ
+				//
+				var viewWrapper = document.getElementById('phones_rows');
+
+				// Populate webpage with phone/emails from UCI config
+				for (let phone_email of <%= luci.util.serialize_json(sms_phones) %>) {
+				  let phone_widget = new ui.Phone(phone_email["trusted_phone"], {
+					phone: phone_email["trusted_phone"],
+					email: phone_email["trusted_email"],
+					uci_id: phone_email[".name"],
+				  });
+				  viewWrapper.appendChild(phone_widget.render());
+				}
+				// Add empty row to the table in order to user is able to add new phone/email
+				let phone_widget_empty = new ui.Phone("", {
+					phone: "",
+					email: "",
+					uci_id: "new",
+				});
+				viewWrapper.appendChild(phone_widget_empty.render());
+
+				//
+				// ТАБЛИЦА РАЗРЕШЁННЫХ SMS/SHELL команд
+				//
+				var viewWrapper_sms = document.getElementById('sms_commands_rows');
+
+				// Populate webpage with SMS/SHELL commands from UCI config
+				for (var command of <%= luci.util.serialize_json(sms_commands) %>) {
+				  var command_widget = new ui.SMScommand(command["sms_command"], {
+					sms_command: command["sms_command"],
+					shell_command: command["shell_command"],
+					uci_id: command[".name"],
+				  });
+				  viewWrapper_sms.appendChild(command_widget.render());
+				}
+				// Add empty row to the table in order to user is able to add new phone/email
+				var command_widget_empty = new ui.SMScommand("", {
+					sms_command: "",
+					shell_command: "",
+					uci_id: "new",
+				});
+				viewWrapper_sms.appendChild(command_widget_empty.render());
+			});
+		});
+	});
+});
+
+
+//]]>
+</script>

@@ -130,9 +130,9 @@ L.require('ui').then(function(ui) {
 						self.socket.send(JSON.stringify({
 							proto: "ubus",
 							uuid: event_data.uuid || "",
-							obj: "tsmodem.driver",
+							obj: "tsmodem.sms",
 							method: "send_sms",
-							params: { command: event_data["sms_text"], value: event_data["phone_number"] }
+							params: { text: event_data["sms_text"], phone: event_data["phone_number"] }
 						}));
 
 					})

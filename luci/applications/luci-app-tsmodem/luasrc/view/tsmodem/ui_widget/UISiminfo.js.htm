@@ -122,7 +122,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 												style: "display: initial;"
 							}),
 							btn_sms_send: E('input',  {
-												type: "button", class: "cbi-button cbi-button-apply webconsole simid-" + this.simid,
+												type: "button", class: "cbi-button cbi-button-apply smsconsole simid-" + this.simid,
 												["data-simid"]: this.simid,
 												value: _("SMS send"),
 												style: "display: initial;"
@@ -143,7 +143,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 
 
 						// Disable "Activate" button for currently active Sim card
-						var active_sim_id = <%=sim_id %>
+						var active_sim_id = '<%=sim_id %>'
 
 						if (active_sim_id == this.simid) {
 							this.chunk.btn_activate.setAttribute("disabled", "disabled");
@@ -232,8 +232,8 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 						// Disable AT-console button as soon as Sim activation button pressed
 						$(".webconsole").prop( "disabled", true );
 
-						// Disable AT-console button as soon as SMS sender button pressed
-						$(".webconsole").prop( "disabled", true );
+						// Disable SMS-console button as soon as Sim activation button pressed
+						$(".smsconsole").prop( "disabled", true );
 
 
 						// Remove all countdowns

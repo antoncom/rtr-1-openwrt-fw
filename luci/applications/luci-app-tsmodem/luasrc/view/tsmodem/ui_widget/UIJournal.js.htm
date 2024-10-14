@@ -10,19 +10,68 @@
     local uci = require "luci.model.uci".cursor()
     local util = require "luci.util"
     local log = require "tsmodem.util.log"
+	local nixio = require "nixio"
+	local leveldb = require 'lualeveldb'
+	local json = require "cjson"
 
-    -- Fetch the journal entries (using a function similar to `read_saved_items`)
-    local journal_list = require "luci.model.tsmodem.journal_list"
-    local journal_data = uci:get_all(journal_config) or {}
-    local journal_entries = journal_list:fetch() or {}
+	function fetch() 
+    local journal_entries = {}
+    local opt = leveldb.options()
+    opt.createIfMissing = true
+    opt.errorIfExists = false
 
-    -- You can serialize and print it out in JSON format to pass to the front-end
-    local serialized_journal = util.serialize_json(journal_entries)
+    local db_file = '/etc/leveldb/journal.db'
+    
+    -- Error handling for opening the database
+    local success, db = pcall(function() 
+        return leveldb.open(opt, db_file)
+    end)
 
-    -- Use prints to expose the data to the HTML/JavaScript side
-    print(journal_list:render("cssfile"))
-    print(journal_list:render("validator"))
-    print(journal_list:render("widgetfile"))
+    if not success then
+        print("Error opening database: " .. tostring(db))
+        return nil
+    end
+
+    local iter, iter_err = nil, nil
+    -- Error handling for creating the iterator
+    success, iter = pcall(function()
+        local it = db:iterator()
+        it:seekToFirst()
+        return it
+    end)
+
+    if not success then
+        print("Error creating iterator: " .. tostring(iter))
+        leveldb.close(db)  -- Ensure database is closed on error
+        return nil
+    end
+
+    -- Error handling for fetching entries
+    success, iter_err = pcall(function()
+        while(iter:valid()) do
+            local key, value = iter:key(), iter:value()
+            local decoded = json.decode(value)
+            table.insert(journal_entries, decoded)
+            iter:next()
+        end
+    end)
+
+    if not success then
+        print("Error iterating over entries: " .. tostring(iter_err))
+        iter:del()  -- Clean up the iterator
+        leveldb.close(db)
+        return nil
+    end
+
+    -- Clean up
+    iter:del()  -- Delete the iterator
+    leveldb.close(db)  -- Close the database
+
+    return journal_entries
+	end
+
+
+	local serialized_journal = util.serialize_json(fetch())
 %>
 
 
@@ -175,10 +224,14 @@
 									var new_row_chunk = self.chunk.newRow(event_date, event_name, event_source, event_command, event_response);
 
 									console.log(event_date, new_row_chunk);
-
+									
 									var table = $('#journal').DataTable();
-									table.row.add([event_date, event_name, event_source, event_command, event_response]).draw();
-									table.columns.adjust().draw();
+
+									var currentPage = table.page();
+									table.row.add([event_date, event_name, event_source, event_command, event_response])
+									table.draw(false);
+									table.columns.adjust().draw(false);
+									table.page(currentPage).draw(false);
 								}
 							}
 						});
@@ -282,8 +335,8 @@
 		L.require("uci").then(function(uci) {
 			uci.load("<%=config%>").then(function(out) {
 				// Fetch the journal entries serialized in Lua and passed to the front-end
+				
 				var journal_data = <%= serialized_journal %>;
-	
 				// Example initialization of the journal table
 				var table = $('#journal').DataTable();
 
@@ -292,15 +345,7 @@
 				// Iterate over the journal entries and add them to the table
 				journal_data.forEach(function(entry) {
 					// Parse the nested 'journal' field if it exists and is a string
-					var journal_entry = {};
-					if (typeof entry.journal === 'string') {
-						try {
-							journal_entry = JSON.parse(entry.journal); // Parse the nested JSON string
-						} catch (e) {
-							console.error('Error parsing journal entry:', e);
-						}
-					}
-
+					var journal_entry = JSON.parse(entry.journal);
 					// Extract the fields from the parsed 'journal_entry'
 					var date = journal_entry.datetime || "";
 					var name = journal_entry.name || "";
