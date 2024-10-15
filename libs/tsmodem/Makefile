@@ -22,7 +22,7 @@ define Package/tsmodem
 	CATEGORY:=Languages
 	TITLE:=Rule-based application logic framework
 	URL:=https://github.com/antoncom/tsmodem.git
-	DEPENDS:=+luci +luci-i18n-base-ru +luci-i18n-base-en +openssh-sftp-server +luci-compat +luaposix +luabitop +lpeg +coreutils +libubox-lua +luasocket +comgt +kmod-usb-serial +kmod-usb-serial-option +kmod-usb-serial-wwan +usb-modeswitch +kmod-usb-core +luci-app-uhttpd +luci-proto-3g +coreutils-stty
+	DEPENDS:=+luci +luci-i18n-base-ru +openssh-sftp-server +luci-compat +luaposix +luabitop +lpeg +coreutils +libubox-lua +luasocket +comgt +kmod-usb-serial +kmod-usb-serial-option +kmod-usb-serial-wwan +usb-modeswitch +kmod-usb-core +luci-app-uhttpd +luci-proto-3g +coreutils-stty
 endef
 
 define Package/tsmodem/description
