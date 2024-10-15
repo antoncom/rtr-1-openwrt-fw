@@ -9,7 +9,7 @@ PKG_NAME:=tsmvpn
 PKG_VERSION:=0.4
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://github.com/Makskuk/vpnconfig.git
+PKG_SOURCE_URL=https://github.com/antoncom/tsmtunnels.git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
@@ -20,7 +20,7 @@ define Package/tsmvpn
 	SECTION:=lang
 	CATEGORY:=Languages
 	TITLE:=Vpnconfig
-	URL:=https://github.com/Makskuk/vpnconfig.git
+	URL:=https://github.com/antoncom/tsmtunnels.git
 	DEPENDS:=+luci
 endef
 
