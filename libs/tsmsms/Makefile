@@ -22,7 +22,7 @@ define Package/tsmsms
 	CATEGORY:=Languages
 	TITLE:=SMS service for Tsmodem
 	URL:=https://github.com/antoncom/tsmsms.git
-	DEPENDS:=+luci +luci-i18n-base-ru +luci-i18n-base-en +openssh-sftp-server +luci-compat +luaposix +luabitop +lpeg +coreutils +libubox-lua +luasocket +comgt +kmod-usb-serial +kmod-usb-serial-option +kmod-usb-serial-wwan +usb-modeswitch +kmod-usb-core +luci-app-uhttpd +luci-proto-3g +coreutils-stty
+	DEPENDS:=
 endef
 
 define Package/tsmsms/description
