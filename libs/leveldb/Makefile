@@ -22,13 +22,12 @@ define Package/leveldb/Default
 endef
 
 define Package/leveldb
-	DEPENDS:=+snappy
 	SECTION:=libs
 	CATEGORY:=Libraries
 	SUBMENU:=database
 	TITLE:=A fast and lightweight key/value database library
 	URL:=https://code.google.com/p/leveldb/
-	DEPENDS:=+libstdcpp +libpthread
+	DEPENDS:=+libstdcpp +libpthread +snappy
 	DEFAULT:=y
 	ABI_VERSION:=1.23
 endef
