@@ -1,0 +1,935 @@
+<%
+
+local util = require "luci.util"
+local ubus_sim = util.ubus("tsmodem.driver", "sim", {})
+local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
+
+%>
+
+<script type="text/javascript">
+//<![CDATA[
+	L.require('ui').then(function(ui) {
+		L.require('dom').then(function(dom) {
+		// 	uci.load("tsmodem").then(function(out){
+				var UISiminfo = ui.AbstractElement.extend({
+					__init__: function(simname, options) {
+		                this.simid = options.simid
+		                this.name = (options.name == "") ? "SIM-" + (parseInt(this.simid)+1) : options.name
+						this.autodetection_mode = options.autodetection_mode
+		                this.provider = options.provider || ""
+						this.provider_autodetected = ""
+
+						this.cpin = options.cpin
+						this.netreg = options.netreg
+						this.lastreg_timer = 0
+						this.netreg_timeout = null
+
+						this.ping_status = options.ping_status
+						this.lastping_timeout = null
+						this.lastping_timer = 0
+
+		                this.netmode = options.netmode
+
+						this.signal = options.signal
+						this.lowsignal_timer = 0
+						this.signal_min = null
+						this.lowsignal_timeout = null
+
+						this.balance = options.balance
+						this.lowbalance_timer = 0
+						this.balance_datetime = ""
+						this.lowbalance_timeout = null
+
+						this.autodetect_provider = undefined
+
+						this.is_switching = false
+
+						this.countdown = {}
+						this.countdown_many = 0
+
+						var self = this
+
+						this.debounce = false
+						this.timeoutId = undefined
+
+						// Debounce helper
+						this.waitme = function() {
+							self.debounce = true;
+							if (self.timeoutId) {
+								clearTimeout(self.timeoutId)
+							}
+							self.timeoutId = setTimeout(function(){
+								self.debounce = false
+							}, 3000)
+						}
+
+						L.require("uci").then(function(uci) {
+							uci.load("tsmodem").then(function(out){
+								self.name = uci.get("tsmodem", "sim_" + self.simid, "name")
+
+								self.signal_min = uci.get("tsmodem", "sim_" + self.simid, "signal_min")
+								self.lowsignal_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_signal")
+
+								self.cpin_timeout = uci.get("tsmodem", "default", "timeout_sim_absent")
+								self.netreg_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_reg")
+								self.lowbalance_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_bal")
+								self.lastping_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_ping")
+
+								self.autodetect_provider = uci.get("tsmodem", "sim_" + self.simid, "autodetect_provider")
+
+								self.provider_code = uci.get("tsmodem", "sim_" + self.simid, "provider")
+
+							});
+
+							uci.load("tsmodem_adapter_provider").then(function(out){
+								self.provider = uci.get("tsmodem_adapter_provider",self.provider_code, "name") || ""
+
+							});
+						});
+
+						this.chunk = {
+							simid: E('div', {class: 'td', ["data-title"]: 'N'}, E('div', {}, parseInt(this.simid)+1)),
+							name: E('div', {class: 'td sim_name', style: "white-space: nowrap;", ["data-title"]: this.name}, [
+										this.name,
+										E('font', {class: "provider_detection"}, ""),
+										E('br'),
+										E('small', {class: "provider_name"}, " ")
+							]),
+							cpin: E('div', {class: 'td cpin_status', ["data-title"]: this.cpin}, E('div', { class: "cpin_value", style: "width: 53px;"}, " ")),
+							netreg: E('div', {class: 'td network_registration', style: "width: 170px;", ["data-title"]: this.netreg}, E('div', { class: "netreg_value", style: "width: 60px;"}, " ")),
+							ping_status: E('div', {class: 'td ping_status', ["data-title"]: this.ping_status}, E('div', { class: "ping_value", style: "width: 53px;"}, this.ping_status)),
+							netmode: E('div', {class: 'td netmode_comment', style: "white-space: nowrap;", ["data-title"]: this.netmode}, E('div', { class: "netmode_value" }, this.netmode)),
+							signal: E('div', {class: 'td signal', ["data-title"]: this.signal}, E('div', { class: "signal_value", style: "width: 53px;"}, this.signal)),
+							//balance: E('div', {class: 'td sim_balance', ["data-title"]: this.signal}, E('div', { style: "width: 53px;"}, E('div', {}, this.balance))),
+							balance: E('div', {class: 'td sim_balance', style: "white-space: nowrap;", ["data-title"]: this.balance}, E('div', {}, E('div', { class: "balance_value" }, this.balance))),
+							btn_balance: E('input',  {
+									type: "button", class: "cbi-button cbi-button-apply sim-" + this.simid + "-balance",
+									["data-simid"]: this.simid,
+									value: _("Баланс"),
+									style: "display: initial; width: 90px;",
+							}),
+
+							btn_setting: E('input',  {
+												type: "button", class: "cbi-button cbi-button-apply sim-" + this.simid + "-settings",
+												["data-simid"]: this.simid,
+												value: _("Settings"),
+												style: "display: initial;",
+							}),
+							btn_console: E('input',  {
+												type: "button", class: "cbi-button cbi-button-apply webconsole simid-" + this.simid,
+												["data-simid"]: this.simid,
+												value: _("AT console"),
+												style: "display: initial;"
+							}),
+							btn_sms_send: E('input',  {
+												type: "button", class: "cbi-button cbi-button-apply smsconsole simid-" + this.simid,
+												["data-simid"]: this.simid,
+												value: _("SMS send"),
+												style: "display: initial;"
+							}),
+							btn_activate: E('input',  {
+												type: "button", class: "cbi-button cbi-button-apply sim-" + this.simid,
+												["data-simid"]: this.simid,
+												value: _("Activate"),
+												style: "display: initial;",
+							}),
+							spinner: E('img', {
+								src: "<%=resource%>/icons/loading.gif",
+								alt: "<%:Loading%>",
+								width: 16,
+								style: "vertical-align:middle"
+							})
+						}
+
+
+						// Disable "Activate" button for currently active Sim card
+						var active_sim_id = '<%=sim_id %>'
+
+						if (active_sim_id == this.simid) {
+							this.chunk.btn_activate.setAttribute("disabled", "disabled");
+						}
+
+						// Disable "Balance" button for another, non-active Sim card
+						if (active_sim_id != this.simid) {
+							this.chunk.btn_balance.setAttribute("disabled", "disabled");
+						}
+					},
+
+					render: function() {
+		                var container = E('div', { id: 'simid-' + this.simid, class: 'tr cbi-rowstyle-' + this.simid }, [
+		                    this.chunk.simid,
+							this.chunk.name,
+							this.chunk.cpin,
+							this.chunk.netreg,
+							this.chunk.ping_status,
+							this.chunk.netmode,
+							this.chunk.signal,
+							this.chunk.balance,
+		                    E('div', {class: "nowrap cbi-section-actions td", style: "text-align: right;"}, [
+								this.chunk.btn_balance,
+								this.chunk.btn_setting,
+								this.chunk.btn_console,
+								this.chunk.btn_sms_send,
+								this.chunk.btn_activate,
+		                    ])
+		                ])
+
+
+						return this.bind(container);
+					},
+
+					// Fire events issued from UISiminfo widget
+					fireEvent: function(event_name, event_data) {
+						var s = new CustomEvent(event_name, {
+							detail: event_data,
+							bubbles: true,
+						})
+						if(window.EventBus.busobjects["UISiminfo_"+this.simid]) {
+							window.EventBus.busobjects["UISiminfo_"+this.simid].dispatchEvent(s);
+						}
+					},
+
+					// Clear Siminfo row when do_switch event or btn_activate pressed
+					clearInfo: function(simid) {
+						var self = this
+
+						this.is_switching = true
+
+						// Clear table row for non-active Sim-card
+						var chunk_update = E('div', {class: "cpin_value"}, " ")
+						var node_pointer = "#" + simid + " .cpin_value"
+						$(node_pointer).replaceWith(chunk_update)
+
+						chunk_update = E('div', {class: "netreg_value"}, ". . .")
+						node_pointer = "#" + simid + " .netreg_value"
+						$(node_pointer).replaceWith(chunk_update)
+
+						chunk_update = E('div', {class: "ping_value"}, " ")
+						node_pointer = "#" + simid + " .ping_value"
+						$(node_pointer).replaceWith(chunk_update)
+
+						chunk_update = E('div', {class: "netmode_value"}, " ")
+						node_pointer = "#" + simid + " .netmode_value"
+						$(node_pointer).replaceWith(chunk_update)
+
+						chunk_update = E('div', {class: "signal_value"}, " ")
+						node_pointer = "#" + simid + " .signal_value"
+						$(node_pointer).replaceWith(chunk_update)
+
+						chunk_update = E('div', {class: "balance_value"}, " ")
+						node_pointer = "#" + simid + " .balance_value"
+						$(node_pointer).replaceWith(chunk_update)
+
+						// Disable Activate buttons while sim is switching
+						$(".cbi-button.cbi-button-apply.sim-0").prop("disabled", true)
+						$(".cbi-button.cbi-button-apply.sim-0").prop("disabled", true)
+
+
+						// Disable Balance buttons while sim is switching
+						$(".cbi-button.cbi-button-apply.sim-0-balance").prop( "disabled", true );
+						$(".cbi-button.cbi-button-apply.sim-1-balance").prop( "disabled", true );
+
+						// Disable AT-console button as soon as Sim activation button pressed
+						$(".webconsole").prop( "disabled", true );
+
+						// Disable SMS-console button as soon as Sim activation button pressed
+						$(".smsconsole").prop( "disabled", true );
+
+
+						// Remove all countdowns
+						if (self.countdown) {
+							if (self.countdown["cdown-cpin"]) self.countdown["cdown-cpin"].onTimesUp();
+							if (self.countdown["cdown-netreg"]) self.countdown["cdown-netreg"].onTimesUp();
+							if (self.countdown["cdown-ping"]) self.countdown["cdown-ping"].onTimesUp();
+							if (self.countdown["cdown-balance"]) self.countdown["cdown-balance"].onTimesUp();
+							if (self.countdown["cdown-balance-timeout"]) self.countdown["cdown-balance-timeout"].onTimesUp();
+							if (self.countdown["cdown-signal"]) self.countdown["cdown-signal"].onTimesUp();
+
+							self.countdown = {}
+							self.countdown_many = 0
+						}
+					},
+
+					bind: function(container) {
+						this.node = container
+						var self = this
+						dom.bindClassInstance(container, this);
+
+						// Register events object which will represent UISiminfo widget on the Event Bus
+						window.EventBus.registerTo(this.node,"UISiminfo_"+this.simid)
+
+						if(this.chunk) {
+							this.chunk.btn_setting.onclick = function(){
+								self.fireEvent("btn_setting_pressed", {
+									simid: self.simid
+								})
+							}
+
+							this.chunk.btn_activate.onclick = function(){
+
+								self.waitme()
+
+								self.fireEvent("btn_activate_pressed", {
+									simid: self.simid,
+									uuid: uuid(),
+								})
+								self.chunk.btn_activate.disabled = true
+							}
+
+							this.chunk.btn_balance.onclick = function(e) {
+
+								self.waitme()
+
+								var node_pointer = "#simid-" + self.simid + " div.balance_value"
+								var chunk_update = E('div', {class: "balance_value"}, " ")
+								$(node_pointer).replaceWith(chunk_update)
+
+								self.fireEvent("btn_balance_pressed", {
+									simid: self.simid,
+									provider_code: self.provider_code,
+									uuid: uuid(),
+								})
+
+								self.chunk.btn_balance.setAttribute("disabled", "disabled");
+								spinner2($(node_pointer), 1)
+								//spinner2($(".spinner-reg-"+self.simid), 1)
+
+
+							}
+
+							this.chunk.btn_console.onclick = function(){
+								// self.fireEvent("btn_activate_pressed", {
+								// 	simid: self.simid,
+								// 	uuid: uuid(),
+								// })
+								// self.chunk.btn_activate.disabled = true
+								self.fireEvent("btn_console_pressed", {
+									simid: self.simid
+								})
+							}
+
+							this.chunk.btn_sms_send.onclick = function(){
+								console.log("pressed 1")
+								self.fireEvent("btn_sms_send_pressed", {
+									simid: self.simid
+								})
+							}
+						}
+
+						// ---------------------------------------------------
+						// Activate button pressed on another UISiminfo widget
+						// ---------------------------------------------------
+						window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
+							var event_data = ev.detail || {}
+
+							console.log("UISiminfo_0")
+
+							self.clearInfo("simid-0")
+							self.clearInfo("simid-1")
+
+						})
+
+
+						// ---------------------------------------------------
+						// Activate button pressed on another UISiminfo widget
+						// ---------------------------------------------------
+						window.EventBus.listenToASAP("UISiminfo_1", ["btn_activate_pressed"], function(ev) {
+							var event_data = ev.detail || {}
+
+							console.log("UISiminfo_1")
+
+
+							self.clearInfo("simid-0")
+							self.clearInfo("simid-1")
+
+						})
+
+						// -----------------------------------------------
+						// 01_rule UI updates: Sim is in slot or not
+						// -----------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["01_rule"], function(ev) {
+
+							if (!self.is_switching && !self.debounce) {
+								var event_data = ev.detail || {}
+								var chunk_update = self.chunk.cpin;
+								const node_pointer = "#simid-" + self.simid + " .cpin_value"
+
+								var currently_activated_sim_id = event_data["sim_id"] && parseInt(event_data["sim_id"])
+								if(currently_activated_sim_id == self.simid) {
+
+									if(event_data && event_data.wait_timer) {
+
+										// Update sim-in-slot state
+										self.sim_ready = event_data.sim_ready || " "
+										self.cpin_timeout = event_data.timeout
+										self.cpin_wait_timer = parseInt(event_data.wait_timer)
+
+
+
+										var SIM_READY = (self.sim_ready == "true")
+										var SIM_ABSENT = (self.sim_ready == "false")
+										var SIM_CHECKING = (self.sim_ready == " ")
+
+										if (SIM_READY) {
+												chunk_update = E('font', {class: "cpin_value", style: "color: green; font-weight: bolder;"}, "OK")
+
+												$(node_pointer).replaceWith(chunk_update)
+
+												if (self.countdown["cdown-cpin"]) {
+													self.countdown["cdown-cpin"].onTimesUp()
+													self.countdown["cdown-cpin"] = null
+													self.countdown_many--;
+												}
+										} else {
+											if (SIM_CHECKING) {
+												chunk_update = E('img', {
+													class: "cpin_value",
+													src: "<%=resource%>/icons/loading.gif",
+													alt: "<%:Loading%>",
+													width: 16,
+													style: "vertical-align:middle"
+												})
+												$(node_pointer).replaceWith(chunk_update)
+
+											} else if (SIM_ABSENT) {
+												chunk_update = E('font', {class: "cpin_value", style: "color: red; font-weight: bolder;"}, "No")
+
+												$(node_pointer).replaceWith(chunk_update)
+
+
+												if (self.cpin_wait_timer && self.cpin_timeout && ((self.cpin_timeout - self.cpin_wait_timer) > 5)) {
+													// Show countdown progress if SIM isn't in slot
+													if (!self.countdown["cdown-cpin"] && self.countdown_many <= 0) {
+														var slot_name = ((self.simid == 0) ? "SIM-1" : "SIM-2")
+														var title = "Нет сим-карты в слоте " + slot_name
+														var description = "В слоте " + slot_name + " не обнаружена Сим-карта. Вставьте сим-карту до истечения таймера, или дождитесь переключения модема на другой слот."
+
+														self.countdown["cdown-cpin"] = new ui.Countdown("cdown-cpin", self.cpin_timeout, self.cpin_wait_timer, title, description)
+														$('#ui-countdown').append(self.countdown["cdown-cpin"].render())
+
+														self.countdown_many++
+													}
+												}
+											}
+										}
+									}
+								// Clear CPIN state of non-activated row (UISiminfo) as we can't know whether Sim-card exists in non-active slot or not
+								} else if(currently_activated_sim_id != self.simid) {
+									chunk_update = E('font', {class: "cpin_value", style: "color: red; font-weight: bolder;"}, " ")
+									$(node_pointer).replaceWith(chunk_update)
+
+								}
+							}
+						});
+
+						// -----------------------------------------------
+						// 02_rule UI updates: Network registration status
+						// -----------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["02_rule"], function(ev) {
+							if (!self.is_switching && !self.debounce) {
+								var event_data = ev.detail || {}
+								var chunk_update = self.chunk.netreg;
+								const node_pointer = "#simid-" + self.simid + " .netreg_value"
+
+								if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+
+									var network_state = {
+										"-1": ["Проверьте Сим-карту в слоте", "SIM NOT INSERTED"],
+										"0": ["<%:Not registered %>", "NOT REGISTERED"],
+										"1": ["<%:Active %>", "REGISTERED"],
+										"2": ["<%:Searching %>", "SEARCHING"],
+										"3": ["<%:Denied %>", "DENIED"],
+										"4": ["<%:Unknown %>", "UNKNOWN"],
+										"5": ["<%:Active-roaming %>", "ROAMING"],
+										"6": ["<%:Not active %>", "OK"],
+										"7": ["Инициализация модема", "UNKNOWN"],
+										"8": ["Соединение с Интернет", "CHECK IFACE TSMODEM"],
+										"9": ["Соединение с GSM-провайдером", "CHECK IFACE TSMODEM"],
+									}
+
+									// Update net registration state
+									self.netreg = parseInt(event_data.network_registration) || 4
+									self.lastreg_timer = parseInt(event_data.lastreg_timer)
+
+									var bgIcon_Y = -(self.netreg * 15) // see www/luci-static/resources/ts_skw92a/img/icon_reg_status.png
+
+									if(self.netreg != 1) {
+										if(self.lastreg_timer > 60) {
+											chunk_update = E('i', { class: "netreg_value", style: "background-position: 0 " + bgIcon_Y + "px; color: red;" }, [
+												 network_state[self.netreg.toString()][0],
+												 E('div', { class: "spinner-reg-"+self.simid, style: "display: inline-block; margin-left: 4px;"})
+											])
+
+											$(node_pointer).replaceWith(chunk_update)
+											if(self.netreg == 8) {
+												// Show countdown progress if no LINK
+												if (!self.countdown["cdown-netreg"] && self.countdown_many <= 0) {
+													var title = "Нет доступа к интернет"
+													var description = "Соединение с интернет не может быть установлено. Проверьте настройки сети, межсетевого экрана, а также достаточный остаток денежных средств на балансе Сим-карты."
+
+													self.countdown["cdown-netreg"] = new ui.Countdown("cdown-netreg", self.netreg_timeout, self.lastreg_timer, title, description)
+													$('#ui-countdown').append(self.countdown["cdown-netreg"].render())
+													self.countdown_many++;
+												}
+											} else {
+												// Show countdown progress if no registration
+												if (!self.countdown["cdown-netreg"] && self.countdown_many <= 0) {
+													var title = "Нет регистрации в сети"
+													var description = "Проверьте настройки, убедившись что они соответствуют вставленной в слот Сим-карте. При отсутствии регистрации Сим-карта будет переключена по истечении таймера."
+
+													self.countdown["cdown-netreg"] = new ui.Countdown("cdown-netreg", self.netreg_timeout, self.lastreg_timer, title, description)
+													$('#ui-countdown').append(self.countdown["cdown-netreg"].render())
+													self.countdown_many++;
+												}
+											}
+										} else {
+											chunk_update = E('i', { class: "netreg_value", style: "background-position: 0 " + bgIcon_Y + "px;" }, [
+												network_state[self.netreg.toString()][0],
+												E('div', { class: "spinner-reg-"+self.simid, style: "display: inline-block; margin-left: 4px;"})
+											])
+											$(node_pointer).replaceWith(chunk_update)
+
+											if (self.countdown["cdown-netreg"]) {
+												self.countdown["cdown-netreg"].onTimesUp()
+												self.countdown["cdown-netreg"] = undefined
+												self.countdown_many--;
+											}
+										}
+										spinner2($(".spinner-reg-"+self.simid), 1)
+
+									} else {
+										chunk_update = E('i', { class: "netreg_value", style: "background-position: 0 " + bgIcon_Y + "px;" }, [
+											network_state[self.netreg.toString()][0],
+											E('div', { class: "spinner-reg-"+self.simid, style: "display: inline-block; margin-left: 4px;"})
+										])
+										$(node_pointer).replaceWith(chunk_update)
+
+										if (self.countdown["cdown-netreg"]) {
+											self.countdown["cdown-netreg"].onTimesUp()
+											self.countdown["cdown-netreg"] = undefined
+											self.countdown_many--;
+										}
+										spinner2($(".spinner-reg-"+self.simid), 0)
+									}
+
+								}
+								var currently_activated_sim_id = event_data["sim_id"] && parseInt(event_data["sim_id"])
+								if(currently_activated_sim_id != self.simid) {
+									$(".cbi-button.cbi-button-apply.sim-" + self.simid + "-balance").prop( "disabled", true );
+								}
+
+								// Enable AT-console button as soon as sim switched
+								if (parseInt(self.netreg) && parseInt(self.netreg) >= 0 && parseInt(self.netreg) != 7) {
+									$(".webconsole.simid-" + self.simid).prop( "disabled", false );
+								}
+
+								if(currently_activated_sim_id != self.simid) {
+									$(".webconsole.simid-" + self.simid).prop( "disabled", true );
+								}
+							}
+						})
+
+						// ---------------------------------------
+						// 03_rule UI updates: Balance on Sim card
+						// ---------------------------------------
+						window.EventBus.listenToASAP("websocket", ["03_rule"], function(ev) {
+							if (!self.is_switching && !self.debounce) {
+								var event_data = ev.detail || {}
+								var chunk_update = self.chunk.balance;
+								const node_pointer = "#simid-" + self.simid + " .balance_value"
+
+								if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+
+									//self.balance = parseInt(event_data.sim_balance) || " "
+									self.balance_datetime = event_data.event_datetime || self.balance_datetime || " "
+									self.lowbalance_timer = event_data.lowbalance_timer || self.lowbalance_timer || 0
+
+									// If Balance is a number
+									if(parseInt(event_data.sim_balance)) {
+										self.balance = parseFloat(event_data.sim_balance).toFixed(2).toString() + " руб."
+										self.chunk.btn_balance.removeAttribute("disabled");
+
+										if (self.lowbalance_timer > 10) {
+											chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap; color: red;" }, [
+												self.balance,
+												E('br'),
+												E('small', {}, self.balance_datetime)
+											])
+
+											$(node_pointer).replaceWith(chunk_update)
+
+											// Show countdown progress if low balance
+											if (!self.countdown["cdown-balance"] && self.countdown_many <= 0) {
+												var title = "Баланс на Сим-карте ниже минимума"
+												var description = "Если не пополнить баланс или не изменить минимум в настройках, то по истечении таймера Сим-карта будет переключена."
+												self.countdown["cdown-balance"] = new ui.Countdown("cdown-balance", self.lowbalance_timeout, self.lowbalance_timer, title, description)
+												$('#ui-countdown').append(self.countdown["cdown-balance"].render())
+												self.countdown_many++;
+											}
+										} else {
+											chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;" }, [
+												self.balance,
+												E('br'),
+												E('small', {}, self.balance_datetime)
+											])
+											$(node_pointer).replaceWith(chunk_update)
+
+											if (self.countdown["cdown-balance"]) {
+												self.countdown["cdown-balance"].onTimesUp()
+												self.countdown["cdown-balance"] = null
+												self.countdown_many--;
+											}
+										}
+									// If balance getting in progress
+									} else if(event_data.sim_balance == "*") {
+										self.chunk.btn_balance.setAttribute("disabled", "disabled");
+										chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;"}, [
+											" ",
+											E('div', { class: "spinner-bal-"+self.simid, style: "display: inline-block; margin-left: 4px;"})
+										])
+										$(node_pointer).replaceWith(chunk_update)
+										spinner2($(".spinner-bal-"+self.simid), 1)
+									// If balance getting doesn't meet success
+									} else {
+										var bal_interval = self.balance_interval
+										var next_try_bal_timer = self.balance_interval_timer
+										var recent_mins = parseInt((bal_interval - next_try_bal_timer) / 60) || false
+										var recent_sec = (bal_interval - next_try_bal_timer) - (recent_mins*60) || false
+										self.chunk.btn_balance.removeAttribute("disabled");
+										if (recent_mins && recent_sec) {
+											chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;"}, [
+												E("small", {}, "Авто-запрос<br>через " + recent_mins + ":" + ((recent_sec < 10) ? ("0" + recent_sec) : recent_sec) ),
+											])
+										} else {
+											chunk_update = E('div', { class: "balance_value", style: "white-space: nowrap;"}, [
+												E("small", {}, " - "),
+											])
+										}
+										$(node_pointer).replaceWith(chunk_update)
+									}
+
+								}
+							}
+						})
+
+						// ---------------------------------------
+						// 04_rule UI updates: PING
+						// ---------------------------------------
+						window.EventBus.listenToASAP("websocket", ["04_rule"], function(ev) {
+							if (!self.is_switching && !self.debounce) {
+								var event_data = ev.detail || {}
+								var chunk_update = self.chunk.ping_status;
+								const node_pointer = "#simid-" + self.simid + " .ping_value"
+
+								if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+									if(event_data && event_data.lastping_timer) {
+
+										self.ping_status = event_data.ping_status || " "
+										self.lastping_timer = event_data.lastping_timer
+
+										var NETREG_OK = (self.netreg == 1)
+
+										if (NETREG_OK) {
+											//var PING_OK = (self.lastping_timer && (self.lastping_timer <= 15) && self.ping_status == 1)
+											var PING_OK = (self.lastping_timer && (self.lastping_timer <= 0))
+											if (PING_OK) {
+												chunk_update = E('font', {class: "ping_value", style: "color: green; font-weight: bolder;"}, "OK")
+												$(node_pointer).replaceWith(chunk_update)
+
+												if (self.countdown["cdown-ping"]) {
+													self.countdown["cdown-ping"].onTimesUp()
+													self.countdown["cdown-ping"] = null
+													self.countdown_many--;
+												}
+											} else {
+												chunk_update = E('font', {class: "ping_value", style: "color: red; font-weight: bolder;"}, "No")
+												$(node_pointer).replaceWith(chunk_update)
+
+												if (self.lastping_timer > 15) {
+													// Show countdown progress if No ping
+													if (!self.countdown["cdown-ping"] && self.countdown_many <= 0) {
+														var title = "Нет пинга сети"
+														var description = "Сим-карта зарегистрирована в сети, соединение с интернет установлено, но доступ к интернет-ресурсам отсутствует, т.к. default-хост ({0}) не пингуется. Возможно недостаточно средств на балансе Сим-карты, либо имеют место временные сбои на стороне GSM-оператора.".string_format(event_data['host'])
+														self.countdown["cdown-ping"] = new ui.Countdown("cdown-ping", self.lastping_timeout, self.lastping_timer, title, description)
+														$('#ui-countdown').append(self.countdown["cdown-ping"].render())
+														self.countdown_many++;
+													}
+												}
+											}
+										} else {
+											chunk_update = E('font', {class: "ping_value", style: "color: red; font-weight: bolder;"}, " ")
+											$(node_pointer).replaceWith(chunk_update)
+
+											if (self.countdown["cdown-ping"]) {
+												self.countdown["cdown-ping"].onTimesUp()
+												self.countdown["cdown-ping"] = null
+												self.countdown_many--;
+											}
+
+										}
+									}
+
+
+								}
+							}
+						})
+
+						// ---------------------------------------
+						// 05_rule UI updates: Signal level
+						// ---------------------------------------
+						window.EventBus.listenToASAP("websocket", ["05_rule"], function(ev) {
+							if (!self.is_switching && !self.debounce) {
+								var event_data = ev.detail || {}
+								var chunk_update = self.chunk.signal;
+								const node_pointer = "#simid-" + self.simid + " .signal_value"
+
+								if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+
+									self.signal = parseInt(event_data.signal) || 0
+									self.lowsignal_timer = parseInt(event_data.low_signal_timer) || 0
+
+									var SIGNAL_OK = (self.signal > 0)
+									var LOWSIGNAL_TIMER_IS_ZERO = (self.lowsignal_timer <=0 )
+									if (LOWSIGNAL_TIMER_IS_ZERO) {
+										chunk_update = E('div', {class: "signal_value"}, self.signal + " %")
+										$(node_pointer).replaceWith(chunk_update)
+
+										if (self.countdown["cdown-signal"]) {
+											self.countdown["cdown-signal"].onTimesUp()
+											self.countdown["cdown-signal"] = undefined
+											self.countdown_many--;
+										}
+
+									} else {
+										chunk_update = E('div', { class: "signal_value", style: "color: red;"}, self.signal + " %")
+										$(node_pointer).replaceWith(chunk_update)
+
+										if(self.lowsignal_timer > 15) {
+											// Show countdown progress if low signal
+											if (!self.countdown["cdown-signal"] && self.countdown_many <= 0) {
+												var title = "Сигнал базовой станции ниже минимума"
+												var description = "Устройство находится в зоне слабого сигнала. По истечении таймера Сим-карта будет переключена. Проверьте минимальный порог переключения в настройках Сим-карты."
+												self.countdown["cdown-signal"] = new ui.Countdown("cdown-signal", self.lowsignal_timeout, self.lowsignal_timer, title, description)
+												$('#ui-countdown').append(self.countdown["cdown-signal"].render($(node_pointer)))
+												self.countdown_many++;
+											}
+										}
+									}
+								}
+							}
+						})
+
+						// -------------------------------------------
+						// 07_rule UI updates: Network mode indication
+						// -------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["07_rule"], function(ev) {
+							if (!self.is_switching && !self.debounce) {
+								var event_data = ev.detail || {}
+								var chunk_update = self.chunk.provider;
+								const node_pointer = "#simid-" + self.simid + " .netmode_value"
+
+								var NETREG_OK = (self.netreg == 1)
+
+								if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+									if(NETREG_OK) {
+										self.netmode = event_data.netmode || " "
+										chunk_update = E('div', { class: "netmode_value", style: "color: black;"}, self.netmode)
+									} else {
+										chunk_update = E('div', { class: "netmode_value", style: "color: black;"}, " ")
+									}
+									$(node_pointer).replaceWith(chunk_update)
+								}
+							}
+						})
+
+						// -------------------------------------------
+						// UI updates: Memo according to Sim settings
+						// -------------------------------------------
+						// window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
+						//
+						// });
+
+						// ------------------------------------------------
+						// 14_rule UI updates: Provider name identification
+						// ------------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["14_rule"], function(ev) {
+							if (!self.is_switching && !self.debounce) {
+								var event_data = ev.detail || {}
+								var chunk_update = self.chunk.provider;
+								const node_pointer = "#simid-" + self.simid + " .provider_name"
+
+								if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+									self.provider_autodetected = event_data.provider_name || " "
+
+									if (event_data.provider_name == "") {
+										chunk_update = E('small', {class: "provider_name"}, "")
+									} else {
+										chunk_update = E('small', {class: "provider_name"}, "Автоопределение: <font color='green'><b>" + self.provider_autodetected + '</b></font>')
+									}
+									$(node_pointer).replaceWith(chunk_update)
+									if (self.autodetection_mode == 1) {
+										self.provider_code = event_data.new_provider_id
+										chunk_update = E('font', {class: "provider_detection", style: "color: black;"}, " - настроен: AUTO")
+									} else {
+										self.provider_code = event_data.old_provider_id
+										if ((self.provider == self.provider_autodetected) || (self.provider_code == "CUSTOM_1") || (self.provider_code == "CUSTOM_2")) {
+											chunk_update = E('font', {class: "provider_detection", style: "color: black;"}, " - настроен: " + self.provider)
+										} else if (self.provider != "") {
+											chunk_update = E('font', {class: "provider_detection", style: "color: red;"}, " - настроен: " + self.provider)
+										} else {
+											chunk_update = E('font', {class: "provider_detection"}, "")
+										}
+									}
+
+									$("#simid-" + self.simid + " .provider_detection").replaceWith(chunk_update)
+
+									// Disable "Balance" button if provider_code 000000 (from auto config)
+									if(self.provider_code == 0) {
+										console.log("self.provider_code", self.provider_code)
+										self.chunk.btn_balance.setAttribute("disabled", "disabled");
+									}
+								}
+							}
+						})
+
+						// ---------------------------------------
+						// 15_rule UI updates: Balance on Sim card
+						// ---------------------------------------
+						window.EventBus.listenToASAP("websocket", ["15_rule"], function(ev) {
+							if (!self.is_switching && !self.debounce) {
+								var event_data = ev.detail || {}
+
+								if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+									self.balance_timeout = event_data.timeout
+									self.wait_balance_for = event_data.wait_balance
+									self.balance_interval = event_data.balance_interval
+									self.balance_interval_timer = event_data.timer
+
+									// If timeout is a number
+									if(parseInt(self.balance_timeout)) {
+										self.balance_timeout = parseInt(self.balance_timeout)
+										self.wait_balance_for = parseInt(self.wait_balance_for)
+										if (self.balance_timeout < 45) {
+
+											// Show countdown progress if getting balance process overcome wait_balance_for value
+											if (!self.countdown["cdown-balance-timeout"] && self.countdown_many <= 0) {
+												var wbf = parseInt(self.wait_balance_for/60)
+												if (wbf <= 0) { wbf = 1}
+												var title = "Баланс не получен в течении " + wbf + " мин."
+												var description = "За " + wbf + " мин. от данного провайдера не получено значения баланса на сим.карте."
+												description += "<br>Проверьте соответствие Сим-карты настройкам активного слота, а также формат сообщения о балансе."
+												self.countdown["cdown-balance-timeout"] = new ui.Countdown("cdown-balance-timeout", self.wait_balance_for, (self.wait_balance_for - self.balance_timeout), title, description)
+												$('#ui-countdown').append(self.countdown["cdown-balance-timeout"].render())
+												self.countdown_many++;
+											}
+										} else {
+											if (self.countdown["cdown-balance-timeout"]) {
+												self.countdown["cdown-balance-timeout"].onTimesUp()
+												self.countdown["cdown-balance-timeout"] = null
+												self.countdown_many--;
+											}
+										}
+									}
+								}
+							}
+						})
+
+						// -------------------------------------------------------
+						// tsmconsole UI updates: Activate button enable / disable
+						//
+						// If UIWebSocket fires "ubus" event with "do_switch" method, then
+						// we disable "Activate" buttons for both Sim cards
+						// -------------------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["ubus"], function(ev) {
+							var event_data = ev.detail || {}
+							var chunk_update = self.chunk.btn_activate;
+
+							// Disable "Activate" buttons, once do_switch ubus method requested
+							if(event_data && event_data["command"] && event_data["command"] == "do_switch") {
+								$(".cbi-button.cbi-button-apply.sim-" + self.simid).prop("disabled", true)
+							}
+						})
+
+
+						// -----------------------------------------------------------
+						// 98_rule UI updates: If modem disconnected from USB too long
+						// -----------------------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["98_rule"], function(ev) {
+							var event_data = ev.detail || {}
+							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+								if(event_data["idle_time"] && event_data["idle_time"] >= 30) {
+									// Show countdown progress if modem is disconnected too long
+									if (!self.countdown["cdown-usb-timeout"] && self.countdown_many <= 0) {
+										var wbf = parseInt(event_data["idle_time"]/60)
+										if (wbf <= 0) { wbf = 1}
+										var title = "USB-порт не инициализирован дольше " + wbf + " мин."
+										var description = "Порт модема /dev/ttyUSB2 не инициализирован более чем за " + wbf + " мин."
+										description += "<br>По истечение таймера USB-порт будет реинициализиорован и устройство возобновит работу. Если данная проблема встречается повторно - обратитесь в службу тех.поддержки."
+										self.countdown["cdown-usb-timeout"] = new ui.Countdown("cdown-usb-timeout", 120, event_data["idle_time"], title, description)
+										$('#ui-countdown').append(self.countdown["cdown-usb-timeout"].render())
+										self.countdown_many++;
+									}
+								} else if (event_data["idle_time"] && event_data["idle_time"] == 0) {
+									if (self.countdown["cdown-usb-timeout"]) {
+										self.countdown["cdown-usb-timeout"].onTimesUp()
+										self.countdown["cdown-usb-timeout"] = null
+										self.countdown_many--;
+									}
+								}
+
+								// Enable "Activate" button for that Sim card which is not currently activated
+								if(self.is_switching) {
+									var currently_activated_sim_id = event_data["sim_id"] && parseInt(event_data["sim_id"])
+
+									if(currently_activated_sim_id != self.simid) {
+										$(".cbi-button.cbi-button-apply.sim-" + self.simid).prop("disabled", false)
+										$(".cbi-button.cbi-button-apply.sim-" + currently_activated_sim_id).prop("disabled", true)
+									}
+								}
+							}
+						});
+
+
+						// -----------------------------------------------------------
+						// 99_rule UI updates: UICover hide / show, clear Siminfo rows
+
+						// IF UIWebSocket fires "99_rule" event with "switching=false", then
+						// we enable another Sim card (not-active currently)
+						// -----------------------------------------------------------
+						window.EventBus.listenToASAP("websocket", ["99_rule"], function(ev) {
+							var event_data = ev.detail || {}
+							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
+
+								// Clear table row when start switching
+								self.is_switching = (event_data["switching"] == "true" || event_data["switching"] == "" || event_data["do_switch"] == "true")
+
+								if(self.is_switching) {
+									self.clearInfo("simid-0")
+									self.clearInfo("simid-1")
+								}
+
+							}
+
+							// Enable "Activate" button for that Sim card which is not currently activated
+							if(self.is_switching) {
+								var currently_activated_sim_id = event_data["sim_id"] && parseInt(event_data["sim_id"])
+
+								if(currently_activated_sim_id != self.simid) {
+									$(".cbi-button.cbi-button-apply.sim-" + self.simid).prop("disabled", false)
+									$(".cbi-button.cbi-button-apply.sim-" + currently_activated_sim_id).prop("disabled", true)
+								}
+							}
+						});
+
+						return container;
+					},
+
+				});
+
+				ui["Siminfo"] = UISiminfo;
+		// 	});
+		});
+	});
+
+//]]>
+</script>

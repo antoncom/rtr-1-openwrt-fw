@@ -4,4 +4,5 @@ m = Map(config, title)
 m.template = "vpnconfig/pptp"
 m.pageaction = false
 
+
 return m

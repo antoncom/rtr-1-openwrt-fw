@@ -1,0 +1,104 @@
+
+<script type="text/javascript">
+//<![CDATA[
+	L.require('ui').then(function(ui) {
+		L.require('dom').then(function(dom) {
+			var UICover = ui.AbstractElement.extend({
+				__init__: function(cover_text, options) {
+                    this.simid = null,
+                    this.switching = false
+					this.timeoutId = null
+					self.debounce = false
+				},
+
+				// Debounce helper
+				waitme: function() {
+					this.debounce = true;
+					if (this.timeoutId) {
+						clearTimeout(this.timeoutId)
+					}
+					var self = this
+					this.timeoutId = setTimeout(function(){
+						self.debounce = false
+					}, 3000)
+				},
+
+				render: function() {
+	                var container = E('div')
+
+					return this.bind(container);
+				},
+
+				displayOverlay: function() {
+					if ($("#overlay").length > 0) {
+						removeOverlay();
+						displayOverlay('<%:Switching the SIM card.. %>');
+					} else {
+						displayOverlay('<%:Switching the SIM card.. %>');
+					}
+				},
+
+				removeOverlay: function() {
+					removeOverlay();
+				},
+
+				bind: function(container) {
+					this.node = container
+					dom.bindClassInstance(container, this);
+                    var self = this
+
+                    // --------------------------------------------------------------------------------
+                    // Subscribe on UISiminfo widget, btn_setting_pressed event: Open SIM Setting modal
+                    // --------------------------------------------------------------------------------
+                    window.EventBus.listenToASAP("websocket", ["99_rule"], function(ev) {
+                        var event_data = ev.detail || {}
+                        self.simid = event_data.simid || self.simid || "simid-0"
+                        self.switching = event_data.switching || self.switching || false
+
+                        if(event_data["switching"] == "true") {
+							self.waitme()
+                            self.displayOverlay()
+                        } else if(event_data["switching"] == "false" && !self.debounce) {
+							self.removeOverlay()
+						}
+
+						if(event_data["do_switch"] == "true") {
+							self.waitme()
+                            self.displayOverlay()
+                        } else if(event_data["do_switch"] == "false" && !self.debounce) {
+							self.removeOverlay()
+						}
+                    })
+
+                    // -------------------------------------
+                    // Subscribe on Activate button pressed
+                    // -------------------------------------
+                    window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
+                        var event_data = ev.detail || {}
+                        self.simid = event_data.simid || self.simid || "simid-0"
+						self.waitme()
+						self.displayOverlay()
+
+                    })
+
+					window.EventBus.listenToASAP("UISiminfo_1", ["btn_activate_pressed"], function(ev) {
+                        var event_data = ev.detail || {}
+                        self.simid = event_data.simid || self.simid || "simid-1"
+						self.waitme()
+						self.displayOverlay()
+
+                    })
+
+
+					return container;
+				},
+
+			});
+
+			ui["Cover"] = UICover;
+
+		});
+	});
+
+//]]>
+</script>

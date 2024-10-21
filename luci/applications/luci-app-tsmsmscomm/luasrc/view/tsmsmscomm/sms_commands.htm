@@ -1,7 +1,10 @@
 <% --[[=========== JS ==========]] %>
+<%+tsmsmscomm/ui_utils/utils.js%>
 <%+tsmsmscomm/ui_utils/external.js%>
+<%+tsmsmscomm/ui_override/TextFieldStyled.js%>
 
 <% --[[=========== UI WIDGETS ==========]] %>
+<%+tsmsmscomm/ui_widget/UIEventBus.js%>
 <%+tsmsmscomm/ui_validator/tsmsmscomm.validator.js%>
 <%+tsmsmscomm/ui_widget/UIPhone.js%>
 <%+tsmsmscomm/ui_widget/UISMScommand.js%>
@@ -24,17 +27,11 @@
 		sms_phones[#sms_phones + 1] = a
 	end)
 
-	util.perror("=========== sms_phones ==============")
-	util.dumptable(sms_phones)
 
-	
 
 	uci:foreach(config, "sms_command", function(a)
 		sms_commands[#sms_commands + 1] = a
 	end)
-
-	util.perror("=========== sms_commands ==============")
-	util.dumptable(sms_commands)
 
 	
 %>

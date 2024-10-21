@@ -20,13 +20,24 @@ function send_action(action, sim_id, payload) {
 	var btn_spinner = document.getElementById("btn_enable_spinner");;
 	spinner(btn_spinner, 1);
 
-	xhr.post('<%=luci.dispatcher.build_url("admin", "system", "sim_list", "action")%>/'+ '%h/%h'.format(action, sim_id), payload,
+	<%
+
+		local url = luci.dispatcher.build_url("admin", "system", "sim_list_2", "action")
+	%>
+
+	var jurl = '<%=url %>' + '/%h/%h'.format(action, sim_id)
+
+	xhr.post(jurl, payload,
 		function (x) {
 			if (!x) {
+				console.log("ERROR in send_action()")
 				return;
 			}
 			spinner(btn_spinner, 0);
-			location.assign('<%=luci.dispatcher.build_url("admin", "system", "sim_list")%>');
+			<% 
+				local ind_redirect = luci.dispatcher.build_url("admin", "system", "sim_list")
+			%>
+			//location.assign('<%=ind_redirect %>');
 		}
 	);
 

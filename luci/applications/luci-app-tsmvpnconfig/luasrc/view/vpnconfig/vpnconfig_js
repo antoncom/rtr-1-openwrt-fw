@@ -1,37 +1,33 @@
+<% --[[=========== LUA BACKEND ==========]] %>
 <%
 	local config = "vpnconfig"
 
 	local uci = require "luci.model.uci".cursor()
 
-	local getInterfaces = function()
-		local str = ""
+	local function getInterfaces()
 		uci:foreach('network', 'interface', function(a)
-			str = str .. "'" ..  a['.name'] .. "',"
+			print("'" ..  a['.name'] .. "',")
 		end)
-		return str
 	end
 
-	local getBridges = function()
-		local str = "'none'"
+	local function getBridges()
+		print("'none',")
 		uci:foreach('network', 'interface', function(a)
 			if a['type'] == 'bridge' then
-				str = str .. ",'" ..  a['name'] .. "'"
+				print("'" ..  a['.name'] .. "',")
 			end
 		end)
-		return str
 	end
 
-	local getFirewallZones = function()
-		local str = "'none'"
+	local function getFirewallZones()
+		print("'none',")
 		uci:foreach('firewall', 'zone', function(a)
-			str = str .. ",'" ..  a['name'] .. "'"
+			print("'" ..  a['name'] .. "',")
 		end)
-		return str
 	end
-
-	local a = getFirewallZones()
 %>
 
+<% --[[=========== STYLES ==========]] %>
 <%+vpnconfig/vpnconfig.css%>
 
 <script src="<%=resource%>/vpnconfig/jquery/jquery-3.5.1.min.js?v=1.0.0"
@@ -44,10 +40,7 @@
 
 <%+vpnconfig/ui_validator/index.js%>
 
-
-
 <script type="text/javascript">
-//<![CDATA[
 
 
 function nearleyValidator(fieldType, errormsg) {
@@ -231,5 +224,4 @@ function get_list_interfaces() {
 	return [<% getInterfaces() %>];
 }
 
-//]]>
 </script>

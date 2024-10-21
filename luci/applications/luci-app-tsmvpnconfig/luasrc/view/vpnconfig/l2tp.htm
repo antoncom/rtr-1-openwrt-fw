@@ -129,15 +129,16 @@ L.require('ui').then(function(ui) {
     }
 
     getCfgData('<%=vpnType%>', function(sections) {
-        g_l2tpData.isActive = parse_bool(sections[0]['isActive']);
-        g_l2tpData.options['server'] = parse_string(sections[0]['server']);
-        g_l2tpData.options['username'] = parse_string(sections[0]['username']);
-        g_l2tpData.options['password'] = parse_string(sections[0]['password']);
-        g_l2tpData.options['authType'] = parse_string(sections[0]['authType']);
-        g_l2tpData.options['addOptinos'] = parse_string(sections[0]['addOptinos']);
-        g_l2tpData.options['isMPPE'] = parse_bool(sections[0]['isMPPE']);
-        g_l2tpData.options['isDefaultRoute'] = parse_bool(sections[0]['isDefaultRoute']);
-        g_l2tpData.options['isIPSecProt'] = parse_bool(sections[0]['isIPSecProt']);
+        g_l2tpData.isActive = sections && (sections.length > 0) && parse_bool(sections[0]['isActive']) || false;
+        g_l2tpData.options['server'] = sections && (sections.length > 0) && parse_string(sections[0]['server']) || "";
+        g_l2tpData.options['username'] = sections && (sections.length > 0) && parse_string(sections[0]['username']) || "";
+        g_l2tpData.options['password'] = sections && (sections.length > 0) && parse_string(sections[0]['password']) || "";
+        g_l2tpData.options['authType'] = sections && (sections.length > 0) && parse_string(sections[0]['authType']) || "";
+        g_l2tpData.options['addOptinos'] = sections && (sections.length > 0) && parse_string(sections[0]['addOptinos']) || "";
+        g_l2tpData.options['isMPPE'] = sections && (sections.length > 0) && parse_bool(sections[0]['isMPPE']) || false;
+        g_l2tpData.options['isDefaultRoute'] = sections && (sections.length > 0) && parse_bool(sections[0]['isDefaultRoute']) || false;
+        g_l2tpData.options['isIPSecProt'] = sections && (sections.length > 0) && parse_bool(sections[0]['isIPSecProt']) || false;
+
         initForm(g_form, g_l2tpData);
         renderForm(g_form);
         $('#btnReset').on('click', function(){ reset_fields(g_form, g_l2tpData); });

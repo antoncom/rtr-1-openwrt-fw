@@ -14,6 +14,7 @@
 <%+tsmodem/ui_widget/UICountdown.js%>
 <%+tsmodem/ui_widget/UIJournal.js%>
 
+
 <% 	--[[=========== STYLES ==========]] %>
 <%+tsmodem/css%>
 
@@ -72,8 +73,6 @@
 	uci:foreach(config, "sim", function(a)
 		sims_config[#sims_config+1] = a
 	end)
-	util.perror("=========================")
-	util.dumptable(sims_config)
 	local i = 1
 	local function animationWrapper(str, is_active)
 		local html = ''
@@ -210,9 +209,9 @@ L.require("ui").then(function(ui){
 				var widget_ui_cover = ui_cover.render()
 				$("body").append(widget_ui_cover)
 
-				var jur = new ui.Journal("",{});
+				//var jur = new ui.Journal("",{});
 				//console.log("JUR", jur.render())
-				$("journalWrapper").append(jur.render());
+				//$("journalWrapper").append(jur.render());
 
 
 				var viewWrapper= document.getElementById('simcards_rows');

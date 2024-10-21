@@ -17,9 +17,8 @@ function index()
 --		nixio.fs.mkdir(uploadDir);
 --	end
 	if nixio.fs.access("/etc/config/tsmgpio") then
+		entry({"admin", "services", "tsmgpio"}, cbi("tsmgpio/main"),   _("GPIO"), nil).leaf = true
 		entry({"admin", "services", "tsmgpio_set", "action"}, call("gpio_action"), nil).leaf = true
-		entry({"admin", "services", "tsmgpio"},   cbi("tsmgpio/main"),   _("GPIO"), 30).leaf = true
-		
 	end
 
 end

@@ -200,9 +200,17 @@ local util = require "luci.util"
 							request.addInterceptor(self.cb_add)
 
 							// отправляем данные формы на роутер методом POST
-							xhrResponse = request.post('<%=luci.dispatcher.build_url("admin", "system", "sms_commands", "action")%>/'+ '%h'.format(action), payload,
-								{timeout: 2000}
+							<%	
+								local phem_add_url = luci.dispatcher.build_url("admin", "system", "sms_commands", "action")
+							%>
+							xhrResponse = request.post(phem_add_url + '/%h'.format(action), payload,
+								{
+									timeout: 2000,
+									responseType: "json"
+								}
 							);
+
+
 						},
 
 
@@ -265,8 +273,16 @@ local util = require "luci.util"
 							request.addInterceptor(self.cb_save)
 
 							// отправляем данные формы на роутер методом POST
-							xhrResponse = request.post('<%=luci.dispatcher.build_url("admin", "system", "sms_commands", "action")%>/'+ '%h'.format(action), payload,
-								{timeout: 2000}
+							<%
+								local pheml_save_url = luci.dispatcher.build_url("admin", "system", "sms_commands_2", "action")
+							%>
+
+							xhrResponse = request.post(pheml_save_url + '/%h'.format(action), payload,
+								{
+									timeout: 2000,
+									responseType: "json"
+								}
+
 							);
 						},
 
@@ -317,8 +333,15 @@ local util = require "luci.util"
 							self.cb_delete = self.cbRequestDone_phone_email_delete(self)
 							request.addInterceptor(self.cb_delete)
 							// отправляем данные формы на роутер методом POST
-							xhrResponse = request.post('<%=luci.dispatcher.build_url("admin", "system", "sms_commands", "action")%>/'+ '%h'.format(action), payload,
-								{timeout: 1000}
+							<%
+								local pheml_delete_url = luci.dispatcher.build_url("admin", "system", "sms_commands", "action")
+							%>
+							xhrResponse = request.post(pheml_delete_url + '/%h'.format(action), payload,
+								{
+									timeout: 1000,
+									responseType: "json"
+								}
+
 							);
 						},
 

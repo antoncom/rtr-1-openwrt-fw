@@ -20,7 +20,7 @@
     opt.createIfMissing = true
     opt.errorIfExists = false
 
-    local db_file = '/var/spool/tsmodem/journal.db'
+    local db_file = '/etc/leveldb/journal.db'
     
     -- Error handling for opening the database
     local success, db = pcall(function() 
@@ -206,9 +206,7 @@
 																	"07_rule", 
 																	"08_rule", 
 																	"14_rule", 
-																	"15_rule",
-																	"16_rule",
-																	"18_rule",
+																	"15_rule", 
 																	"98_rule", 
 																	"99_rule"], function(ev) {
 
@@ -347,19 +345,16 @@
 				// Iterate over the journal entries and add them to the table
 				journal_data.forEach(function(entry) {
 					// Parse the nested 'journal' field if it exists and is a string
-					if(entry.journal) {
-						//var journal_entry = JSON.parse(entry.journal);
-						var journal_entry = entry.journal
-						// Extract the fields from the parsed 'journal_entry'
-						var date = journal_entry.datetime || "";
-						var name = journal_entry.name || "";
-						var source = journal_entry.source || "";
-						var command = journal_entry.command || "";
-						var response = journal_entry.response || "";
+					var journal_entry = JSON.parse(entry.journal);
+					// Extract the fields from the parsed 'journal_entry'
+					var date = journal_entry.datetime || "";
+					var name = journal_entry.name || "";
+					var source = journal_entry.source || "";
+					var command = journal_entry.command || "";
+					var response = journal_entry.response || "";
 
-						// Add the journal entry to the DataTable
-						table.row.add([date, name, source, command, response]).draw();
-					}
+					// Add the journal entry to the DataTable
+					table.row.add([date, name, source, command, response]).draw();
 				});
 			});
 		});

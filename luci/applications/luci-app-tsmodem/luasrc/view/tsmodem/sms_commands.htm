@@ -1,16 +1,16 @@
 <% --[[=========== JS ==========]] %>
-<%+tsmodem/ui_utils/utils.js%>
-<%+tsmodem/ui_utils/external.js%>
-<%+tsmodem/ui_override/TextFieldStyled.js%>
+<%+tsmsmscomm/ui_utils/utils.js%>
+<%+tsmsmscomm/ui_utils/external.js%>
+<%+tsmsmscomm/ui_override/TextFieldStyled.js%>
 
 <% --[[=========== UI WIDGETS ==========]] %>
-<%+tsmodem/ui_widget/UIEventBus.js%>
-<%+tsmodem/ui_validator/tsmodem.validator.js%>
-<%+tsmodem/ui_widget/UIPhone.js%>
-<%+tsmodem/ui_widget/UISMScommand.js%>
+<%+tsmsmscomm/ui_widget/UIEventBus.js%>
+<%+tsmsmscomm/ui_validator/tsmodem.validator.js%>
+<%+tsmsmscomm/ui_widget/UIPhone.js%>
+<%+tsmsmscomm/ui_widget/UISMScommand.js%>
 
 <% 	--[[=========== STYLES ==========]] %>
-<%+tsmodem/css%>
+<%+tsmsmscomm/css%>
 
 
 <% --[[=========== LUA BACKEND ==========]] %>
@@ -96,7 +96,10 @@ L.require("ui").then(function(ui){
 				var viewWrapper = document.getElementById('phones_rows');
 
 				// Populate webpage with phone/emails from UCI config
-				for (let phone_email of <%= luci.util.serialize_json(sms_phones) %>) {
+				<%
+					local smsphs = luci.util.serialize_json(sms_phones) 
+				%>
+				for (let phone_email of <%=smsphs %>) {
 				  let phone_widget = new ui.Phone(phone_email["trusted_phone"], {
 					phone: phone_email["trusted_phone"],
 					email: phone_email["trusted_email"],

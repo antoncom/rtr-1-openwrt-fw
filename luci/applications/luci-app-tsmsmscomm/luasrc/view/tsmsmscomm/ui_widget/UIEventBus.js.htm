@@ -1,0 +1,101 @@
+<script type="text/javascript">
+/*
+ * ui.EventBus() is used as communicator between reactive widget on the web page
+ * If a widget wants his events to be listened by others, it has to register the events on EventBus
+ * Then if some other widgets want to react the first widget state, then they subscribe the appropriate events on EventBus
+**/
+//<![CDATA[
+L.require('ui').then(function(ui) {
+//	L.require("session").then(function(session){
+		L.require('dom').then(function(dom) {
+			var UIEventBus = ui.AbstractElement.extend(/** @lends LuCI.ui.Textarea.prototype */ {
+				__init__: function() {
+					this.busobjects = {}
+					this.timeoutId = {}
+				},
+
+				/** @override */
+				render: function() {
+					var divEl = E('div', {
+						class: 'event-bus',
+						style: 'display: none'
+					});
+					return this.bind(divEl);
+				},
+
+				/** @private */
+				bind: function(divEl) {
+					this.node = divEl;
+					dom.bindClassInstance(divEl, this);
+
+					return divEl;
+				},
+
+
+				removeEvents: function(target, eventNameList, func) {
+					for(var i=0; i<eventNameList.length; i++) {
+						target.removeEventListener(eventNameList[i], func)
+					}
+				},
+
+				register: function(source, eventName, sourceEvents=[], callback) {
+					this.registerEvents(source, eventName, sourceEvents)
+					this.node.addEventListener(eventName, L.bind(function(ev) {
+						return callback(ev)
+					}, this), true)
+				},
+
+				register2: function(source, eventName, sourceEvents=[], callback) {
+					this.registerEvents(source, eventName, sourceEvents)
+					this.node.addEventListener(eventName, L.bind(function(ev) {
+						callback(ev, source)
+					}, source))
+				},
+
+				register3: function(source, eventName, sourceEvents=[], callback) {
+					var dispatchFn = L.bind(function(ev) {
+						this.node.dispatchEvent(new CustomEvent(eventName, {
+							bubbles: true,
+							srcElement: source
+						}));
+						callback(source)
+					}, this);
+
+					for (var i = 0; i < sourceEvents.length; i++) {
+						source.addEventListener(sourceEvents[i], dispatchFn);
+					}
+				},
+
+				registerTo: function(source, name) {
+						this.busobjects[name] = source;
+						console.log("EventBus Object [" + name + "] registered.")
+				},
+
+				// Subscription methanism
+				// If some widget has not loaded yet, then setInterval is used to create EventBus object ASAP with 200 ms delay
+				listenToASAP: function(objname, events, callback) {
+					var tmId = uuid(objname + "_" + events.join("_") + "_" + callback);
+					if(this.busobjects && this.busobjects[objname]) {
+						this.timeoutId[tmId] = setTimeout(this._listenTo.bind(this), 10, objname, events, callback)
+					} else {
+						this.timeoutId[tmId] = setTimeout(this.listenToASAP.bind(this), 1000, objname, events, callback)
+					}
+				},
+				_listenTo: function(objname, events, callback) {
+					var tmId = uuid(objname + "_" + events.join("_") + "_" + callback);
+					for (var i = 0; i < events.length; i++) {
+						this.busobjects[objname].addEventListener(events[i], callback);
+					}
+					clearInterval(this.timeoutId[tmId])
+				},
+
+
+			});
+			ui["EventBus"] = UIEventBus;
+			window.EventBus = new ui.EventBus()
+			window.EventBusNode = window.EventBus.render()
+		});
+//	});
+});
+//]]>
+</script>

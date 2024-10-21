@@ -7,15 +7,12 @@ local util = require "luci.util"
 local ubus = require "ubus"
 local log = require "tsmodem.util.log"
 
-
 function index()
-	if nixio.fs.access("/etc/config/tsmsmscomm") then
 
 		-- SMS commands setting page
-		entry({"admin", "system", "sms_commands"}, cbi("tsmsmscomm/sms_commands"), translate("Управление по SMS"), 30)
-		entry({"admin", "system", "sms_commands", "action"}, call("save_update_delete_phone"), nil).leaf = true
-		entry({"admin", "system", "sms_commands", "action"}, call("action_sms"), nil).leaf = true
-	end
+		entry({"admin", "system", "sms_commands"}, cbi("tsmsmscomm/sms_commands"), "Управление по SMS", 99).leaf = true
+		entry({"admin", "system", "sms_commands_2", "action"}, call("save_update_delete_phone"))
+		entry({"admin", "system", "sms_commands_3", "action"}, call("action_sms"))
 end
 
 function save_update_delete_phone()
