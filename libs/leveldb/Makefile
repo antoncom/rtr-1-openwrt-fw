@@ -26,7 +26,7 @@ define Package/leveldb
 	SUBMENU:=Database
 	TITLE:=A fast and lightweight key/value database library
 	URL:=https://code.google.com/p/leveldb/
-	DEPENDS:=+libstdcpp +libpthread +snappy
+	DEPENDS:=+libstdcpp +libpthread
 	DEFAULT:=y
 	ABI_VERSION:=1.23
 endef
