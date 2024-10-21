@@ -15,7 +15,6 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/leveldb/Default
-	SUBMENU:=database
 	TITLE:=(leveldb)A key/value database library
 	URL:=https://code.google.com/p/leveldb/
 	MAINTAINER:=code.google.com
@@ -24,7 +23,7 @@ endef
 define Package/leveldb
 	SECTION:=libs
 	CATEGORY:=Libraries
-	SUBMENU:=database
+	SUBMENU:=Database
 	TITLE:=A fast and lightweight key/value database library
 	URL:=https://code.google.com/p/leveldb/
 	DEPENDS:=+libstdcpp +libpthread +snappy

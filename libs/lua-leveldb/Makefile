@@ -12,11 +12,12 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/lua-leveldb
-  DEPENDS:=+libstdcpp +leveldb
-  SECTION:=Libaries
-  CATEGORY:=openResty
+  SECTION:=libs
+  CATEGORY:=Libraries
+  SUBMENU:=Database
   TITLE:=Lua bindings for Google's LevelDB key/store database.
   URL:=https://github.com/marcopompili/lua-leveldb
+  DEPENDS:=+libstdcpp +leveldb
 endef
 
 define Package/lua-leveldb/description
