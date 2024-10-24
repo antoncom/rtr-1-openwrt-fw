@@ -13,7 +13,7 @@ function index()
 	if nixio.fs.access("/etc/config/tsmodem") then
 		-- SIM cards setting page
 		entry({"admin", "system", "sim_list"}, cbi("tsmodem/main"), translate("SIM cards settings"), 30)
-		entry({"admin", "system", "sim_list", "action"}, call("do_sim_action"), nil).leaf = true
+		entry({"admin", "system", "sim_list_2", "action"}, call("do_sim_action"), nil).leaf = true
 	end
 end
 
