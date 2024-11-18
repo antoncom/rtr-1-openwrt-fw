@@ -106,7 +106,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 									type: "button", class: "cbi-button cbi-button-apply sim-" + this.simid + "-balance",
 									["data-simid"]: this.simid,
 									value: _("Баланс"),
-									style: "display: initial; width: 90px;",
+									style: "display: initial; width: 90px; margin-left: 5px; margin-right: 5px;",
 							}),
 
 							btn_setting: E('input',  {
@@ -119,7 +119,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 												type: "button", class: "cbi-button cbi-button-apply webconsole simid-" + this.simid,
 												["data-simid"]: this.simid,
 												value: _("AT console"),
-												style: "display: initial;"
+												style: "display: initial; margin-right: 5px;"
 							}),
 							btn_sms_send: E('input',  {
 												type: "button", class: "cbi-button cbi-button-apply smsconsole simid-" + this.simid,
@@ -166,11 +166,15 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 							this.chunk.signal,
 							this.chunk.balance,
 		                    E('div', {class: "nowrap cbi-section-actions td", style: "text-align: right;"}, [
-								this.chunk.btn_balance,
-								this.chunk.btn_setting,
-								this.chunk.btn_console,
-								this.chunk.btn_sms_send,
-								this.chunk.btn_activate,
+		                    	E('div', { style: "margin-bottom: 5px;" }, [
+		                    		this.chunk.btn_setting,
+		                    		this.chunk.btn_balance,
+		                    		this.chunk.btn_activate,
+		                    	]),
+								E('div', { style: "" }, [
+									this.chunk.btn_console,
+									this.chunk.btn_sms_send,
+								])
 		                    ])
 		                ])
 
@@ -521,10 +525,12 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 								// Enable AT-console button as soon as sim switched
 								if (parseInt(self.netreg) && parseInt(self.netreg) >= 0 && parseInt(self.netreg) != 7) {
 									$(".webconsole.simid-" + self.simid).prop( "disabled", false );
+									$(".smsconsole.simid-" + self.simid).prop( "disabled", false );
 								}
 
 								if(currently_activated_sim_id != self.simid) {
 									$(".webconsole.simid-" + self.simid).prop( "disabled", true );
+									$(".smsconsole.simid-" + self.simid).prop( "disabled", true );
 								}
 							}
 						})
