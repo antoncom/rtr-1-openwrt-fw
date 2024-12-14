@@ -1,0 +1,337 @@
+<%
+	local config = "pptp-client"
+
+	local uci = require "luci.model.uci".cursor()
+
+	local getInterfaces = function()
+		local str = ""
+		uci:foreach('network', 'interface', function(a)
+			str = str .. "'" ..  a['.name'] .. "',"
+		end)
+		return str
+	end
+
+	local getBridges = function()
+		local str = "'none'"
+		uci:foreach('network', 'interface', function(a)
+			if a['type'] == 'bridge' then
+				str = str .. ",'" ..  a['name'] .. "'"
+			end
+		end)
+		return str
+	end
+
+	local getFirewallZones = function()
+		local str = "'none'"
+		uci:foreach('firewall', 'zone', function(a)
+			str = str .. ",'" ..  a['name'] .. "'"
+		end)
+		return str
+	end
+
+	local a = getFirewallZones()
+%>
+
+<%+pptp-client/vpnconfig.css%>
+
+<script src="<%=resource%>/pptp-client/jquery-3.5.1.min.js?v=1.0.0"
+		type="text/javascript"
+		charset="utf-8"></script>
+
+<script src="<%=resource%>/pptp-client/nearley.js?v=1.5.2"
+		type="text/javascript"
+		charset="utf-8"></script>
+
+<script src="<%=resource%>/tsmodem/sweetalert/sweetalert.min.js?v=2.6.11"
+        type="text/javascript"
+        charset="utf-8"></script>
+
+
+<%+pptp-client/ui_validator/index.js%>
+
+
+
+<script type="text/javascript">
+//<![CDATA[
+	class PostController {
+		callback = null;
+		tmr = null;
+		constructor(callback, tmr)	{
+			this.callback = callback;
+			this.tmr = tmr;
+		}
+	}
+
+	// После добавления настроек PPTP-Client -
+	// показать на экране пользователя уведомление
+	function cb_setting_add(ctrlAdd) {
+		return function(x) {
+			if (!x) {
+				return;
+			}
+			if(ctrlAdd.tmr) {
+				clearTimeout(ctrlAdd.tmr)
+			}
+			alert("success", "Конфигурация PPTP-клиента добавлена.", false)
+		}
+	}
+
+	// После редактирования настроек PPTP-Client -
+	// показать на экране пользователя уведомление
+	function cb_setting_edit(ctrlEdit) {
+		return function(x) {
+			if (!x) {
+				return;
+			}
+			if(ctrlEdit.tmr) {
+				clearTimeout(ctrlEdit.tmr)
+			}
+			console.log("CALLBACK_EDIT")
+			alert("info", "Конфигурация PPTP-клиента сохранена, но не активирована.", false)
+		}
+	}
+
+	var myTmr
+
+	// После активации настроек PPTP-Client -
+	// показать на экране пользователя уведомление
+	function cb_setting_activate(ctrlActivate) {
+		return function(x) {
+			if (!x) {
+				return;
+			}
+			if(ctrlActivate.tmr) {
+				clearTimeout(ctrlActivate.tmr)
+			}
+			alert("success", "Конфигурация PPTP-клиента сохранена и активирована.", false)
+		}
+	}
+
+	// После активации настроек PPTP-Client -
+	// показать на экране пользователя уведомление
+	function cb_setting_del(ctrlDel) {
+		return function(x) {
+			if (!x) {
+				return;
+			}
+			if(ctrlDel.tmr) {
+				clearTimeout(ctrlDel.tmr)
+			}
+			alert("success", "Конфигурация PPTP-клиента удалена.", false)
+		}
+	}
+
+	function rejected() {
+		return function(res) {
+			alert("error", res, true)
+		}
+	}
+
+	var addCtrl = new PostController(cb_setting_add, null);
+	var editCtrl = new PostController(cb_setting_edit, null);
+	var activateCtrl = new PostController(cb_setting_activate);
+	var delCtrl = new PostController(cb_setting_del);
+
+
+	function nearleyValidator(fieldType, errormsg) {
+		return function(user_input_text) {
+			// this function is declared at "ui_validator/index.js.htm"
+			var gramma = nearley_validator(fieldType);
+			if (!gramma) {
+				console.log('Unexpected fieldType', fieldType);
+				return "unknown grammar";
+			}
+
+			const parser = new nearley.Parser(nearley.Grammar.fromCompiled(gramma));
+			try {
+				var pf = parser.feed(user_input_text)
+				if (pf.results.length > 0)
+					return true; // it's a requirement of LuCI widget API
+				else
+					return errormsg;
+			}
+			catch (e) {
+				return errormsg;
+			}
+		}
+	}
+
+	function spinner(state) {
+		var element = document.getElementById("btn_enable_spinner");
+		if (state === true) {
+			element.style.width = "16px";
+			element.innerHTML = '<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" width="16" height="16" style="vertical-align:middle" />';
+		}
+		else {
+			element.style.width = "0px";
+			element.innerHTML = '';
+		}
+	}
+
+	function getCfgData(vpnType, callback) {
+		spinner(true);
+		L.require("uci").then(function(uci) {
+			uci.load("<%=config%>").then(function(out){
+				var sections = uci.sections('<%=config%>', vpnType);
+				if (callback) {
+					callback(sections);
+				}
+				spinner(false);
+			});
+		});
+	}
+
+	function addRow(elementId, data) {
+		var container = E('div', { id: data.name, class: 'tr '}, [
+			E('div', {class: 'td'}, E('div', {}, data.name)),
+			E('div', {class: 'td'}, E('div', {id: data.name+'-active'}, (data.isActive == true ? '<%:yes%>' : '<%:no%>'))),
+			E('div', {class: "nowrap cbi-section-actions td", style: "text-align: center;"}, [
+				E('div', {class: 'cbi-button cbi-button-neutral ', style: "display: initial;", click: function() {activateConfig(data);}}, (data.isActive == true ? '<%:Disable%>' : '<%:Enable%>')),' ',
+				E('div', {class: 'cbi-button cbi-button-edit', style: "display: initial;", click: function() {showModal(data);}}, '<%:Edit%>'),' ',
+				E('div', {class: 'cbi-button cbi-button-remove', style: "display: initial;", click: function() {deleteConfig(data);}}, '<%:Delete%>'),
+			])
+		])
+					
+		var viewWrapper= document.getElementById(elementId);
+		viewWrapper.appendChild(container);
+	}
+
+	function commitConfig(data) {
+		L.require('uci').then(function(uci){
+			var section = uci.get('<%=config%>', data.name);
+			if (!section) {
+				//sendAction("add", data, handleActionResult);
+				sendAction("add", data, addCtrl);
+			} else {
+				//sendAction("edit", data, handleActionResult);
+				sendAction("edit", data, editCtrl);
+			}
+		});
+	}
+
+	function activateConfig(data) {
+		data.isActive = !data.isActive; 
+		sendAction("enable", data, activateCtrl);
+	}
+
+	function deleteConfig(data) {
+		sendAction("delete", data, delCtrl);
+	}
+
+
+	function uploadFile(data) {
+		var xhr = new XMLHttpRequest();
+		var url = '<%=luci.dispatcher.build_url("admin", "services", config, "action")%>/'+ '%h/%h'.format('upload_file');
+		xhr.open('POST', url, true);
+		xhr.onload = function () {
+			if (xhr.status === 200) {
+				console.log('File successfully uploaded');
+			} else {
+				alert('File upload failed!');
+			}
+		};
+		xhr.send(data);
+	}
+
+	function sendAction(action, data, ctrlCont) {
+		L.require('request').then(function(request) {
+
+			var xhrResponse
+			var url = '<%=luci.dispatcher.build_url("admin", "services", "pptp-client_2", "action")%>/'+ '%h'.format(action);
+			spinner(true);
+
+			// Если POST-запрос был неудачен -
+			// показать на экране пользователя уведомление об ошибке
+			ctrlCont.tmr = setTimeout(function(){
+				xhrResponse.then(null, rejected())
+			}, 8000);
+
+			// регистрируем callback-функцию
+			request.addInterceptor(ctrlCont.callback(ctrlCont))
+
+			xhrResponse = request.post(url, data, {timeout: 8000});
+
+		})
+	}
+
+	function handleActionResult(result) {
+		if (!result) return;
+
+		switch(result.status) {
+			case 'success':
+				console.log(result.action, result.status);
+				location.reload();
+				break;
+			case 'error':
+				console.log(result);
+				showMessageWindow('<%:Error%>', result.message);
+				break;
+			default:
+				console.log('unexpected status', result);
+		}
+	}
+
+	function showMessageWindow(title, message) {
+		L.require('ui').then(function(ui) {
+			L.showModal(title, [
+				E('span', message),
+				E('div', { class: 'modal-buttons' }, [
+					E('div', {
+						class: 'btn',
+						click: function() {
+							L.hideModal();
+							location.reload(); //reload page to restore form data
+						}
+					}, '<%:Close%>')
+				])
+			]);
+		});
+	}
+
+	function parse_bool(value) {
+	    return value == 'true' || value == 1;
+	}
+
+	function parse_string(value) {
+		return !value ? "" : String(value);
+	}
+
+	function make_dropdown_options(list) {
+	    var result = {};
+	    var item = "";
+
+	    for(i in list) {
+	        item = list[i];
+	        result[item] = item;
+	    }
+
+	    return result;
+	}
+
+	function get_list_firewall_zone() {
+		return [<% getFirewallZones() %>];
+	}
+
+	function get_list_bridges() {
+		return [<% getBridges() %>];
+	}
+
+	function get_list_interfaces() {
+		return [<% getInterfaces() %>];
+	}
+
+	function alert(icon, message, confirmBtn) {
+		Swal.fire({
+		  position: "center-end",
+		  icon: icon,	// for example: "success",
+		  text: message,
+		  width: "250px",
+		  showConfirmButton: confirmBtn, // true or false
+		  timer: 2000
+		});
+	}
+
+
+
+//]]>
+</script>
