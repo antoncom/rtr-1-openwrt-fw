@@ -94,8 +94,10 @@ function do_sim_action(action, sim_id)
 				end
 			end
 
-			--[[ glear modem states ]]
-			-- util.ubus("tsmodem.driver", "clear_state", {})
+			--[[ clear modem states if setting is applied to active Sim-card]]
+			if (active_sim == sim_id) then
+				util.ubus("tsmodem.driver", "clear_state", {})
+			end
 		end,
 
 		default = function(...)

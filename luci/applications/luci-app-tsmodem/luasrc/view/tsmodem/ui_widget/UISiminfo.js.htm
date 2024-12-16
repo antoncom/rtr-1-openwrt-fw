@@ -60,7 +60,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 							}
 							self.timeoutId = setTimeout(function(){
 								self.debounce = false
-							}, 3000)
+							}, 5000)
 						}
 
 						L.require("uci").then(function(uci) {
@@ -106,14 +106,14 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 									type: "button", class: "cbi-button cbi-button-apply sim-" + this.simid + "-balance",
 									["data-simid"]: this.simid,
 									value: _("Баланс"),
-									style: "display: initial; width: 90px; margin-left: 5px; margin-right: 5px;",
+									style: "display: initial;",
 							}),
 
 							btn_setting: E('input',  {
 												type: "button", class: "cbi-button cbi-button-apply sim-" + this.simid + "-settings",
 												["data-simid"]: this.simid,
 												value: _("Settings"),
-												style: "display: initial;",
+												style: "display: initial; width: 90px; margin-left: 5px; margin-right: 5px;",
 							}),
 							btn_console: E('input',  {
 												type: "button", class: "cbi-button cbi-button-apply webconsole simid-" + this.simid,
@@ -167,8 +167,8 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 							this.chunk.balance,
 		                    E('div', {class: "nowrap cbi-section-actions td", style: "text-align: right;"}, [
 		                    	E('div', { style: "margin-bottom: 5px;" }, [
-		                    		this.chunk.btn_setting,
 		                    		this.chunk.btn_balance,
+		                    		this.chunk.btn_setting,
 		                    		this.chunk.btn_activate,
 		                    	]),
 								E('div', { style: "" }, [
@@ -177,7 +177,6 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 								])
 		                    ])
 		                ])
-
 
 						return this.bind(container);
 					},
@@ -313,7 +312,6 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 							}
 
 							this.chunk.btn_sms_send.onclick = function(){
-								console.log("pressed 1")
 								self.fireEvent("btn_sms_send_pressed", {
 									simid: self.simid
 								})
@@ -325,8 +323,6 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 						// ---------------------------------------------------
 						window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
 							var event_data = ev.detail || {}
-
-							console.log("UISiminfo_0")
 
 							self.clearInfo("simid-0")
 							self.clearInfo("simid-1")
@@ -340,8 +336,6 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 						window.EventBus.listenToASAP("UISiminfo_1", ["btn_activate_pressed"], function(ev) {
 							var event_data = ev.detail || {}
 
-							console.log("UISiminfo_1")
-
 
 							self.clearInfo("simid-0")
 							self.clearInfo("simid-1")
@@ -352,9 +346,12 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 						// 01_rule UI updates: Sim is in slot or not
 						// -----------------------------------------------
 						window.EventBus.listenToASAP("websocket", ["01_rule"], function(ev) {
+							var event_data = ev.detail || {}
+							if (event_data && event_data.do_switch) {
+								self.is_switching = event_data.do_switch == "true" ? true : false
+							}
 
 							if (!self.is_switching && !self.debounce) {
-								var event_data = ev.detail || {}
 								var chunk_update = self.chunk.cpin;
 								const node_pointer = "#simid-" + self.simid + " .cpin_value"
 
@@ -368,11 +365,11 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 										self.cpin_timeout = event_data.timeout
 										self.cpin_wait_timer = parseInt(event_data.wait_timer)
 
-
-
 										var SIM_READY = (self.sim_ready == "true")
 										var SIM_ABSENT = (self.sim_ready == "false")
 										var SIM_CHECKING = (self.sim_ready == " ")
+										var IS_SWITCHING = (event_data.switching != "false")
+
 
 										if (SIM_READY) {
 												chunk_update = E('font', {class: "cpin_value", style: "color: green; font-weight: bolder;"}, "OK")
@@ -395,7 +392,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 												})
 												$(node_pointer).replaceWith(chunk_update)
 
-											} else if (SIM_ABSENT) {
+											} else if (SIM_ABSENT && (!IS_SWITCHING)) {
 												chunk_update = E('font', {class: "cpin_value", style: "color: red; font-weight: bolder;"}, "No")
 
 												$(node_pointer).replaceWith(chunk_update)
@@ -407,7 +404,6 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 														var slot_name = ((self.simid == 0) ? "SIM-1" : "SIM-2")
 														var title = "Нет сим-карты в слоте " + slot_name
 														var description = "В слоте " + slot_name + " не обнаружена Сим-карта. Вставьте сим-карту до истечения таймера, или дождитесь переключения модема на другой слот."
-
 														self.countdown["cdown-cpin"] = new ui.Countdown("cdown-cpin", self.cpin_timeout, self.cpin_wait_timer, title, description)
 														$('#ui-countdown').append(self.countdown["cdown-cpin"].render())
 
@@ -422,6 +418,18 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 									chunk_update = E('font', {class: "cpin_value", style: "color: red; font-weight: bolder;"}, " ")
 									$(node_pointer).replaceWith(chunk_update)
 
+								}
+
+								// Enable "Activate" button for that Sim card which is not currently activated
+								var currently_activated_sim_id = event_data["sim_id"] && parseInt(event_data["sim_id"])
+
+
+								if(currently_activated_sim_id != undefined && currently_activated_sim_id != self.simid) {
+									self.chunk.btn_activate.disabled = false
+									//$(".cbi-button.cbi-button-apply.sim-" + self.simid).prop("disabled", false)
+									//$(".cbi-button.cbi-button-apply.sim-" + currently_activated_sim_id).prop("disabled",true)
+								} else if(currently_activated_sim_id != undefined && currently_activated_sim_id == self.simid) {
+									self.chunk.btn_activate.disabled = true
 								}
 							}
 						});
@@ -791,7 +799,6 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 
 									// Disable "Balance" button if provider_code 000000 (from auto config)
 									if(self.provider_code == 0) {
-										console.log("self.provider_code", self.provider_code)
 										self.chunk.btn_balance.setAttribute("disabled", "disabled");
 									}
 								}
@@ -907,7 +914,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 							if(event_data["sim_id"] && event_data["sim_id"] == self.simid) {
 
 								// Clear table row when start switching
-								self.is_switching = (event_data["switching"] == "true" || event_data["switching"] == "" || event_data["do_switch"] == "true")
+								self.is_switching = (event_data["switching"] == "true")
 
 								if(self.is_switching) {
 									self.clearInfo("simid-0")
@@ -916,15 +923,6 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 
 							}
 
-							// Enable "Activate" button for that Sim card which is not currently activated
-							if(self.is_switching) {
-								var currently_activated_sim_id = event_data["sim_id"] && parseInt(event_data["sim_id"])
-
-								if(currently_activated_sim_id != self.simid) {
-									$(".cbi-button.cbi-button-apply.sim-" + self.simid).prop("disabled", false)
-									$(".cbi-button.cbi-button-apply.sim-" + currently_activated_sim_id).prop("disabled", true)
-								}
-							}
 						});
 
 						return container;

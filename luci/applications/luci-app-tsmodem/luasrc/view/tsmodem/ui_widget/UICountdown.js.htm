@@ -26,7 +26,7 @@
                     };
 
                     this.timerInterval = null
-                    this.timePassed = parseInt(progress)
+                    this.timePassed = parseInt(progress) - 15
                     this.timeLeft = parseInt(this.TIME_LIMIT)
                     this.remainingPathColor = this.COLOR_CODES.info.color;
 
@@ -117,7 +117,7 @@
 					return(container);
 				},
 
-                onTimesUp: function() {
+        onTimesUp: function() {
 					clearInterval(this.timerInterval);
 					var self = this
 					// Let UICountdown will be shown with zero value for two sec.

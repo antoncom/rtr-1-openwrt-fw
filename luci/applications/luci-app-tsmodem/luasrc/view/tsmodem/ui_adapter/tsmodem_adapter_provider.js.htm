@@ -154,6 +154,20 @@ L.require('ui').then(function(ui) {
 						  });
 						}
 
+						// --------------------------------------------------------------------------------
+                        // Subscribe on websocket widget, to get full text of USSD response
+                        // --------------------------------------------------------------------------------
+                        window.EventBus.listenToASAP("websocket", ["03_rule"], function(ev) {
+                            var event_data = ev.detail || {}
+								if(event_data["journal"]) {
+									var provider_id = event_data["journal"]["provider_id"] || "00000"
+									var balance_message = event_data["journal"]["response"] || "";
+									uci.set("tsmodem_adapter_provider", provider_id, "balance_last_message", balance_message)
+									uci.apply()
+								}
+
+                        })
+
 						// Cusom override:
 						// We subscribe EventBus event which is emitted by "DropdownProto" widget (see ui_override)
 						window.EventBus.register(this.node, 'bus-proto-changed', [],
@@ -179,10 +193,10 @@ L.require('ui').then(function(ui) {
 									container.classList.add("active")
 
 									if(gsm_data["editable"] == "0") {
-										self.fields["balance_mask"].getTextArea().readOnly = true;
+										self.fields["balance_mask"].getTextArea().readOnly = false;
 										self.fields["name"].getTextField().readOnly = true;
 										self.fields["gate_address"].getTextField().readOnly = true;
-										self.fields["balance_ussd"].getTextField().readOnly = true;
+										self.fields["balance_ussd"].getTextField().readOnly = false;
 									} else {
 										self.fields["balance_mask"].getTextArea().readOnly = false;
 										self.fields["name"].getTextField().readOnly = false;

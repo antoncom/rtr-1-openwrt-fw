@@ -6,7 +6,6 @@
 <%
     -- Lua variables and dependencies
     local config = "tsmodem"
-    local journal_config = "tsmodem_journal_provider"
     local uci = require "luci.model.uci".cursor()
     local util = require "luci.util"
     local log = require "tsmodem.util.log"
@@ -15,59 +14,62 @@
 	local json = require "cjson"
 
 	function fetch() 
-    local journal_entries = {}
-    local opt = leveldb.options()
-    opt.createIfMissing = true
-    opt.errorIfExists = false
+	    local journal_entries = {}
+	    local opt = leveldb.options()
+	    opt.createIfMissing = true
+	    opt.errorIfExists = false
 
-    local db_file = '/var/spool/tsmodem/journal.db'
-    
-    -- Error handling for opening the database
-    local success, db = pcall(function() 
-        return leveldb.open(opt, db_file)
-    end)
+	    local db_file = uci:get("tsmjournal", "database", "inmemory")
+	    util.perror(db_file)
 
-    if not success then
-        print("Error opening database: " .. tostring(db))
-        return nil
-    end
+	    -- Error handling for opening the database
+	    local success, db = pcall(function() 
+	        return leveldb.open(opt, db_file)
+	    end)
 
-    local iter, iter_err = nil, nil
-    -- Error handling for creating the iterator
-    success, iter = pcall(function()
-        local it = db:iterator()
-        it:seekToFirst()
-        return it
-    end)
+	    if not success then
+	        print("Error opening database: " .. tostring(db))
+	        return nil
+	    end
 
-    if not success then
-        print("Error creating iterator: " .. tostring(iter))
-        leveldb.close(db)  -- Ensure database is closed on error
-        return nil
-    end
+	    local iter, iter_err = nil, nil
+	    -- Error handling for creating the iterator
+	    success, iter = pcall(function()
+	        local it = db:iterator()
+	        it:seekToFirst()
+	        return it
+	    end)
 
-    -- Error handling for fetching entries
-    success, iter_err = pcall(function()
-        while(iter:valid()) do
-            local key, value = iter:key(), iter:value()
-            local decoded = json.decode(value)
-            table.insert(journal_entries, decoded)
-            iter:next()
-        end
-    end)
+	    if not success then
+	        print("Error creating iterator: " .. tostring(iter))
+	        leveldb.close(db)  -- Ensure database is closed on error
+	        return nil
+	    end
 
-    if not success then
-        print("Error iterating over entries: " .. tostring(iter_err))
-        iter:del()  -- Clean up the iterator
-        leveldb.close(db)
-        return nil
-    end
+	    -- Error handling for fetching entries
+	    success, iter_err = pcall(function()
+	        while(iter:valid()) do
+	            local key, value = iter:key(), iter:value()
+	            local decoded = json.decode(value)
+	            table.insert(journal_entries, decoded)
+	            iter:next()
+	        end
+	    end)
 
-    -- Clean up
-    iter:del()  -- Delete the iterator
-    leveldb.close(db)  -- Close the database
+	    if not success then
+	        print("Error iterating over entries: " .. tostring(iter_err))
+	        iter:del()  -- Clean up the iterator
+	        leveldb.close(db)
+	        return nil
+	    end
 
-    return journal_entries
+	    -- Clean up
+	    iter:del()  -- Delete the iterator
+	    leveldb.close(db)  -- Close the database
+
+	    util.perror("FETCH DB")
+	    util.dumptable(journal_entries)
+	    return journal_entries
 	end
 
 
@@ -92,6 +94,10 @@
 
 						this.debounce = false
 						this.timeoutId = undefined
+						this.is_switching = false
+
+						this.dtable = $('#journal').DataTable();
+
 
 						var self = this
 
@@ -103,7 +109,7 @@
 							}
 							self.timeoutId = setTimeout(function(){
 								self.debounce = false
-							}, 3000)
+							}, 5000)
 						}
 
 						this.chunk = {
@@ -144,11 +150,14 @@
 					},
 
 					render: function() {
-		                var container = E('h3', {}, '<%:System log %>') + E('table', { class: 'table journal', id: 'journal' }, [
+		                //var container = E('h3', {}, '<%:System log%>') + E('table', { class: 'table journal', id: 'journal' }, [
+		                var container = E('table', { class: 'table journal', id: 'journal_1' }, [
 		                    this.chunk.tblHeader,
 							this.chunk.tblRawEmpty,
 							this.chunk.clearLogRaw,
 		                ])
+
+		                console.log("JOURNAL RENDERING...", container)
 
 
 						return this.bind(container);
@@ -165,6 +174,60 @@
 						}
 					},
 
+					clearJournal: function() {
+						var self = this
+						// if ( $.fn.dataTable.isDataTable( '#journal' ) ) {
+						//     var table = $('#journal').DataTable();
+						// }
+						// else {
+						//     var table = $('#journal').DataTable();
+						// }
+						// var table = $('#journal').DataTable();
+						self.dtable.clear().draw();
+
+						self.fireEvent("btn_clear_log_pressed", {})
+					},
+
+					renderDataTable: function() {
+						var self = this
+
+						if ( $.fn.dataTable.isDataTable( '#journal' ) ) {
+						    self.dtable = $('#journal').DataTable();
+						}
+						else {
+							self.dtable = $('#journal').DataTable({
+								"pageLength": 5, 
+								"order": [[0, "desc"]],
+								"language": {
+									"decimal":        "",
+									"emptyTable":     "нет доступных данных",
+									"info":           "Отображение от _START_ до _END_, _TOTAL_ Записи",
+									"infoEmpty":      "Отображение 0 до 0,  0 записи",
+									"infoFiltered":   "(отфильтровано по _MAX_ количеству записей)",
+									"infoPostFix":    "",
+									"thousands":      ",",
+									"lengthMenu": '<select>' +
+										'<option value="5">5</option>' +
+										'<option value="10">10</option>' +
+										'<option value="20">25</option>' +
+										'<option value="50">50</option>' +
+										'</select> Записи',
+									"loadingRecords": "Погрузка...",
+									"processing":     "",
+									"search": "Поиск :",
+									"zeroRecords":    "Совпадающих записей не найдено",
+									
+									"aria": {
+										"orderable":  "Упорядочивайте по этой колонке",
+										"orderableReverse": "Расположите этот столбец в обратном порядке"
+									}
+								} 
+							});
+						}
+						
+						clearTimeout(this.timeoutId)
+					},
+
 					bind: function(container) {
 						this.node = container
 						var self = this
@@ -173,47 +236,29 @@
 						// Register events object which will represent UIJournal widget on the Event Bus
 						window.EventBus.registerTo(this.node,"UIJournal")
 
-						if(this.chunk) {
-							this.chunk.btnClearLog.onclick = function(){
-								self.fireEvent("btn_clear_log_pressed", {})
-							}
-						}
+						$('#clearJournalButton').on('click', function() {
+							self.clearJournal();
+						});
 						
 
 						// ------------------------------------------------------------------
 						// Add record into the Journal web table as soon as new event occures
 						// ------------------------------------------------------------------
-						/*window.EventBus.listenToASAP("websocket", ["01_rule", 
-																    "02_rule", 
-																	"03_rule", 
-																	"04_rule", 
-																	"05_rule", 
-																	"06_rule", 
-																	"07_rule", 
-																	"08_rule", 
-																	"14_rule", 
-																	"15_rule", 
-																	"98_rule", 
-																	"99_rule"], function(ev) {
-							*/
-
-						window.EventBus.listenToASAP("websocket", ["01_rule", 
-																    "02_rule", 
-																	"03_rule", 
-																	"04_rule", 
-																	"05_rule", 
-																	"06_rule", 
-																	"07_rule", 
-																	"08_rule", 
-																	"14_rule", 
+						window.EventBus.listenToASAP("websocket",  ["01_rule",
+																	"02_rule",
+																	"03_rule",
+																	"04_rule",
+																	"05_rule",
+																	"06_rule",
+																	"07_rule",
+																	"08_rule",
+																	"14_rule",
 																	"15_rule",
 																	"16_rule",
-																	"18_rule",
-																	"98_rule", 
+																	"UISiminfo",
+																	"98_rule",
 																	"99_rule"], function(ev) {
-
-
-							if (!self.is_switching && !self.debounce) {
+							if (!self.debounce) {
 								var event_data = ev.detail || {}
 								if(event_data["journal"]) {
 
@@ -225,111 +270,32 @@
 
 									var new_row_chunk = self.chunk.newRow(event_date, event_name, event_source, event_command, event_response);
 
-									console.log(event_date, new_row_chunk);
 									
-									var table = $('#journal').DataTable();
-
-									var currentPage = table.page();
-									table.row.add([event_date, event_name, event_source, event_command, event_response])
-									table.draw(false);
-									table.columns.adjust().draw(false);
-									table.page(currentPage).draw(false);
+									//var table = $('#journal').DataTable();
+									var currentPage = self.dtable.page();
+									self.dtable.row.add([event_date, event_name, event_source, event_command, event_response])
+									self.dtable.draw(false);
+									self.dtable.columns.adjust().draw(false);
+									self.dtable.page(currentPage).draw(false);
 								}
 							}
 						});
 
-						window.EventBus.listenToASAP("UISiminfo_0", ["btn_activate_pressed"], function(ev) {
-							var event_data = ev.detail || {}
- 							var simid = event_data.simid || "simid-0"
-
- 							var event_date = "2024-06-13";
-							var event_name = "Активация слота SIM пользователем";
-							var event_source = "Web-интерфейс";
-							var event_command = "Активировать";
-							var event_response = (simid == 0) ? "SIM-1" : "SIM-2";
-
-							var new_row_chunk = self.chunk.newRow(event_date, event_name, event_source, event_command, event_response);
-
-							console.log("simid", simid);
-
-							var table = $('#journal').DataTable();
-							table.row.add([event_date, event_name, event_source, event_command, event_response]).draw();
-							table.columns.adjust().draw();
-
-						})
-
-						window.EventBus.listenToASAP("UISiminfo_1", ["btn_activate_pressed"], function(ev) {
-							var event_data = ev.detail || {}
- 							var simid = event_data.simid || ""
-
- 							var event_date = "2024-06-13";
-							var event_name = "Активация слота SIM пользователем";
-							var event_source = "Web-интерфейс";
-							var event_command = "Активировать";
-							var event_response = (simid == 1) ? "SIM-2" : "SIM-1";
-
-							var new_row_chunk = self.chunk.newRow(event_date, event_name, event_source, event_command, event_response);
-
-							console.log("simid", simid);
-
-							var table = $('#journal').DataTable();
-							table.row.add([event_date, event_name, event_source, event_command, event_response]).draw();
-							table.columns.adjust().draw();
-
-						})
+						
+						self.timeoutId = setTimeout(self.renderDataTable, 2000)
 
 						return container;
 					},
 
 				});
 				ui["Journal"] = UIJournal;
-				$(document).ready( function () {
-					$('#journal').DataTable({
-						"pageLength": 5, 
-						"order": [[0, "desc"]],
-						"language": {
-							"decimal":        "",
-							"emptyTable":     "нет доступных данных",
-							"info":           "Отображение от _START_ до _END_, _TOTAL_ Записи",
-							"infoEmpty":      "Отображение 0 до 0,  0 записи",
-							"infoFiltered":   "(отфильтровано по _MAX_ количеству записей)",
-							"infoPostFix":    "",
-							"thousands":      ",",
-							"lengthMenu": '<select>' +
-								'<option value="5">5</option>' +
-								'<option value="10">10</option>' +
-								'<option value="20">25</option>' +
-								'<option value="50">50</option>' +
-								'</select> Записи',
-							"loadingRecords": "Погрузка...",
-							"processing":     "",
-							"search": "Поиск :",
-							"zeroRecords":    "Совпадающих записей не найдено",
-							
-							"aria": {
-								"orderable":  "Упорядочивайте по этой колонке",
-								"orderableReverse": "Расположите этот столбец в обратном порядке"
-							}
-						} 
-					});
-				});
-
-				$(document).ready(function() {
-					$('#clearJournalButton').on('click', function() {
-						clearJournal();
-				});
-				function clearJournal() {
-						console.log("CLEARING TABLE");
-						var table = $('#journal').DataTable();
-						table.clear().draw();
-					}
-				});
 		// 	});
 		});
 	});
 
 //]]>
 </script>
+
 
 <script type="text/javascript">
 	// Load the required libraries (UI and UCI)
@@ -339,30 +305,47 @@
 				// Fetch the journal entries serialized in Lua and passed to the front-end
 				
 				var journal_data = <%= serialized_journal %>;
+				//var journal_data = {};
 				// Example initialization of the journal table
-				var table = $('#journal').DataTable();
+				//var table = $('#journal').DataTable();
+
+				// table = $('#journal').DataTable( {
+				//     retrieve: true,
+				//     paging: false
+				// } );
+
+				if ( $.fn.dataTable.isDataTable( '#journal' ) ) {
+				    self.dtable = $('#journal').DataTable();
+				}
+				else {
+				    self.dtable = $('#journal').DataTable( {
+					    retrieve: true,
+					    paging: false
+				    } );
+				}
 
 				
 	
 				// Iterate over the journal entries and add them to the table
-				journal_data.forEach(function(entry) {
-					// Parse the nested 'journal' field if it exists and is a string
-					if(entry.journal) {
-						//var journal_entry = JSON.parse(entry.journal);
-						var journal_entry = entry.journal
-						// Extract the fields from the parsed 'journal_entry'
-						var date = journal_entry.datetime || "";
-						var name = journal_entry.name || "";
-						var source = journal_entry.source || "";
-						var command = journal_entry.command || "";
-						var response = journal_entry.response || "";
+				if (journal_data != null) {
+					journal_data.forEach(function(entry) {
+						// Parse the nested 'journal' field if it exists and is a string
+						if(entry.journal) {
+							//var journal_entry = JSON.parse(entry.journal);
+							var journal_entry = entry.journal
+							// Extract the fields from the parsed 'journal_entry'
+							var date = journal_entry.datetime || "";
+							var name = journal_entry.name || "";
+							var source = journal_entry.source || "";
+							var command = journal_entry.command || "";
+							var response = journal_entry.response || "";
 
-						// Add the journal entry to the DataTable
-						table.row.add([date, name, source, command, response]).draw();
-					}
-				});
+							// Add the journal entry to the DataTable
+							self.dtable.row.add([date, name, source, command, response]).draw();
+						}
+					});
+				}
 			});
 		});
 	});
-	</script>
-	
+</script>
