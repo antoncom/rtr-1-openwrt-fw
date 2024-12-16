@@ -21,7 +21,7 @@ define Package/tsmjournal
 	CATEGORY:=Languages
 	TITLE:=Tsmjournal for Bitcord RTR-3 Tsmodem
 	URL:=https://github.com/antoncom/tsmjournal.git
-	DEPENDS:=+luaposix +libubox-lua +lualeveldb +gwsocket
+	DEPENDS:=+luaposix +libubox-lua +lua-leveldb +gwsocket
 endef
 
 define Package/tsmjournal/description
