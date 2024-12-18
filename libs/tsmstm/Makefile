@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tsmstm
-PKG_RELEASE:=2.6.0
+PKG_RELEASE:=3.0.1
 
 PKG_SOURCE_URL=https://github.com/antoncom/tsmstm.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE=2023-06-14
+PKG_SOURCE_DATE=2023-12-18
 #PKG_SOURCE_VERSION:=ccc877b8b289b206d6dc42c5ab0eb81430133785
-PKG_SOURCE_VERSION:=tsmodem-2.6.0
+PKG_SOURCE_VERSION:=tsmodem-3.0.1
 
 
 include $(INCLUDE_DIR)/package.mk
@@ -37,6 +37,10 @@ define Package/tsmstm/install
 	# Source code
 	$(INSTALL_DIR) $(1)/usr/lib/lua/tsmstm
 	$(CP) $(PKG_BUILD_DIR)/src/* $(1)/usr/lib/lua/tsmstm
+
+	# Default config
+	$(INSTALL_DIR) $(1)/etc/config
+	$(CP) $(PKG_BUILD_DIR)/etc/config/tsmstm $(1)/etc/config/tsmstm
 
 	# Daemon
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/rc.d

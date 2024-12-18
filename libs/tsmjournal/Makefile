@@ -10,7 +10,7 @@ PKG_RELEASE:=1.0.0
 
 PKG_SOURCE_URL=https://github.com/antoncom/tsmjournal.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE=2024-12-16
+PKG_SOURCE_DATE=2024-12-18
 PKG_SOURCE_VERSION:=master
 
 include $(INCLUDE_DIR)/package.mk
@@ -35,6 +35,10 @@ define Package/tsmjournal/install
 	# Source code
 	$(INSTALL_DIR) $(1)/usr/lib/lua/tsmjournal
 	$(CP) $(PKG_BUILD_DIR)/src/* $(1)/usr/lib/lua/tsmjournal
+
+	# Default config
+	$(INSTALL_DIR) $(1)/etc/config
+	$(CP) $(PKG_BUILD_DIR)/etc/config/tsmjournal $(1)/etc/config/tsmjournal
 
 	# Daemon
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/rc.d
