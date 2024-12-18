@@ -5,7 +5,7 @@
 %>
 <%
     -- Lua variables and dependencies
-    local config = "tsmodem"
+    local config = "tsmjournal"
     local uci = require "luci.model.uci".cursor()
     local util = require "luci.util"
     local log = require "tsmodem.util.log"
@@ -19,7 +19,7 @@
 	    opt.createIfMissing = true
 	    opt.errorIfExists = false
 
-	    local db_file = uci:get("tsmjournal", "database", "inmemory")
+	    local db_file = uci:get(config, "database", "inmemory")
 	    util.perror(db_file)
 
 	    -- Error handling for opening the database
@@ -305,14 +305,6 @@
 				// Fetch the journal entries serialized in Lua and passed to the front-end
 				
 				var journal_data = <%= serialized_journal %>;
-				//var journal_data = {};
-				// Example initialization of the journal table
-				//var table = $('#journal').DataTable();
-
-				// table = $('#journal').DataTable( {
-				//     retrieve: true,
-				//     paging: false
-				// } );
 
 				if ( $.fn.dataTable.isDataTable( '#journal' ) ) {
 				    self.dtable = $('#journal').DataTable();
