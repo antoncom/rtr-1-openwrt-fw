@@ -4,10 +4,10 @@
 
 <%# =========== LUA BACKEND ==========] %>
 <%
-	local vpnType = "pptp"
+	local vpnType = "vpnpptp"
 %>
 <%
-    local config = "pptp-client"
+    local config = "network"
 
     local uci = require "luci.model.uci".cursor()
 
@@ -38,6 +38,19 @@
     end
 
     local a = getFirewallZones()
+
+    local ubus = require "ubus"
+    local conn = ubus.connect()
+
+    -- Call a procedure
+    local vpnUp = "false"
+    local status = conn:call("network.interface.vpnpptp", "status", { name = vpnType })
+
+    if (status and status["up"]) then
+        vpnUp = status["up"]
+    end
+    conn:close()
+
 %>
 
 <div id="view">
@@ -73,7 +86,7 @@
         class PptpData {
             name = "pptp1";
             type = '<%=vpnType%>';
-            isActive = false;
+            isActive = parse_bool('<%=vpnUp%>') || false;
             options = {
                 server: "",
                 username: "",
@@ -99,7 +112,10 @@
             form['username'] = new ui.Textfield(data.options.username, {
                 placeholder: "<%:Username%>",
                 optional: false,
-                validate: nearleyValidator('sectionName', '<%:Should contain letters, numbers and "_"%>')
+                //validate: nearleyValidator('sectionName', '<%:Should contain letters, numbers and "_"%>')
+                validate: function(input) {
+                    return true;
+                }
             });
             form['password'] = new ui.Textfield(data.options.password, {
                 placeholder: "<%:Password%>",
@@ -165,19 +181,24 @@
         	viewWrapper.appendChild(container);
         }
 
-        getCfgData('<%=vpnType%>', function(sections) {
-            g_pptpData.isActive = parse_bool(sections[0]['isActive']);
-            g_pptpData.options['server'] = parse_string(sections[0]['server']);
-            g_pptpData.options['username'] = parse_string(sections[0]['username']);
-            g_pptpData.options['password'] = parse_string(sections[0]['password']);
-            g_pptpData.options['authType'] = parse_string(sections[0]['authType']);
-            g_pptpData.options['addOptinos'] = parse_string(sections[0]['addOptinos']);
-            g_pptpData.options['isMPPE'] = parse_bool(sections[0]['isMPPE']);
-            g_pptpData.options['isDefaultRoute'] = parse_bool(sections[0]['isDefaultRoute']);
-            initForm(g_form, g_pptpData);
-            renderForm(g_form);
-            $('#btnReset').on('click', function(){ reset_fields(g_form, g_pptpData); });
-            $('#btnApply').on('click', function(){ apply(g_form); });
+        getCfgData('interface', function(sections) {
+            g_pptpData.isActive = parse_bool('<%=vpnUp%>') || false;
+            sections.forEach(function(iface) {
+                if(iface && iface[".name"] && iface[".name"] == '<%=vpnType%>') {
+
+                    g_pptpData.options['server'] = parse_string(iface['server']);
+                    g_pptpData.options['username'] = parse_string(iface['username']);
+                    g_pptpData.options['password'] = parse_string(iface['password']);
+                    g_pptpData.options['authType'] = parse_string(iface['authType']) || '';
+                    g_pptpData.options['addOptinos'] = parse_string(iface['addOptinos']) || '';
+                    g_pptpData.options['isMPPE'] = parse_bool(iface['isMPPE']) || '';
+                    g_pptpData.options['isDefaultRoute'] = parse_bool(iface['isDefaultRoute']) || '';
+                    initForm(g_form, g_pptpData);
+                    renderForm(g_form);
+                    $('#btnReset').on('click', function(){ reset_fields(g_form, g_pptpData); });
+                    $('#btnApply').on('click', function(){ apply(g_form); });
+                }
+            });
         });
 
         function reset_fields(form, data) {

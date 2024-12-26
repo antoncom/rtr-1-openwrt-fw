@@ -1,0 +1,15 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+    set network.vpnpptp=interface
+    set network.vpnpptp.proto='pptp'
+    set network.vpnpptp.username='gan-vpnjantit.com'
+    set network.vpnpptp.ipv6='auto'
+    set network.vpnpptp.password='gan915009'
+    set network.vpnpptp.server='se1.vpnjantit.com'
+    commit network
+    add_list firewall.@zone[1].network='vpnpptp'
+    commit firewall
+EOF
+
+exit 0

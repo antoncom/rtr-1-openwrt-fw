@@ -1,11 +1,11 @@
 <%
-	local config = "pptp-client"
+	local config = "network"
 
 	local uci = require "luci.model.uci".cursor()
 
 	local getInterfaces = function()
 		local str = ""
-		uci:foreach('network', 'interface', function(a)
+		uci:foreach(config, 'interface', function(a)
 			str = str .. "'" ..  a['.name'] .. "',"
 		end)
 		return str
@@ -13,9 +13,9 @@
 
 	local getBridges = function()
 		local str = "'none'"
-		uci:foreach('network', 'interface', function(a)
+		uci:foreach(config, 'interface', function(a)
 			if a['type'] == 'bridge' then
-				str = str .. ",'" ..  a['name'] .. "'"
+				str = str .. ",'" ..  a['ifname'] .. "'"
 			end
 		end)
 		return str
@@ -24,12 +24,19 @@
 	local getFirewallZones = function()
 		local str = "'none'"
 		uci:foreach('firewall', 'zone', function(a)
-			str = str .. ",'" ..  a['name'] .. "'"
+			if a and a['ifname'] then
+				str = str .. ",'" ..  a['ifname'] .. "'"
+			end
 		end)
+
+	
 		return str
 	end
 
 	local a = getFirewallZones()
+
+
+
 %>
 
 <%+pptp-client/vpnconfig.css%>
