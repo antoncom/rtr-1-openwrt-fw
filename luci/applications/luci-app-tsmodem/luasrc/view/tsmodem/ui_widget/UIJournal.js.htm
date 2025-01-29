@@ -255,6 +255,10 @@
 																	"14_rule",
 																	"15_rule",
 																	"16_rule",
+																	"18_rule",
+																	"19_rule",
+																	"20_rule",
+																	"21_rule",
 																	"UISiminfo",
 																	"98_rule",
 																	"99_rule"], function(ev) {
@@ -321,6 +325,7 @@
 				// Iterate over the journal entries and add them to the table
 				if (journal_data != null) {
 					journal_data.forEach(function(entry) {
+
 						// Parse the nested 'journal' field if it exists and is a string
 						if(entry.journal) {
 							//var journal_entry = JSON.parse(entry.journal);
@@ -332,10 +337,11 @@
 							var command = journal_entry.command || "";
 							var response = journal_entry.response || "";
 
-							// Add the journal entry to the DataTable
-							self.dtable.row.add([date, name, source, command, response]).draw();
+							self.dtable.row.add([date, name, source, command, response])
+							self.dtable.draw(false);
 						}
 					});
+					self.dtable.columns.adjust().draw(false);
 				}
 			});
 		});
