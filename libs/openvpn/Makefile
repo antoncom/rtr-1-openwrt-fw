@@ -7,7 +7,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=openvpn
+PKG_NAME:=openvpn_bitcord
 
 PKG_VERSION:=2.4.11
 PKG_RELEASE:=1
@@ -28,7 +28,7 @@ PKG_CPE_ID:=cpe:/a:openvpn:openvpn
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/openvpn/Default
+define Package/openvpn_bitcord/Default
   TITLE:=OpenVPN patched for Bitcord RTR-2
   SECTION:=net
   CATEGORY:=Bitcord_patched
@@ -44,17 +44,17 @@ else
 endif
 endef
 
-Package/openvpn-openssl=$(call Package/openvpn/Default,openssl,OpenSSL,+PACKAGE_openvpn-openssl:libopenssl)
-Package/openvpn-mbedtls=$(call Package/openvpn/Default,mbedtls,mbedTLS,+PACKAGE_openvpn-mbedtls:libmbedtls)
-Package/openvpn-nossl=$(call Package/openvpn/Default,nossl,plaintext (no SSL))
+Package/openvpn-openssl=$(call Package/openvpn_bitcord/Default,openssl,OpenSSL,+PACKAGE_openvpn-openssl:libopenssl)
+Package/openvpn-mbedtls=$(call Package/openvpn_bitcord/Default,mbedtls,mbedTLS,+PACKAGE_openvpn-mbedtls:libmbedtls)
+Package/openvpn-nossl=$(call Package/openvpn_bitcord/Default,nossl,plaintext (no SSL))
 
-define Package/openvpn/config/Default
+define Package/openvpn_bitcord/config/Default
 	source "$(SOURCE)/Config-$(1).in"
 endef
 
-Package/openvpn-openssl/config=$(call Package/openvpn/config/Default,openssl)
-Package/openvpn-mbedtls/config=$(call Package/openvpn/config/Default,mbedtls)
-Package/openvpn-nossl/config=$(call Package/openvpn/config/Default,nossl)
+Package/openvpn-openssl/config=$(call Package/openvpn_bitcord/config/Default,openssl)
+Package/openvpn-mbedtls/config=$(call Package/openvpn_bitcord/config/Default,mbedtls)
+Package/openvpn-nossl/config=$(call Package/openvpn_bitcord/config/Default,nossl)
 
 ifeq ($(BUILD_VARIANT),mbedtls)
 CONFIG_OPENVPN_MBEDTLS:=y
