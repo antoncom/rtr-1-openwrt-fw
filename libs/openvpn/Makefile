@@ -30,8 +30,8 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/openvpn/Default
   TITLE:=OpenVPN patched for Bitcord RTR-2
-  SECTION:=net
-  CATEGORY:=Network
+  SECTION:=bitcord
+  CATEGORY:=Bitcord_patched
   URL:=http://openvpn.net
   SUBMENU:=VPN
   MENU:=1
