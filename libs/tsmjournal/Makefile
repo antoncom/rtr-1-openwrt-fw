@@ -10,7 +10,7 @@ PKG_RELEASE:=1.0.0
 
 PKG_SOURCE_URL=https://github.com/antoncom/tsmjournal.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE=2024-12-18
+PKG_SOURCE_DATE=2025-01-31
 PKG_SOURCE_VERSION:=master
 
 include $(INCLUDE_DIR)/package.mk
