@@ -45,8 +45,8 @@ define Package/tsmodem/install
 
 	# Default config
 	$(INSTALL_DIR) $(1)/etc/config
-	$(CP) $(PKG_BUILD_DIR)/root/etc/config/tsmodem $(1)/etc/config/tsmodem
-	$(CP) $(PKG_BUILD_DIR)/root/etc/config/tsmodem_adapter_provider $(1)/etc/config/tsmodem_adapter_provider
+	$(CP) $(PKG_BUILD_DIR)/files/etc/config/tsmodem $(1)/etc/config/tsmodem
+	$(CP) $(PKG_BUILD_DIR)/files/etc/config/tsmodem_adapter_provider $(1)/etc/config/tsmodem_adapter_provider
 
 	# Daemon
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/rc.d
