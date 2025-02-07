@@ -1,8 +1,0 @@
-#!/bin/sh
-
-uci -q batch <<-EOF >/dev/null
-    add_list firewall.@zone[1].network='tsmodem'
-    commit firewall
-EOF
-
-exit 0
