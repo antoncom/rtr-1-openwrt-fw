@@ -12,18 +12,18 @@ uci -q batch <<-EOF >/dev/null
 EOF
 
 uci -q batch <<-EOF >/dev/null
-    set network.tsmodem=interface
-    set network.tsmodem.username='root'
-    set network.tsmodem.proto='3g'
-    set network.tsmodem.device='/dev/ttyUSB2'
-    set network.tsmodem.dialnumber='*99***1#'
-    set network.tsmodem.service='umts'
-    set network.tsmodem.pppd_options='noipdefault'
-    set network.tsmodem.keepalive='500 5'
-    set network.tsmodem.ipv6='auto'
-    set network.tsmodem.ip4table='default'
-    set network.tsmodem.ip6table='default'
-    set network.tsmodem.apn='internet.megafon.ru'
+    set network.modem=interface
+    set network.modem.username='root'
+    set network.modem.proto='3g'
+    set network.modem.device='/dev/ttyUSB2'
+    set network.modem.dialnumber='*99***1#'
+    set network.modem.service='umts'
+    set network.modem.pppd_options='noipdefault'
+    set network.modem.keepalive='500 5'
+    set network.modem.ipv6='auto'
+    set network.modem.ip4table='default'
+    set network.modem.ip6table='default'
+    set network.modem.apn='internet.megafon.ru'
     commit network 
 EOF
 
@@ -39,11 +39,11 @@ uci -q batch <<-EOF >/dev/null
 EOF
 
 uci -q batch <<-EOF >/dev/null
-    add dhcp tsmodem
-    set dhcp.tsmodem.interface='tsmodem'
-    set dhcp.tsmodem.start='100'
-    set dhcp.tsmodem.limit='150'
-    set dhcp.tsmodem.leasetime='12h'
+    add dhcp modem
+    set dhcp.modem.interface='modem'
+    set dhcp.modem.start='100'
+    set dhcp.modem.limit='150'
+    set dhcp.modem.leasetime='12h'
     commit dhcp
 EOF
 
@@ -59,7 +59,21 @@ uci -q batch <<-EOF >/dev/null
     set firewall.@zone[0].output='ACCEPT'
     set firewall.@zone[0].forward='ACCEPT'
     set firewall.@zone[0].masq='1'
-    set firewall.@zone[0].network='lan' 'tsmodem'
+    set firewall.@zone[0].network='lan' 'modem'
+    commit firewall
+    add firewall zone
+    set firewall.@zone[-1].name='3g'
+    set firewall.@zone[-1].input='ACCEPT'
+    set firewall.@zone[-1].output='ACCEPT'
+    set firewall.@zone[-1].forward='ACCEPT'
+    add_list firewall.@zone[-1].device='3g-modem'
+    add_list firewall.@zone[-1].network='modem'
+    add firewall forwarding
+    set firewall.@forwarding[-1].src='3g'
+    set firewall.@forwarding[-1].dest='lan'
+    add firewall forwarding
+    set firewall.@forwarding[-1].src='lan'
+    set firewall.@forwarding[-1].dest='3g'
     commit firewall
 EOF
 
@@ -96,6 +110,16 @@ uci -q batch <<-EOF >/dev/null
     commit luci
 EOF
 
+VDATE=$(opkg info tsmodem | grep Version | awk '{
+    print substr($0,10,10)
+}')
+
+VNUM=$(opkg info tsmodem | grep Version | awk '{
+    print substr($0,30,10)
+}')
+
+uci set tsmodem.version.number=$VNUM
+uci set tsmodem.version.date=$VDATE
+uci commit tsmodem
+
 exit 0
-
-
