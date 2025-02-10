@@ -1,6 +1,14 @@
 #!/bin/sh
 
 uci -q batch <<-EOF >/dev/null
+    set system.@system[0].hostname='BITCORD-RTR-2'
+    set system.@system[0].pubname='Роутер BITCORD RTR-2'
+    set system.@system[0].timezone='MSK-3'
+    set system.@system[0].zonename='Europe/Moscow'
+    commit system
+EOF
+
+uci -q batch <<-EOF >/dev/null
     set network.lan=interface
     set network.lan.type='bridge'
     set network.lan.proto='static'
@@ -52,7 +60,7 @@ uci -q batch <<-EOF >/dev/null
     set firewall.@defaults[0].input='ACCEPT'
     set firewall.@defaults[0].output='ACCEPT'
     set firewall.@defaults[0].forward='ACCEPT'
-    set firewall.@defaults[0].synflood_protect='1'
+    set firewall.@defaults[0].synflood_protect='0'
     set firewall.@zone[0]=zone
     set firewall.@zone[0].name='lan'
     set firewall.@zone[0].input='ACCEPT'
@@ -66,6 +74,7 @@ uci -q batch <<-EOF >/dev/null
     set firewall.@zone[-1].input='ACCEPT'
     set firewall.@zone[-1].output='ACCEPT'
     set firewall.@zone[-1].forward='ACCEPT'
+    set firewall.@zone[-1].masq='1'
     add_list firewall.@zone[-1].device='3g-modem'
     add_list firewall.@zone[-1].network='modem'
     add firewall forwarding

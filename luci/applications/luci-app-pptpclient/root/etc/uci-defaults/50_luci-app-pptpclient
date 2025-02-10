@@ -11,4 +11,24 @@ uci -q batch <<-EOF >/dev/null
     commit network
 EOF
 
+# add 'vpnpptp' to covered network for 'vpn' zone of the Firewall; something like this:
+# firewall.@zone[3].network='openvpn' 'vpnpptp'
+
+ZONEID=$(uci show firewall | grep "name='vpn'" | awk -F "." '{print $2}')
+
+[[ -n $ZONEID ]] && {
+    ZONES=$(uci get firewall.$ZONEID.network)
+
+    uci del firewall.$ZONEID.network
+
+    for i in $(echo $ZONES | tr " " "\n")
+    do
+        uci add_list firewall.$ZONEID.network=$i
+    done
+
+    uci add_list firewall.$ZONEID.network='vpnpptp'
+    uci commit firewall
+}
+
+
 exit 0
