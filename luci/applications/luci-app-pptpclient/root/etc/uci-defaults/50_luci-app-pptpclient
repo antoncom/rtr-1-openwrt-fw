@@ -21,7 +21,7 @@ ZONEID=$(uci show firewall | grep "name='vpn'" | awk -F "." '{print $2}')
 
     uci del firewall.$ZONEID.network
 
-    for i in $(echo $ZONES | tr " " "\n")
+    for i in $(echo $ZONES | tr " ")
     do
         uci add_list firewall.$ZONEID.network=$i
     done
