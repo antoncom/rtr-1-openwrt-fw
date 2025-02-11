@@ -67,8 +67,8 @@
 	    iter:del()  -- Delete the iterator
 	    leveldb.close(db)  -- Close the database
 
-	    util.perror("FETCH DB")
-	    util.dumptable(journal_entries)
+	    --util.perror("FETCH DB")
+	    --util.dumptable(journal_entries)
 	    return journal_entries
 	end
 
@@ -81,269 +81,278 @@
 //<![CDATA[
 	L.require('ui').then(function(ui) {
 		L.require('dom').then(function(dom) {
-		// 	uci.load("tsmodem").then(function(out){
-				var UIJournal = ui.AbstractElement.extend({
-					__init__: function(simname, options) {
-		                this.date = "";
-		                this.event_name = "";
-						this.source;
-		                this.command;
-						this.response;
-						this.total_records = 0;
-						this.pagination_records = 5;
+			L.require("uci").then(function(uci) {
 
-						this.debounce = false
-						this.timeoutId = undefined
-						this.is_switching = false
+			 	uci.load("tsmodem").then(function(out){
+					var UIJournal = ui.AbstractElement.extend({
+						__init__: function(simname, options) {
+			                this.date = "";
+			                this.event_name = "";
+							this.source;
+			                this.command;
+							this.response;
+							this.total_records = 0;
+							this.pagination_records = 5;
 
-						this.dtable = $('#journal').DataTable();
+							this.debounce = false
+							this.timeoutId = undefined
+							this.is_switching = false
 
-
-						var self = this
-
-						// Debounce helper
-						this.waitme = function() {
-							self.debounce = true;
-							if (self.timeoutId) {
-								clearTimeout(self.timeoutId)
-							}
-							self.timeoutId = setTimeout(function(){
-								self.debounce = false
-							}, 5000)
-						}
-
-						this.chunk = {
-							tblHeader: E('tr', {class: 'tr table-titles'}, [
-								E('th', {class: "th", style: "width: 150px"}, "<%:Date / time %>" ),
-								E('th', {class: "th", style: "width: 33%"}, "<%:Event %>" ),
-								E('th', {class: "th"}, "<%:Source %>" ),
-								E('th', {class: "th"}, "<%:Command %>" ),
-								E('th', {class: "th", style: "padding-left: 25px;"}, "<%:Responce %>" ),
-							]),
-							newRow: function(date, name, source, command, response) {
-								return (
-								E('tr', {class: 'tr journal-row'}, [
-									E('td', {class: "td"}, date ),
-									E('td', {class: "td"}, name ),
-									E('td', {class: "td"}, source ),
-									E('td', {class: "td"}, command ),
-									E('td', {class: "td"}, response ),
-								]))
-							},
-
-							tblRawEmpty: E('tr', {class: 'tr journal-empty'}, [
-								E('td', {class: "td"}, "<%:Date / time %>" ),
-								E('td', {class: "td", style: "text-align: right; color: grey;"}, 
-									E('b', E('i', {}, "<%:System log is empty. %>" ))
-								),
-								E('td', {class: "td"}, "" ),
-								E('td', {class: "td"}, "" ),
-								E('td', {class: "td", style: "background-image: none;"}, "" ),
-							]),
-							btnClearLog: E('input', {type: "button", class: "cbi-button cbi-button-apply", onclick: "clearJournal()", value: "<%:Clear the log %>"}),
-							clearLogRaw: E('div', {class: "clear-journal", style: "margin-top: 20px; text-align: center;"}, [
-								E('input', {type: "button", class: "cbi-button cbi-button-apply", onclick: "clearJournal()", value: "<%:Clear the log %>"}),
-								]
-							),
-
-						}
-					},
-
-					render: function() {
-		                //var container = E('h3', {}, '<%:System log%>') + E('table', { class: 'table journal', id: 'journal' }, [
-		                var container = E('table', { class: 'table journal', id: 'journal_1' }, [
-		                    this.chunk.tblHeader,
-							this.chunk.tblRawEmpty,
-							this.chunk.clearLogRaw,
-		                ])
-
-		                console.log("JOURNAL RENDERING...", container)
+							//this.dtable = $('#journal').DataTable();
+							this.dtable = $('#journal').DataTable({
+									"pageLength": 15, 
+									"order": [[0, "desc"]],
+									"language": {
+										"decimal":        "",
+										"emptyTable":     "Нет доступных данных",
+										"info":           "Отображение от _START_ до _END_, Записей: _TOTAL_ ",
+										"infoEmpty":      "Отображение 0 до 0,  0 записи",
+										"infoFiltered":   "(отфильтровано по _MAX_ количеству записей)",
+										"infoPostFix":    "",
+										"thousands":      ",",
+										"lengthMenu": '<select>' +
+											'<option value="5">5</option>' +
+											'<option value="10">10</option>' +
+											'<option value="15">15</option>' +
+											'<option value="20">20</option>' +
+											'<option value="25">25</option>' +
+											'<option value="50">50</option>' +
+											'</select>  записей',
+										"loadingRecords": "Подгрузка...",
+										"processing":     "",
+										"search": "Поиск :",
+										"zeroRecords":    "Совпадающих записей не найдено",
+										
+										"aria": {
+											"orderable":  "Упорядочивайте по этой колонке",
+											"orderableReverse": "Расположите этот столбец в обратном порядке"
+										}
+									} 
+								});
 
 
-						return this.bind(container);
-					},
+							var self = this
 
-					// Fire events issued from UIJournal widget
-					fireEvent: function(event_name, event_data) {
-						var s = new CustomEvent(event_name, {
-							detail: event_data,
-							bubbles: true,
-						})
-						if(window.EventBus.busobjects["UIJournal"]) {
-							window.EventBus.busobjects["UIJournal"].dispatchEvent(s);
-						}
-					},
-
-					clearJournal: function() {
-						var self = this
-						// if ( $.fn.dataTable.isDataTable( '#journal' ) ) {
-						//     var table = $('#journal').DataTable();
-						// }
-						// else {
-						//     var table = $('#journal').DataTable();
-						// }
-						// var table = $('#journal').DataTable();
-						self.dtable.clear().draw();
-
-						self.fireEvent("btn_clear_log_pressed", {})
-					},
-
-					renderDataTable: function() {
-						var self = this
-
-						if ( $.fn.dataTable.isDataTable( '#journal' ) ) {
-						    self.dtable = $('#journal').DataTable();
-						}
-						else {
-							self.dtable = $('#journal').DataTable({
-								"pageLength": 5, 
-								"order": [[0, "desc"]],
-								"language": {
-									"decimal":        "",
-									"emptyTable":     "нет доступных данных",
-									"info":           "Отображение от _START_ до _END_, _TOTAL_ Записи",
-									"infoEmpty":      "Отображение 0 до 0,  0 записи",
-									"infoFiltered":   "(отфильтровано по _MAX_ количеству записей)",
-									"infoPostFix":    "",
-									"thousands":      ",",
-									"lengthMenu": '<select>' +
-										'<option value="5">5</option>' +
-										'<option value="10">10</option>' +
-										'<option value="20">25</option>' +
-										'<option value="50">50</option>' +
-										'</select> Записи',
-									"loadingRecords": "Погрузка...",
-									"processing":     "",
-									"search": "Поиск :",
-									"zeroRecords":    "Совпадающих записей не найдено",
-									
-									"aria": {
-										"orderable":  "Упорядочивайте по этой колонке",
-										"orderableReverse": "Расположите этот столбец в обратном порядке"
-									}
-								} 
-							});
-						}
-						
-						clearTimeout(this.timeoutId)
-					},
-
-					bind: function(container) {
-						this.node = container
-						var self = this
-						dom.bindClassInstance(container, this);
-
-						// Register events object which will represent UIJournal widget on the Event Bus
-						window.EventBus.registerTo(this.node,"UIJournal")
-
-						$('#clearJournalButton').on('click', function() {
-							self.clearJournal();
-						});
-						
-
-						// ------------------------------------------------------------------
-						// Add record into the Journal web table as soon as new event occures
-						// ------------------------------------------------------------------
-						window.EventBus.listenToASAP("websocket",  ["01_rule",
-																	"02_rule",
-																	"03_rule",
-																	"04_rule",
-																	"05_rule",
-																	"06_rule",
-																	"07_rule",
-																	"08_rule",
-																	"14_rule",
-																	"15_rule",
-																	"16_rule",
-																	"18_rule",
-																	"19_rule",
-																	"20_rule",
-																	"21_rule",
-																	"UISiminfo",
-																	"98_rule",
-																	"99_rule"], function(ev) {
-							if (!self.debounce) {
-								var event_data = ev.detail || {}
-								if(event_data["journal"]) {
-
-									var event_date = event_data["journal"]["datetime"]  || "";
-									var event_name = event_data["journal"]["name"] || "";
-									var event_source = event_data["journal"]["source"] || "";
-									var event_command = event_data["journal"]["command"] || "";
-									var event_response = event_data["journal"]["response"] || "";
-
-									var new_row_chunk = self.chunk.newRow(event_date, event_name, event_source, event_command, event_response);
-
-									
-									//var table = $('#journal').DataTable();
-									var currentPage = self.dtable.page();
-									self.dtable.row.add([event_date, event_name, event_source, event_command, event_response])
-									self.dtable.draw(false);
-									self.dtable.columns.adjust().draw(false);
-									self.dtable.page(currentPage).draw(false);
+							// Debounce helper
+							this.waitme = function() {
+								self.debounce = true;
+								if (self.timeoutId) {
+									clearTimeout(self.timeoutId)
 								}
+								self.timeoutId = setTimeout(function(){
+									self.debounce = false
+								}, 5000)
 							}
-						});
 
-						
-						self.timeoutId = setTimeout(self.renderDataTable, 2000)
+							this.chunk = {
+								tblHeader: E('tr', {class: 'tr table-titles'}, [
+									E('th', {class: "th", style: "width: 150px"}, "<%:Date / time %>" ),
+									E('th', {class: "th", style: "width: 33%"}, "<%:Event %>" ),
+									E('th', {class: "th"}, "<%:Source %>" ),
+									E('th', {class: "th"}, "<%:Command %>" ),
+									E('th', {class: "th", style: "padding-left: 25px;"}, "<%:Responce %>" ),
+								]),
+								newRow: function(date, name, source, command, response) {
+									return (
+									E('tr', {class: 'tr journal-row'}, [
+										E('td', {class: "td"}, date ),
+										E('td', {class: "td"}, name ),
+										E('td', {class: "td"}, source ),
+										E('td', {class: "td"}, command ),
+										E('td', {class: "td"}, response ),
+									]))
+								},
 
-						return container;
-					},
+								tblRawEmpty: E('tr', {class: 'tr journal-empty'}, [
+									E('td', {class: "td"}, "<%:Date / time %>" ),
+									E('td', {class: "td", style: "text-align: right; color: grey;"}, 
+										E('b', E('i', {}, "<%:System log is empty. %>" ))
+									),
+									E('td', {class: "td"}, "" ),
+									E('td', {class: "td"}, "" ),
+									E('td', {class: "td", style: "background-image: none;"}, "" ),
+								]),
+								btnClearLog: E('input', {type: "button", class: "cbi-button cbi-button-apply", onclick: "clearJournal()", value: "<%:Clear the log %>"}),
+								clearLogRaw: E('div', {class: "clear-journal", style: "margin-top: 20px; text-align: center;"}, [
+									E('input', {type: "button", class: "cbi-button cbi-button-apply", onclick: "clearJournal()", value: "<%:Clear the log %>"}),
+									]
+								),
 
-				});
-				ui["Journal"] = UIJournal;
-		// 	});
+							}
+						},
+
+						render: function() {
+			                var container = E('table', { class: 'table journal', id: 'journal_1' }, [
+			                    this.chunk.tblHeader,
+								this.chunk.tblRawEmpty,
+								this.chunk.clearLogRaw,
+			                ])
+
+							return this.bind(container);
+						},
+
+						// Fire events issued from UIJournal widget
+						fireEvent: function(event_name, event_data) {
+							var s = new CustomEvent(event_name, {
+								detail: event_data,
+								bubbles: true,
+							})
+							if(window.EventBus.busobjects["UIJournal"]) {
+								window.EventBus.busobjects["UIJournal"].dispatchEvent(s);
+							}
+						},
+
+						clearJournal: function() {
+							var self = this
+							self.dtable.clear().draw();
+							self.fireEvent("btn_clear_log_pressed", {})
+						},
+
+						renderDataTable: function() {
+							console.log("...RENDER DATATABLE")
+
+							var self = this
+
+							if ( $.fn.dataTable.isDataTable( '#journal' ) ) {
+							    self.dtable = $('#journal').DataTable();
+							}
+							else {
+								self.dtable = $('#journal').DataTable({
+									"pageLength": 15, 
+									"order": [[0, "asc"]],
+									"language": {
+										"decimal":        "",
+										"emptyTable":     "нет доступных данных",
+										"info":           "Отображение от _START_ до _END_, _TOTAL_ Записи",
+										"infoEmpty":      "Отображение 0 до 0,  0 записи",
+										"infoFiltered":   "(отфильтровано по _MAX_ количеству записей)",
+										"infoPostFix":    "",
+										"thousands":      ",",
+										"lengthMenu": '<select>' +
+											'<option value="5">5</option>' +
+											'<option value="10">10</option>' +
+											'<option value="20">25</option>' +
+											'<option value="50">50</option>' +
+											'</select> Записи',
+										"loadingRecords": "Погрузка...",
+										"processing":     "",
+										"search": "Поиск :",
+										"zeroRecords":    "Совпадающих записей не найдено",
+										
+										"aria": {
+											"orderable":  "Упорядочивайте по этой колонке",
+											"orderableReverse": "Расположите этот столбец в обратном порядке"
+										}
+									} 
+								});
+							}
+							
+							clearTimeout(this.timeoutId)
+						},
+
+						bind: function(container) {
+							this.node = container
+							var self = this
+							dom.bindClassInstance(container, this);
+
+							// Register events object which will represent UIJournal widget on the Event Bus
+							window.EventBus.registerTo(this.node,"UIJournal")
+
+							$('#clearJournalButton').on('click', function() {
+								self.clearJournal();
+							});
+							
+
+							// ------------------------------------------------------------------
+							// Add record into the Journal web table as soon as new event occures
+							// ------------------------------------------------------------------
+							window.EventBus.listenToASAP("websocket",  ["01_rule",
+																		"02_rule",
+																		"03_rule",
+																		"04_rule",
+																		"05_rule",
+																		"06_rule",
+																		"07_rule",
+																		"08_rule",
+																		"14_rule",
+																		"15_rule",
+																		"16_rule",
+																		"18_rule",
+																		"19_rule",
+																		"20_rule",
+																		"21_rule",
+																		"UISiminfo",
+																		"98_rule",
+																		"99_rule"], function(ev) {
+								if (!self.debounce) {
+									var event_data = ev.detail || {}
+									if(event_data["journal"]) {
+
+										var event_date = event_data["journal"]["datetime"]  || "";
+										var event_name = event_data["journal"]["name"] || "";
+										var event_source = event_data["journal"]["source"] || "";
+										var event_command = event_data["journal"]["command"] || "";
+										var event_response = event_data["journal"]["response"] || "";
+
+										var new_row_chunk = self.chunk.newRow(event_date, event_name, event_source, event_command, event_response);
+
+										
+										//var table = $('#journal').DataTable();
+										var currentPage = self.dtable.page();
+										self.dtable.row.add([event_date, event_name, event_source, event_command, event_response])
+										self.dtable.draw(false);
+										self.dtable.columns.adjust().draw(false);
+										self.dtable.page(currentPage).draw(false);
+									}
+								}
+							});
+
+							var journal_data = <%= serialized_journal %>;
+
+							if ( $.fn.dataTable.isDataTable( '#journal' ) ) {
+							    self.dtable = $('#journal').DataTable();
+							}
+							else {
+							    self.dtable = $('#journal').DataTable( {
+								    retrieve: true,
+								    paging: false
+							    } );
+							}
+
+							
+				
+							// Iterate over the journal entries and add them to the table
+							if (journal_data != null) {
+
+								journal_data.forEach(function(entry) {
+
+									// Parse the nested 'journal' field if it exists and is a string
+									if(entry.journal) {
+										var journal_entry = entry.journal
+										// Extract the fields from the parsed 'journal_entry'
+										var date = journal_entry.datetime || "";
+										var name = journal_entry.name || "";
+										var source = journal_entry.source || "";
+										var command = journal_entry.command || "";
+										var response = journal_entry.response || "";
+
+										self.dtable.row.add([date, name, source, command, response])
+										self.dtable.draw(false);
+									}
+								});
+								self.dtable.columns.adjust().draw(false);
+
+							}
+
+							return container;
+						},
+
+					});
+					ui["Journal"] = UIJournal;
+			 	});
+			});
 		});
 	});
 
 //]]>
-</script>
-
-
-<script type="text/javascript">
-	// Load the required libraries (UI and UCI)
-	L.require("ui").then(function(ui) {
-		L.require("uci").then(function(uci) {
-			uci.load("<%=config%>").then(function(out) {
-				// Fetch the journal entries serialized in Lua and passed to the front-end
-				
-				var journal_data = <%= serialized_journal %>;
-
-				if ( $.fn.dataTable.isDataTable( '#journal' ) ) {
-				    self.dtable = $('#journal').DataTable();
-				}
-				else {
-				    self.dtable = $('#journal').DataTable( {
-					    retrieve: true,
-					    paging: false
-				    } );
-				}
-
-				
-	
-				// Iterate over the journal entries and add them to the table
-				if (journal_data != null) {
-					journal_data.forEach(function(entry) {
-
-						// Parse the nested 'journal' field if it exists and is a string
-						if(entry.journal) {
-							//var journal_entry = JSON.parse(entry.journal);
-							var journal_entry = entry.journal
-							// Extract the fields from the parsed 'journal_entry'
-							var date = journal_entry.datetime || "";
-							var name = journal_entry.name || "";
-							var source = journal_entry.source || "";
-							var command = journal_entry.command || "";
-							var response = journal_entry.response || "";
-
-							self.dtable.row.add([date, name, source, command, response])
-							self.dtable.draw(false);
-						}
-					});
-					self.dtable.columns.adjust().draw(false);
-				}
-			});
-		});
-	});
 </script>
