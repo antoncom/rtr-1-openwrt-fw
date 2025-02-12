@@ -4,32 +4,33 @@
 	L.require('ui').then(function(ui) {
 		L.require('dom').then(function(dom) {
 			var UICountdown = ui.AbstractElement.extend({
-				__init__: function(className, total, progress, title, descr) {
-                    this.className = className
-                    this.TIME_LIMIT = total
-                    this.FULL_DASH_ARRAY = 283
-                    this.WARNING_THRESHOLD = 10
-                    this.ALERT_THRESHOLD = 5
+				__init__: function(className, total, progress, simid, title, descr) {
+          this.className = className
+          this.TIME_LIMIT = total
+          this.FULL_DASH_ARRAY = 283
+          this.WARNING_THRESHOLD = 10
+          this.ALERT_THRESHOLD = 5
 
-                    this.COLOR_CODES = {
-                      info: {
-                        color: "red"
-                      },
-                      warning: {
-                        color: "red",
-                        threshold: this.WARNING_THRESHOLD
-                      },
-                      alert: {
-                        color: "green",
-                        threshold: this.ALERT_THRESHOLD
-                      }
-                    };
+          this.COLOR_CODES = {
+            info: {
+              color: "red"
+            },
+            warning: {
+              color: "red",
+              threshold: this.WARNING_THRESHOLD
+            },
+            alert: {
+              color: "green",
+              threshold: this.ALERT_THRESHOLD
+            }
+          };
 
-                    this.timerInterval = null
-                    this.timePassed = parseInt(progress) - 15
-                    this.timeLeft = parseInt(this.TIME_LIMIT)
-                    this.remainingPathColor = this.COLOR_CODES.info.color;
+          this.timerInterval = null
+          this.timePassed = parseInt(progress)
+          this.timeLeft = parseInt(this.TIME_LIMIT)
+          this.remainingPathColor = this.COLOR_CODES.info.color;
 
+          this.simid = simid
 					this.title = title
 					this.description = descr
 
@@ -101,6 +102,16 @@
 					})
 
 					// -----------------------------------------------------------
+					// Subscribe to UISimsettingModal widget. On "Save" setting button pressed
+					// Removes all downcounters from the page
+					// -----------------------------------------------------------
+					window.EventBus.listenToASAP("UISimSettingModal", ["btn_save_setting_pressed"], function(ev) {
+						if (ev && ev.detail && ev.detail.simid && ev.detail.simid == self.simid) {
+							self.onTimesUp()
+						}
+					})
+
+					// -----------------------------------------------------------
 					// Subscribe to WebSocket widget. On switch
 					// -----------------------------------------------------------
 					window.EventBus.listenToASAP("websocket", ["01_rule", "02_rule"], function(ev) {
@@ -108,7 +119,6 @@
                         self.do_switch = event_data["do_switch"]
 
 						if(self.do_switch == "true") {
-							console.log("========= SWITCHING ========", self.do_switch)
 							self.onTimesUp()
 						}
 

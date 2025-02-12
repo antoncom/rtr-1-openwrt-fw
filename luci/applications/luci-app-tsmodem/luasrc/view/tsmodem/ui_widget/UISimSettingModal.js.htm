@@ -63,8 +63,6 @@
 						// регистрируем callback-функцию
 						request.addInterceptor(ctrlCont.callback(ctrlCont))
 
-						console.log("===", url)
-
 						xhrResponse = request.post(url, data, {timeout: 3000});
 
 					})
@@ -457,6 +455,11 @@
                                                         //my_handleEdit(simid, sim_data, a_adapter_data);
                                                         //sendAction("edit", data, editCtrl);
                                                        	sendAction("edit", simid, { "sim_data": sim_data, "gsm_data": adapter_data}, editCtrl )
+
+                               							self.fireEvent("btn_save_setting_pressed", {
+															simid: self.simid,
+															uuid: uuid(),
+														})
 
 
                                                         // Start modem automation again
