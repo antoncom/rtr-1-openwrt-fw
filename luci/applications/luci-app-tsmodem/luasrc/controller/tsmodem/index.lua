@@ -13,17 +13,31 @@ function index()
 	if nixio.fs.access("/etc/config/tsmodem") then
 		-- SIM cards setting page
 		entry({"admin", "system", "sim_list"}, cbi("tsmodem/main"), translate("SIM cards settings"), 30)
-		entry({"admin", "system", "sim_list_2", "action"}, call("do_sim_action"), nil).leaf = true
+		entry({"admin", "system", "sim_list_do", "action"}, call("do_sim_action"), nil).leaf = true
 	end
 end
+
+	function send_response(code, message)
+		local response = {}
+		response.action = action
+		response.message = message
+
+		if code == 200 then
+			response.status = 'success'
+		else
+			response.status = 'error'
+		end
+	
+		http.status(code)
+		http.prepare_content("application/json")
+		http.write(util.serialize_json(response))
+	end
 
 
 function do_sim_action(action, sim_id)
 	local payload = {}
 
-
-	payload["sim_data"] = luci.jsonc.parse(luci.http.formvalue("sim_data"))
-	payload["gsm_data"] = luci.jsonc.parse(luci.http.formvalue("adapter_data"))
+	local payload = luci.jsonc.parse(luci.http.content())
 
 	local commands = {
 		switch = function(sim_id, ...)
@@ -67,7 +81,7 @@ function do_sim_action(action, sim_id)
 			end
 
 			local provider_id = payloads["sim_data"].provider
-			for key, value in pairs(payloads["gsm_data"][provider_id]) do
+			for key, value in pairs(payloads["gsm_data"]) do
 				if util.contains(allowed_gsm_options, key) then
 					local ok = uci:set(config_gsm, provider_id, key, value)
 				end
@@ -94,15 +108,14 @@ function do_sim_action(action, sim_id)
 				end
 			end
 
-			--[[ clear modem states if setting is applied to active Sim-card]]
+			--[[ glear modem states ]]
 			if (active_sim == sim_id) then
 				util.ubus("tsmodem.driver", "clear_state", {})
 			end
 		end,
 
 		default = function(...)
-			http.prepare_content("text/plain")
-			http.write("0")
+			send_response(200, "Configuration saved successfully")
 		end
 	}
 	if commands[action] then
