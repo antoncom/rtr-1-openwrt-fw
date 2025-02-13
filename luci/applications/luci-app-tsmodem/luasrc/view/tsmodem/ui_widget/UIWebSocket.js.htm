@@ -27,6 +27,45 @@ L.require('ui').then(function(ui) {
 
 					window.EventBus.registerTo(this.node,"websocket")
 
+
+
+					//-----------------------------------------------------------
+					//Subscribe to UIJournal widget. On "Clear log" button pressed
+					//-----------------------------------------------------------
+					window.EventBus.listenToASAP("UIJournal", ["btn_clear_log_pressed"], function(ev) {
+
+						console.log("CLEAR LOG .....")
+						self.socket.send(JSON.stringify({
+							proto: "ubus",
+							uuid: "",
+							obj: "tsmodem.journal",
+							method: "clear",
+						}));
+
+					})
+
+					// window.EventBus.listenToASAP("UIJournal", ["btn_clear_log_pressed"], function(ev) {
+					// 	console.log("Captured ____")
+					// }
+
+
+
+					window.EventBus.listenToASAP("UISiminfo_0", ["btn_clear_log_pressed"], function(ev) {
+
+						var event_data = ev.detail || {}
+						self.simid = event_data.simid || self.simid || "simid-0"
+
+						self.socket.send(JSON.stringify({
+							proto: "ubus",
+							uuid: event_data.uuid || "",
+							obj: "tsmodem.driver",
+							method: "do_switch",
+							params: { rule: "User activated slot #1" }
+						}));
+
+					})
+
+
 					// -----------------------------------------------------------
 					// Subscribe to UISiminfo widget. On "Activate" button pressed
 					// -----------------------------------------------------------
@@ -40,7 +79,7 @@ L.require('ui').then(function(ui) {
 							uuid: event_data.uuid || "",
 							obj: "tsmodem.driver",
 							method: "do_switch",
-							params: { rule: "user  slot #1" }
+							params: { rule: "User activated slot #1" }
 						}));
 
 					})
@@ -55,7 +94,7 @@ L.require('ui').then(function(ui) {
 							uuid: event_data.uuid || "",
 							obj: "tsmodem.driver",
 							method: "do_switch",
-							params: { rule: "user slot #1" }
+							params: { rule: "User activated slot #2" }
 						}));
 
 					})
@@ -72,6 +111,27 @@ L.require('ui').then(function(ui) {
 							uci.load("tsmodem_adapter_provider").then(function(out){
 								var ussd_comm = uci.get("tsmodem_adapter_provider",event_data.provider_code, "balance_ussd") || ""
 
+								const date = new Date();
+								const formattedDate = `${date.getFullYear()}-${('0'+(date.getMonth() + 1)).slice(-2)}-${date.getDate()} ${('0'+date.getHours()).slice(-2)}:${('0'+date.getMinutes()).slice(-2)}:${('0'+date.getSeconds()).slice(-2)}`;
+
+								// TODO: hopely, remove it at all
+								// self.socket.send(JSON.stringify({
+								// 	proto: "ubus",
+								// 	uuid: event_data.uuid || "",
+								// 	obj: "tsmodem.journal",
+								// 	method: "send",
+								// 	params: {
+								// 		journal: {
+								// 			datetime: formattedDate,
+								// 			name: "Пользователь запросил баланс",
+								// 			source: "SIM-1",
+								// 			command: "AT+CUSD=1," + ussd_comm + ",15",
+								// 			response: "в обработке",
+								// 		},
+								// 		ruleid: "UISiminfo"
+								// 	}
+								// }));
+
 								self.socket.send(JSON.stringify({
 									proto: "ubus",
 									uuid: event_data.uuid || "",
@@ -79,9 +139,10 @@ L.require('ui').then(function(ui) {
 									method: "send_at",
 									params: {
 										command: "AT+CUSD=1," + ussd_comm + ",15",
-										["what-to-update"]: "balance"
+										["what-to-update"]: "balance",
 									}
 								}));
+
 							});
 						});
 					})
@@ -94,6 +155,10 @@ L.require('ui').then(function(ui) {
 							uci.load("tsmodem_adapter_provider").then(function(out){
 								var ussd_comm = uci.get("tsmodem_adapter_provider",event_data.provider_code, "balance_ussd") || ""
 
+								const date = new Date();
+								const formattedDate = `${date.getFullYear()}-${('0'+(date.getMonth() + 1)).slice(-2)}-${date.getDate()} ${('0'+date.getHours()).slice(-2)}:${('0'+date.getMinutes()).slice(-2)}:${('0'+date.getSeconds()).slice(-2)}`;
+
+
 								self.socket.send(JSON.stringify({
 									proto: "ubus",
 									uuid: event_data.uuid || "",
@@ -101,9 +166,30 @@ L.require('ui').then(function(ui) {
 									method: "send_at",
 									params: {
 										command: "AT+CUSD=1," + ussd_comm + ",15",
-										["what-to-update"]: "balance"
+										["what-to-update"]: "balance",
 									}
 								}));
+
+								// TODO: hopely, remove it at all
+								// var jtid = setInterval(function(){
+								// 	self.socket.send(JSON.stringify({
+								// 		proto: "ubus",
+								// 		uuid: event_data.uuid || "",
+								// 		obj: "tsmodem.journal",
+								// 		method: "send",
+								// 		params: {
+								// 			journal: {
+								// 				datetime: formattedDate,
+								// 				name: "Пользователь запросил баланс",
+								// 				source: "SIM-2",
+								// 				command: "AT+CUSD=1," + ussd_comm + ",15",
+								// 				response: "в обработке",
+								// 			},
+								// 			ruleid: "UISiminfo"
+								// 		}
+								// 	}));
+								// 	clearInterval(jtid)
+								// }, 2000)
 
 							});
 						});
@@ -124,6 +210,8 @@ L.require('ui').then(function(ui) {
 
 					window.EventBus.listenToASAP("UIModalSMS_send", ["send-sms"], function(ev) {
 						var event_data = ev.detail || {}
+
+						console.log(event_data)
 
 						self.socket.send(JSON.stringify({
 							proto: "ubus",
@@ -211,5 +299,6 @@ L.require('ui').then(function(ui) {
 		});
 	});
 });
+
 //]]>
 </script>
