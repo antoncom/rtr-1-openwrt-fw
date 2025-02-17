@@ -1,0 +1,157 @@
+<script type="text/javascript">
+    var nearley_validator = function (fieldtype) {
+        var grammar = {
+            //  ---------------------------------------------------------------------
+            //  ADD field name as key and compiled grammar as value
+            //  Grammar compilation is created using this specification:
+            //  https://netping.atlassian.net/wiki/spaces/PROJ/pages/2809857522/html-
+            //  =====================================================================
+            address: {
+                Lexer: undefined,
+                ParserRules: [
+                    {"name": "MAIN", "symbols": ["URL"]},
+                    {"name": "URL$ebnf$1", "symbols": []},
+                    {"name": "URL$ebnf$1$subexpression$1", "symbols": [{"literal":".","pos":20}, "DOMAIN"]},
+                    {"name": "URL$ebnf$1", "symbols": ["URL$ebnf$1$subexpression$1", "URL$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "URL", "symbols": ["DOMAIN", "URL$ebnf$1"]},
+                    {"name": "DOMAIN$ebnf$1$subexpression$1", "symbols": ["LETTER"]},
+                    {"name": "DOMAIN$ebnf$1$subexpression$1", "symbols": ["NUMBER"]},
+                    {"name": "DOMAIN$ebnf$1$subexpression$1", "symbols": ["SYMBOL"]},
+                    {"name": "DOMAIN$ebnf$1", "symbols": ["DOMAIN$ebnf$1$subexpression$1"]},
+                    {"name": "DOMAIN$ebnf$1$subexpression$2", "symbols": ["LETTER"]},
+                    {"name": "DOMAIN$ebnf$1$subexpression$2", "symbols": ["NUMBER"]},
+                    {"name": "DOMAIN$ebnf$1$subexpression$2", "symbols": ["SYMBOL"]},
+                    {"name": "DOMAIN$ebnf$1", "symbols": ["DOMAIN$ebnf$1$subexpression$2", "DOMAIN$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "DOMAIN", "symbols": ["DOMAIN$ebnf$1"]},
+                    {"name": "LETTER", "symbols": [/[a-zA-Z]/]},
+                    {"name": "NUMBER", "symbols": [/[0-9]/]},
+                    {"name": "SYMBOL", "symbols": [/[_\-%/:?&=]/]}
+                ], 
+                ParserStart: "MAIN"
+            },
+
+            ip4: {
+                Lexer: undefined,
+                ParserRules: [
+                    {"name": "MAIN", "symbols": ["IP"]},
+                    {"name": "IP", "symbols": ["NUMBER", {"literal":".","pos":19}, "NUMBER", {"literal":".","pos":23}, "NUMBER", {"literal":".","pos":27}, "NUMBER"]},
+                    {"name": "NUMBER", "symbols": ["From_0_to_255"]},
+                    {"name": "From_0_to_255", "symbols": [/[0-9]/]},
+                    {"name": "From_0_to_255", "symbols": [/[1-9]/, /[0-9]/]},
+                    {"name": "From_0_to_255", "symbols": [{"literal":"1","pos":55}, /[0-9]/, /[0-9]/]},
+                    {"name": "From_0_to_255", "symbols": [{"literal":"2","pos":65}, /[0-5]/, /[0-5]/]}
+                ], 
+                ParserStart: "MAIN"
+            },
+
+            ip4_list: {
+                Lexer: undefined,
+                ParserRules: [
+                    {"name": "MAIN", "symbols": ["LIST"]},
+                    {"name": "LIST$ebnf$1", "symbols": []},
+                    {"name": "LIST$ebnf$1$subexpression$1", "symbols": ["DELIM", "IP"]},
+                    {"name": "LIST$ebnf$1", "symbols": ["LIST$ebnf$1$subexpression$1", "LIST$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "LIST", "symbols": ["IP", "LIST$ebnf$1"]},
+                    {"name": "IP", "symbols": ["NUMBER", {"literal":".","pos":32}, "NUMBER", {"literal":".","pos":36}, "NUMBER", {"literal":".","pos":40}, "NUMBER"]},
+                    {"name": "NUMBER", "symbols": ["From_0_to_255"]},
+                    {"name": "From_0_to_255", "symbols": [/[0-9]/]},
+                    {"name": "From_0_to_255", "symbols": [/[1-9]/, /[0-9]/]},
+                    {"name": "From_0_to_255", "symbols": [{"literal":"1","pos":68}, /[0-9]/, /[0-9]/]},
+                    {"name": "From_0_to_255", "symbols": [{"literal":"2","pos":78}, /[0-5]/, /[0-5]/]},
+                    {"name": "DELIM$ebnf$1", "symbols": [/[, ]/]},
+                    {"name": "DELIM$ebnf$1", "symbols": [/[, ]/, "DELIM$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "DELIM", "symbols": ["DELIM$ebnf$1"]}
+                ], 
+                ParserStart: "MAIN"
+            },
+
+            netmask: {
+                Lexer: undefined,
+                ParserRules: [
+                    {"name": "MAIN", "symbols": ["NETMASK"]},
+                    {"name": "NETMASK", "symbols": ["net_mask"]},
+                    {"name": "NETMASK", "symbols": ["From_0_to_32"]},
+                    {"name": "net_mask", "symbols": ["From_0_to_255", {"literal":".","pos":29}, "From_0_to_255", {"literal":".","pos":33}, "From_0_to_255", {"literal":".","pos":37}, "From_0_to_255"]},
+                    {"name": "From_0_to_255", "symbols": [/[0-9]/]},
+                    {"name": "From_0_to_255", "symbols": [/[1-9]/, /[0-9]/]},
+                    {"name": "From_0_to_255", "symbols": [{"literal":"1","pos":59}, /[0-9]/, /[0-9]/]},
+                    {"name": "From_0_to_255", "symbols": [{"literal":"2","pos":69}, /[0-5]/, /[0-5]/]},
+                    {"name": "From_0_to_32", "symbols": [/[0-9]/]},
+                    {"name": "From_0_to_32", "symbols": [/[0-2]/, /[0-9]/]},
+                    {"name": "From_0_to_32", "symbols": [{"literal":"3","pos":95}, /[0-2]/]}
+                ], 
+                ParserStart: "MAIN"
+            },
+
+            number: {
+                Lexer: undefined,
+                ParserRules: [
+                    {"name": "MAIN", "symbols": ["NUMBER"]},
+                    {"name": "NUMBER$ebnf$1", "symbols": [/[0-9]/]},
+                    {"name": "NUMBER$ebnf$1", "symbols": [/[0-9]/, "NUMBER$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "NUMBER", "symbols": ["NUMBER$ebnf$1"]},
+                    {"name": "NUMBER$ebnf$2", "symbols": [/[0-9]/]},
+                    {"name": "NUMBER$ebnf$2", "symbols": [/[0-9]/, "NUMBER$ebnf$2"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "NUMBER$ebnf$3", "symbols": [/[0-9]/]},
+                    {"name": "NUMBER$ebnf$3", "symbols": [/[0-9]/, "NUMBER$ebnf$3"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "NUMBER", "symbols": ["NUMBER$ebnf$2", {"literal":".","pos":25}, "NUMBER$ebnf$3"]},
+                    {"name": "NUMBER$ebnf$4", "symbols": [/[0-9]/]},
+                    {"name": "NUMBER$ebnf$4", "symbols": [/[0-9]/, "NUMBER$ebnf$4"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "NUMBER$ebnf$5", "symbols": [/[0-9]/]},
+                    {"name": "NUMBER$ebnf$5", "symbols": [/[0-9]/, "NUMBER$ebnf$5"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "NUMBER", "symbols": ["NUMBER$ebnf$4", {"literal":",","pos":35}, "NUMBER$ebnf$5"]}
+                ], 
+                ParserStart: "MAIN"
+            },
+
+            integer: {
+                Lexer: undefined,
+                ParserRules: [
+                    {"name": "MAIN", "symbols": ["NUMBER"]},
+                    {"name": "NUMBER$ebnf$1", "symbols": []},
+                    {"name": "NUMBER$ebnf$1", "symbols": [/[0-9]/, "NUMBER$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "NUMBER", "symbols": ["NUMBER$ebnf$1"]}                
+                ], 
+                ParserStart: "MAIN"
+            },
+
+            sectionName: {
+                Lexer: undefined,
+                ParserRules: [
+                    {"name": "MAIN", "symbols": ["NAME"]},
+                    {"name": "NAME$ebnf$1$subexpression$1", "symbols": ["LETTER"]},
+                    {"name": "NAME$ebnf$1$subexpression$1", "symbols": ["NUMBER"]},
+                    {"name": "NAME$ebnf$1$subexpression$1", "symbols": ["SYMBOL"]},
+                    {"name": "NAME$ebnf$1", "symbols": ["NAME$ebnf$1$subexpression$1"]},
+                    {"name": "NAME$ebnf$1$subexpression$2", "symbols": ["LETTER"]},
+                    {"name": "NAME$ebnf$1$subexpression$2", "symbols": ["NUMBER"]},
+                    {"name": "NAME$ebnf$1$subexpression$2", "symbols": ["SYMBOL"]},
+                    {"name": "NAME$ebnf$1", "symbols": ["NAME$ebnf$1$subexpression$2", "NAME$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "NAME", "symbols": ["NAME$ebnf$1"]},
+                    {"name": "LETTER", "symbols": [/[a-zA-Z]/]},
+                    {"name": "NUMBER", "symbols": [/[0-9]/]},
+                    {"name": "SYMBOL", "symbols": [/[_]/]}
+                ], 
+                ParserStart: "MAIN"
+            },
+
+            string: {
+                Lexer: undefined,
+                ParserRules: [
+                   {"name": "MAIN", "symbols": ["NAME"]},
+                    {"name": "NAME$ebnf$1", "symbols": []},
+                    {"name": "NAME$ebnf$1$subexpression$1", "symbols": ["LETTER"]},
+                    {"name": "NAME$ebnf$1$subexpression$1", "symbols": ["NUMBER"]},
+                    {"name": "NAME$ebnf$1$subexpression$1", "symbols": ["SYMBOL"]},
+                    {"name": "NAME$ebnf$1", "symbols": ["NAME$ebnf$1$subexpression$1", "NAME$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+                    {"name": "NAME", "symbols": ["NAME$ebnf$1"]},
+                    {"name": "LETTER", "symbols": [/[a-zA-Z]/]},
+                    {"name": "NUMBER", "symbols": [/[0-9]/]},
+                    {"name": "SYMBOL", "symbols": [/[_]/]}
+                ], 
+                ParserStart: "MAIN"
+            }
+        };
+        return grammar[fieldtype];
+    }
+</script>
