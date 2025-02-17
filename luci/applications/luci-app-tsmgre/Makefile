@@ -11,7 +11,7 @@ LUCI_PKGARCH:=all
 
 PKG_NAME:=luci-app-tsmgre
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=20250213
+PKG_RELEASE:=20250217
 PKG_LICENSE:=GPL-3.0-or-later
 
 include $(TOPDIR)/feeds/luci/luci.mk
