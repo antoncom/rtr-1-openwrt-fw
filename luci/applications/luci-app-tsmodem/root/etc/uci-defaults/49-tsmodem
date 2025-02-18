@@ -27,18 +27,15 @@ uci -q batch <<-EOF >/dev/null
 EOF
 
 uci -q batch <<-EOF >/dev/null
-    set network.modem=interface
-    set network.modem.username='root'
-    set network.modem.proto='3g'
-    set network.modem.device='/dev/ttyUSB2'
-    set network.modem.dialnumber='*99***1#'
-    set network.modem.service='umts'
-    set network.modem.pppd_options='noipdefault'
-    set network.modem.keepalive='500 5'
-    set network.modem.ipv6='auto'
-    set network.modem.ip4table='default'
-    set network.modem.ip6table='default'
-    set network.modem.apn='internet.megafon.ru'
+    network.modem=interface
+    network.modem.username='root'
+    network.modem.proto='3g'
+    network.modem.device='/dev/ttyUSB2'
+    network.modem.dialnumber='*99***1#'
+    network.modem.service='umts'
+    network.modem.pppd_options='noipdefault'
+    network.modem.ipv6='auto'
+    network.modem.apn='internet.megafon.ru'
     commit network 
 EOF
 
