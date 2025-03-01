@@ -47,7 +47,7 @@ function do_action(action)
 		add= function(...)
 			uci:section(config, data.vpnType, data.name, data.options)
 			uci:set(config, data.name, 'isActive', 'false')
-			return run_backend_script(action, data)
+			return run_network_add(data)
 
 		end,
 
@@ -55,12 +55,12 @@ function do_action(action)
 			for key, value in pairs(data.options) do
 				uci:set(config, 'tsmgre', key, value)
 			end
-			return run_backend_script(action, data)
+			return run_network_edit(data)
 		end,
 
 		delete = function(...)
 			uci:delete(config, data.name)
-			return run_backend_script(action, data)
+			return run_network_delete(data)
 		end,
 
 		enable = function(...)
@@ -68,7 +68,7 @@ function do_action(action)
 			for key, value in pairs(data.options) do
 				uci:set(config, 'tsmgre', key, value)
 			end
-			return run_backend_script(action, data)
+			return run_network_enable(data)
 		end,
 
 		upload_file = function(...)
@@ -119,43 +119,139 @@ function do_action(action)
 	end
 
 	if commands[action] then
-		local success = commands[action]()
+		local success, errmsg = commands[action]()
 		if (success) then
 			send_response(200, "Configuration applyed successfully")
-			uci:commit(config)
-			if (data.isActive == '0') then
-				conn:call("network.interface.tsmgre", "down", {})
-			elseif (data.isActive == '1') then
-				conn:call("network.interface.tsmgre", "up", {})
-			end
-			conn:close()
+			-- uci:commit(config)
+			-- if (data.isActive == '0') then
+			-- 	conn:call("network.interface.tsmgre", "down", {})
+			-- elseif (data.isActive == '1') then
+			-- 	conn:call("network.interface.tsmgre", "up", {})
+			-- end
+			-- conn:close()
 
 		else
-			send_response(500, "Failed to apply configuration")
+			send_response(500, errmsg)
 			uci:revert(config)
+			uci:revert("network")
 		end
 	else
-		send_response(400, 'Unexpected vpnconfig action')
+		send_response(400, 'Unexpected GRE config action')
 	end
 end
 
-function run_backend_script(action, data)
-	-- TODO: call actual network configuration scripts
+function run_network_add(data)
+	local action = "add"
+	local greExt = {}
+	local greInt = {}
 
-	-- action - add | edit | delete | enable
-	-- data: 
-	--    data.vpnType - type of uci config section
-	--    data.name - name of uci config section
-	--    data.isActive - is this VPN client enabled
-	--    data.options - object with VPN client parameters - see on corresponding client page
-	
-	-- UCI changes will be committed if this function return 'true'. Otherwise UCI changes will be reverted.
-	
-	-- For IPSec - check for public key files in uploadDir
-	-- their names are stored in:
-	--    data.options['fileCaCertificate']
-	--    data.options['fileLocalCertificate']
-	--    data.options['filePubkey'] 
+	local ifname = data.options.localAddr
 
-	return true -- 'true' on success, 'false' on error
+	--[[ getLocalIp() => value, errmsg ]]
+	--[[ ----------------------------- ]]
+	local getLocalIp = function(ifname) 
+		local ifstatus = util.ubus("network.interface."..ifname, "status", {})
+
+		if not ifstatus then return false, string.format("Ошибка: отсутствует интерфейс [%s].", ifname) end
+		local ifaddr = ifstatus["ipv4-address"] and (#ifstatus["ipv4-address"] > 0) and ifstatus["ipv4-address"][1].address
+		
+		if not ifaddr then return false, string.format("Ошибка: не найден IP-адрес сервера для интерфейса [%s].", ifname) end
+		return ifaddr, "OK"
+	end
+	--[[ ----------------------------- ]]
+	local localAddr, errmsg = getLocalIp(data.options.localAddr)
+	if not localAddr then return false, errmsg end
+
+	greExt = {
+		proto = "gre",
+		peeraddr = data.options.remoteAddr,
+		ipaddr = localAddr
+	}
+	greInt = {
+		proto = "static",
+		device = "@GREext",
+		ipaddr = data.options.tunnelIp,
+		netmask = data.options.tunnelMask
+	}
+	uci:section("network", "interface", "GREext", greExt)
+	uci:section("network", "interface", "GREint", greInt)
+	local uciOk = uci:save("network") and uci:apply(true)
+	if (uciOk) then 
+		uci:commit("network")
+	else
+		uci:revert("network")
+		return false, "Ошибка: не удалось применить настройки [network]."
+	end
+
+	return true, "OK" -- 'true' on success, 'false' on error
+end
+
+
+function run_network_edit(data)
+	local action = "edit"
+	local greExt = {}
+	local greInt = {}
+
+	local ifname = data.options.localAddr
+
+	--[[ getLocalIp() => value, errmsg ]]
+	--[[ ----------------------------- ]]
+	local getLocalIp = function(ifname) 
+		local ifstatus = util.ubus("network.interface."..ifname, "status", {})
+
+		if not ifstatus then return false, string.format("Ошибка: отсутствует интерфейс [%s].", ifname) end
+		local ifaddr = ifstatus["ipv4-address"] and (#ifstatus["ipv4-address"] > 0) and ifstatus["ipv4-address"][1].address
+		
+		if not ifaddr then return false, string.format("Ошибка: не найден IP-адрес сервера для интерфейса [%s].", ifname) end
+		return ifaddr, "OK"
+	end
+	--[[ ----------------------------- ]]
+	local localAddr, errmsg = getLocalIp(data.options.localAddr)
+	if not localAddr then return false, errmsg end
+
+	greExt = {
+		proto = "gre",
+		peeraddr = data.options.remoteAddr,
+		ipaddr = localAddr
+	}
+	greInt = {
+		proto = "static",
+		device = "@GREext",
+		ipaddr = data.options.tunnelIp,
+		netmask = data.options.tunnelMask
+	}
+	uci:tset("network", "GREext", greExt)
+	uci:tset("network", "GREint", greInt)
+	local uciOk = uci:save("network") and uci:apply(true)
+	if (uciOk) then 
+		uci:commit("network")
+	else
+		uci:revert("network")
+		return false, "Ошибка: не удалось применить настройки [network]."
+	end
+
+	return true, "OK" -- 'true' on success, 'false' on error
+end
+
+function run_network_enable(data)
+	local action = "enable"
+
+	return true, "OK" -- 'true' on success, 'false' on error
+end
+
+function run_network_delete(data)
+	local action = "delete"
+
+	uci:delete("network", "GREint")
+	uci:delete("network", "GREext")
+	
+	local uciOk = uci:save("network") and uci:apply(true)
+	if (uciOk) then 
+		uci:commit("network")
+	else
+		uci:revert("network")
+		return false, "Ошибка: не удалось удалить настройки [network]."
+	end
+
+	return true, "OK" -- 'true' on success, 'false' on error
 end

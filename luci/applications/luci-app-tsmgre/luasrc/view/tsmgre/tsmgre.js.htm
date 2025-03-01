@@ -35,15 +35,15 @@
 
 <%+tsmgre/tsmgre.css%>
 
-<script src="<%=resource%>/vpnconfig/jquery/jquery-3.5.1.min.js?v=1.0.0"
+<script src="<%=resource%>/bitcord/jquery/jquery-3.5.1.min.js?v=1.0.0"
 		type="text/javascript"
 		charset="utf-8"></script>
 
-<script src="<%=resource%>/vpnconfig/nearley/nearley.js?v=1.5.2"
+<script src="<%=resource%>/bitcord/nearley/nearley.js?v=1.5.2"
 		type="text/javascript"
 		charset="utf-8"></script>
 
-<script src="<%=resource%>/tsmodem/sweetalert/sweetalert.min.js?v=2.6.11"
+<script src="<%=resource%>/bitcord/sweetalert/sweetalert.min.js?v=2.6.11"
         type="text/javascript"
         charset="utf-8"></script>
 
@@ -73,7 +73,12 @@
 			if(ctrlAdd.tmr) {
 				clearTimeout(ctrlAdd.tmr)
 			}
-			alert("success", "Конфигурация GRE-туннеля добавлена.", false)
+			if (x.ok) {
+				alert("success", "Конфигурация GRE-туннеля добавлена.", false, true)
+			} else {
+				var errmsg = JSON.parse(x.xhr.response) && JSON.parse(x.xhr.response).message
+				alert("error", errmsg, true, false)				
+			}
 		}
 	}
 
@@ -88,7 +93,7 @@
 				clearTimeout(ctrlEdit.tmr)
 			}
 			console.log("CALLBACK_EDIT")
-			alert("info", "Конфигурация GRE-туннеля сохранена, но не активирована.", false)
+			alert("info", "Конфигурация GRE-туннеля сохранена, но не активирована.", false, false)
 		}
 	}
 
@@ -104,7 +109,7 @@
 			if(ctrlActivate.tmr) {
 				clearTimeout(ctrlActivate.tmr)
 			}
-			alert("success", "Конфигурация GRE-туннеля сохранена и активирована.", false)
+			alert("success", "Конфигурация GRE-туннеля сохранена и активирована.", false, true)
 		}
 	}
 
@@ -118,13 +123,13 @@
 			if(ctrlDel.tmr) {
 				clearTimeout(ctrlDel.tmr)
 			}
-			alert("success", "Конфигурация GRE-туннеля удалена.", false)
+			alert("success", "Конфигурация GRE-туннеля удалена.", false, true)
 		}
 	}
 
 	function rejected() {
 		return function(res) {
-			alert("error", res, true)
+			alert("error", res, true, false)
 		}
 	}
 
@@ -322,14 +327,19 @@ function get_list_interfaces() {
 	return [<%= getInterfaces() %>];
 }
 
-function alert(icon, message, confirmBtn) {
+function alert(icon, message, confirmBtn, refresh) {
 	Swal.fire({
 	  position: "center-end",
 	  icon: icon,	// for example: "success",
 	  text: message,
 	  width: "250px",
 	  showConfirmButton: confirmBtn, // true or false
-	  timer: 2000
+	  timer: 2000,
+	  didClose: function() {
+	  	if (refresh == true) {
+	  		//location.reload();
+	  	}
+	  }
 	});
 }
 
