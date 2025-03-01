@@ -13,6 +13,7 @@ local conn = ubus.connect()
 
 local dummy_cfg_content = 'config tsmgre \'tsmgre\'\n'
 local uploadDir = "/etc/config/vpnconfig_files"
+local config = 'tsmgre'
 
 function index()
 	if not nixio.fs.access("/etc/config/tsmgre") then
@@ -31,7 +32,6 @@ function index()
 end
 
 function do_action(action)
-	local config = 'tsmgre'
 	local data = {}
 	local payload = luci.jsonc.parse(luci.http.content())
 
@@ -47,6 +47,7 @@ function do_action(action)
 		add= function(...)
 			uci:section(config, data.vpnType, data.name, data.options)
 			uci:set(config, data.name, 'isActive', 'false')
+			uci:save(config)
 			return run_network_add(data)
 
 		end,
@@ -54,20 +55,21 @@ function do_action(action)
 		edit = function(...)
 			for key, value in pairs(data.options) do
 				uci:set(config, 'tsmgre', key, value)
+				uci:save(config)
 			end
 			return run_network_edit(data)
 		end,
 
 		delete = function(...)
 			uci:delete(config, data.name)
+			uci:save(config)
 			return run_network_delete(data)
 		end,
 
 		enable = function(...)
 			uci:set(config, data.name, 'isActive', data.isActive)
-			for key, value in pairs(data.options) do
-				uci:set(config, 'tsmgre', key, value)
-			end
+			uci:save(config)
+			uci:commit(config)
 			return run_network_enable(data)
 		end,
 
@@ -122,14 +124,6 @@ function do_action(action)
 		local success, errmsg = commands[action]()
 		if (success) then
 			send_response(200, "Configuration applyed successfully")
-			-- uci:commit(config)
-			-- if (data.isActive == '0') then
-			-- 	conn:call("network.interface.tsmgre", "down", {})
-			-- elseif (data.isActive == '1') then
-			-- 	conn:call("network.interface.tsmgre", "up", {})
-			-- end
-			-- conn:close()
-
 		else
 			send_response(500, errmsg)
 			uci:revert(config)
@@ -144,6 +138,8 @@ function run_network_add(data)
 	local action = "add"
 	local greExt = {}
 	local greInt = {}
+	local greExtIfname = data.name .. "Ext"
+	local greIntIfname = data.name .. "Int"
 
 	local ifname = data.options.localAddr
 
@@ -165,23 +161,28 @@ function run_network_add(data)
 	greExt = {
 		proto = "gre",
 		peeraddr = data.options.remoteAddr,
-		ipaddr = localAddr
+		ipaddr = localAddr,
+		auto = "0"
 	}
 	greInt = {
 		proto = "static",
-		device = "@GREext",
+		device = "@"..greExtIfname,
 		ipaddr = data.options.tunnelIp,
 		netmask = data.options.tunnelMask
 	}
-	uci:section("network", "interface", "GREext", greExt)
-	uci:section("network", "interface", "GREint", greInt)
+	uci:section("network", "interface", greExtIfname, greExt)
+	uci:section("network", "interface", greIntIfname, greInt)
 	local uciOk = uci:save("network") and uci:apply(true)
 	if (uciOk) then 
 		uci:commit("network")
+		uci:commit(config)
 	else
 		uci:revert("network")
+		uci:revert(config)
 		return false, "Ошибка: не удалось применить настройки [network]."
 	end
+	
+	util.ubus("network.interface."..greExtIfname, "down", {})
 
 	return true, "OK" -- 'true' on success, 'false' on error
 end
@@ -191,6 +192,8 @@ function run_network_edit(data)
 	local action = "edit"
 	local greExt = {}
 	local greInt = {}
+	local greExtIfname = data.name .. "Ext"
+	local greIntIfname = data.name .. "Int"
 
 	local ifname = data.options.localAddr
 
@@ -216,17 +219,19 @@ function run_network_edit(data)
 	}
 	greInt = {
 		proto = "static",
-		device = "@GREext",
+		device = "@"..greExtIfname,
 		ipaddr = data.options.tunnelIp,
 		netmask = data.options.tunnelMask
 	}
-	uci:tset("network", "GREext", greExt)
-	uci:tset("network", "GREint", greInt)
+	uci:tset("network", greExtIfname, greExt)
+	uci:tset("network", greIntIfname, greInt)
 	local uciOk = uci:save("network") and uci:apply(true)
 	if (uciOk) then 
 		uci:commit("network")
+		uci:commit(config)
 	else
 		uci:revert("network")
+		uci:revert(config)
 		return false, "Ошибка: не удалось применить настройки [network]."
 	end
 
@@ -234,16 +239,32 @@ function run_network_edit(data)
 end
 
 function run_network_enable(data)
-	local action = "enable"
+	local isActive = data.isActive
+	local greExtIfname = data.name .. "Ext"
+	local greIntIfname = data.name .. "Int"
+	local ifstatus = "" -- UP or DOWN
 
-	return true, "OK" -- 'true' on success, 'false' on error
+	if (isActive == true) then
+		uci:set("network",greExtIfname, "auto", 1)
+		uci:commit("network")
+		util.ubus("network.interface."..greExtIfname, "up", {})
+	elseif (isActive == false) then
+		uci:set("network",greExtIfname, "auto", 0)
+		uci:commit("network")
+		util.ubus("network.interface."..greExtIfname, "down", {})
+	else
+		return false, string.format("Ошибка: нет указаний об активации интерфейса [%s].",greExtIfname)
+	end
+	ifstatus = (isActive == true) and "UP" or "DOWN"
+	return true, string.format("OK: сетевой интерфейс [%s] переведён в статус [%s].", greExtIfname, ifstatus)
 end
 
 function run_network_delete(data)
-	local action = "delete"
+	local greExtIfname = data.name .. "Ext"
+	local greIntIfname = data.name .. "Int"
 
-	uci:delete("network", "GREint")
-	uci:delete("network", "GREext")
+	uci:delete("network", greIntIfname)
+	uci:delete("network", greExtIfname)
 	
 	local uciOk = uci:save("network") and uci:apply(true)
 	if (uciOk) then 
