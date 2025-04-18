@@ -1,10 +1,1 @@
 
-config tsmgre 'tsmgre'
-	option isActive '1'
-	option password 'dfdfdf'
-	option isMPPE '0'
-	option authType 'any'
-	option username 'd'
-	option isDefaultRoute '0'
-	option server '8.8.8.8'
-

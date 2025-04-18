@@ -10,11 +10,11 @@
 <%+tsmgpio/gpio.css%>
 <%+tsmgpio/ui_override/TextFieldStyled.js%>
 
-<script src="<%=resource%>/tsmodem/jquery/jquery-3.5.1.min.js?v=3.0.1"
+<script src="<%=resource%>/tsmodem/jquery/jquery-3.5.1.min.js"
 		type="text/javascript"
 		charset="utf-8"></script>
 
-<script src="<%=resource%>/tsmodem/sweetalert/sweetalert.min.js?v=3.0.1"
+<script src="<%=resource%>/tsmodem/sweetalert/sweetalert.min.js"
 		type="text/javascript"
 		charset="utf-8"></script>
 
@@ -30,10 +30,10 @@ L.require('request').then(function(request) {
 	    options = {
 	        direction: "",
 	        value: "",
-	        action: "",
-	        action_value: "",
+	        action_type: "",	// "none", "command"
+	        action_command: "", // shell command or script filename
 	        trigger: "",
-	        debounce: "",
+	        debounce_ms: "",
 	    };
 	}
 
@@ -85,7 +85,8 @@ L.require('request').then(function(request) {
 	        optional: false,
 	        sort: false,
 	    })
-	    form_row['action'] = new ui.Select(data.options.action, make_dropdown_options(actionType), {
+
+	    form_row['action_type'] = new ui.Select(data.options.action_type, make_dropdown_options(actionType), {
 	    	id: data.name,
 	        multiple: false,
 	        optional: false,
@@ -96,12 +97,12 @@ L.require('request').then(function(request) {
 	        optional: false,
 	        sort: false,
 	    })
-	    form_row['debounce'] = new ui.TextFieldStyled(data.options.debounce, {
+	    form_row['debounce_ms'] = new ui.TextFieldStyled(data.options.debounce_ms, {
 	        optional: false,
 	        htmlStyle: "width: 60px;"
 			//validate: nearleyValidator('number', "<%:Should contain digits nad ',' or '.'%>")
 	    })
-	    form_row['action_value'] = new ui.TextFieldStyled(data.options.action_value, {
+	    form_row['action_command'] = new ui.TextFieldStyled(data.options.action_command, {
 	        optional: false,
 			htmlStyle: "width: 350px;"
 			//validate: nearleyValidator('number', "<%:Should contain digits nad ',' or '.'%>")
@@ -126,9 +127,10 @@ L.require('request').then(function(request) {
 	function renderFormRow(formRow) {
 			L.require('ui').then(function(ui) {
 				var id_action = formRow.name;
-				var id_action_value = formRow.name + '_value';
+				var id_action_command = formRow.name + '_action_type';
+				var id_action_command = formRow.name + '_command';
 				var id_action_trigger = formRow.name + '_trigger';
-				var id_action_debouce = formRow.name + '_debounce';
+				var id_action_debouce = formRow.name + '_debounce_ms';
 
 				var container = E('div', {class: "tr"}, [
 					E('div', { class: 'td' }, [
@@ -144,7 +146,7 @@ L.require('request').then(function(request) {
 			        ]),
 			        E('div', { class: 'td' }, [
 			            E('label', { 'class': 'cbi-value-title' }, '<%:Action%>'),
-			            E('div', { class: '' }, [formRow.action.render()]),
+			            E('div', { class: '' }, [formRow.action_type.render()]),
 			        ]),
 
 			        E('div', { class: 'table' }, [
@@ -159,15 +161,15 @@ L.require('request').then(function(request) {
 							E('div', { class: 'td' }, [
 						        E('div', { id: id_action_debouce, class: '', style: '' }, [
 						            E('label', { 'class': 'cbi-value-title' }, '<%:Debounce%>'),
-						            E('div', { class: ''}, [formRow.debounce.render()]),
+						            E('div', { class: ''}, [formRow.debounce_ms.render()]),
 						        ]),
 						    ]),
 
 							E('div', { class: 'table' }, [
 								E('div', { class: 'tr' }, [
-									E('div', { id: id_action_value, class: 'td', }, [
+									E('div', { id: id_action_command, class: 'td', }, [
 							            E('label', { 'class': 'cbi-value-title' }, '<%:Action parameters%>'),
-							            E('div', { class: '' }, [formRow.action_value.render()])
+							            E('div', { class: '' }, [formRow.action_command.render()])
 							        ]),
 								])
 							])
@@ -181,34 +183,33 @@ L.require('request').then(function(request) {
 				viewWrapper.appendChild(container);
 
 
-				if (formRow.action.values[0] == "command") {
-					$("#"+id_action_value).show()
+				if (formRow.action_type.values[0] == "command") {
+					$("#"+id_action_command).show()
 					$("#"+id_action_trigger).show()
 					$("#"+id_action_debouce).show()
 				} else {
-					$("#"+id_action_value).hide()
+					$("#"+id_action_command).hide()
 					$("#"+id_action_trigger).hide()
 					$("#"+id_action_debouce).hide()
 				}
 
 
-				// If action = "command", then show action_value text field
+				// If action_type = "command", then show action_command text field
 				$("#"+id_action).on("click", function(e){
 					var id = e.target.id.substr(7)
-					// var action_value_node = e.targ
-					var act_el_id = id + "_value"
+					var act_el_id = id + "_command"
 					var trigger_el_id = id + "_trigger"
-					var debounce_el_id = id + "_debounce"
+					var debounce_ms_el_id = id + "_debounce_ms"
 
-					// var action_value_node = e.target.parentElement.parentElement.parentElement.nextSibling || null;
+					// var action_command_node = e.target.parentElement.parentElement.parentElement.nextSibling || null;
 				 	if(e.target.value == "command") {
 				 		$("#"+act_el_id).show()
 				 		$("#"+trigger_el_id).show()
-				 		$("#"+debounce_el_id).show()
+				 		$("#"+debounce_ms_el_id).show()
 				 	} else {
 				 		$("#"+act_el_id).hide()
 				 		$("#"+trigger_el_id).hide()
-				 		$("#"+debounce_el_id).hide()
+				 		$("#"+debounce_ms_el_id).hide()
 				 	}
 				});
 			})
@@ -232,10 +233,10 @@ L.require('request').then(function(request) {
 				g_gpio['name'] = parse_string(element['.name']);
 			    g_gpio.options['direction'] = parse_string(element['direction']);
 			    g_gpio.options['value'] = parse_string(element['value']);
-			    g_gpio.options['action'] = parse_string(element['action']);
-			    g_gpio.options['action_value'] = parse_string(element['action_value']);
+			    g_gpio.options['action_type'] = parse_string(element['action_type']);
+			    g_gpio.options['action_command'] = parse_string(element['action_command']);
 			    g_gpio.options['trigger'] = parse_string(element['trigger']);
-			    g_gpio.options['debounce'] = parse_string(element['debounce']);
+			    g_gpio.options['debounce_ms'] = parse_string(element['debounce_ms']);
 
 			    g_gpioData.gpio.push(g_gpio);
 
@@ -264,15 +265,15 @@ L.require('request').then(function(request) {
 	  				gp.setValue(data["gpio"][indx]["options"][param])
 	  			}
 	  			var id_action = data["gpio"][indx].name;
-				var id_action_value =id_action + '_value';
+				var id_action_command = id_action + '_command';
 				var id_action_trigger = id_action + '_trigger';
-				var id_action_debouce = id_action + '_debounce';
+				var id_action_debouce = id_action + '_debounce_ms';
 	  			if(data["gpio"][indx]["options"][param] == "command") {
-	  				$("#"+id_action_value).show()
+	  				$("#"+id_action_command).show()
 					$("#"+id_action_trigger).show()
 					$("#"+id_action_debouce).show()
 	  			} else if(data["gpio"][indx]["options"][param] == "none") {
-	  				$("#"+id_action_value).hide()
+	  				$("#"+id_action_command).hide()
 					$("#"+id_action_trigger).hide()
 					$("#"+id_action_debouce).hide()
 	  			}
