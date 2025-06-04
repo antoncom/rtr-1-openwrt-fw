@@ -10,8 +10,8 @@ LUCI_DEPENDS:=+tsmodem
 LUCI_PKGARCH:=all
 
 PKG_NAME:=luci-app-tsmodem
-PKG_VERSION:=3.0.1
-PKG_RELEASE:=20250217
+PKG_VERSION:=3.1.0
+PKG_RELEASE:=20250604
 PKG_LICENSE:=GPL-3.0-or-later
 
 include $(TOPDIR)/feeds/luci/luci.mk

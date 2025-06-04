@@ -6,11 +6,11 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI TsmGpio MVC
 LUCI_DESCRIPTION:=Tsmodem GPIO setting LuCI webpage for edit GPIO UCI setting
-LUCI_DEPENDS:=+luci-mod-tsmodem-ui
+LUCI_DEPENDS:=+luci-mod-tsmodem-ui +tsmgpio
 LUCI_PKGARCH:=all
 
 PKG_NAME:=luci-app-tsmgpio
-PKG_VERSION:=3.0.1
+PKG_VERSION:=3.1.0
 PKG_RELEASE:=20241021
 PKG_LICENSE:=GPL-3.0-or-later
 

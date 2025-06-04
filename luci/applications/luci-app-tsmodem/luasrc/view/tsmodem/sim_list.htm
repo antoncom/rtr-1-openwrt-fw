@@ -14,7 +14,6 @@
 <%+tsmodem/ui_widget/UICountdown.js%>
 <%+tsmodem/ui_widget/UIJournal.js%>
 
-
 <% 	--[[=========== STYLES ==========]] %>
 <%+tsmodem/css%>
 
@@ -73,6 +72,8 @@
 	uci:foreach(config, "sim", function(a)
 		sims_config[#sims_config+1] = a
 	end)
+	util.perror("=========================")
+	util.dumptable(sims_config)
 	local i = 1
 	local function animationWrapper(str, is_active)
 		local html = ''
@@ -126,8 +127,6 @@
 
 <h3><%:System log %></h3>
 <!-- TODO make html page works //-->
-<div id="journalWrapper"></div>
-
 <table id="journal" class="table journal">
 	<thead class="table-titles">
 		<tr>
@@ -146,7 +145,6 @@
 		value="<%:Clear the log %>"
 	/>
 </div>
-
 
 <span id="btn_enable_spinner" class="btn_spinner"></span> 
 
@@ -213,11 +211,8 @@ L.require("ui").then(function(ui){
 				$("body").append(widget_ui_cover)
 
 				var jur = new ui.Journal("",{});
-				var jur_ui = jur.render()
-				$("journalWrapper").append(jur_ui);
-
-				console.log("journalWrapper!!!!!!!!!!!!")
-				console.log(jur_ui)
+				//console.log("JUR", jur.render())
+				$("journalWrapper").append(jur.render());
 
 
 				var viewWrapper= document.getElementById('simcards_rows');
@@ -236,23 +231,6 @@ L.require("ui").then(function(ui){
 		});
 	});
 });
-
-// $( document ).ready(function() {
-//     console.log( "TD!" );
-//     new DataTable('#journal');
-
-// });
-/*
-$(document).ready( function () {
-	$('#journal').DataTable();
-} );
-*/
-/*
-$(document).ready(function() {
-	console.log("READY");
-	$('#journal').paging({limit:2	});
-});
-*/
 
 //]]>
 </script>
