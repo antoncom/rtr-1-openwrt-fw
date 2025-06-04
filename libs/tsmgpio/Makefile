@@ -22,7 +22,7 @@ define Package/tsmgpio
 	CATEGORY:=Languages
 	TITLE:=Tsmgpio - GPIO support for RTR-2
 	URL:=https://github.com/antoncom/tsmgpio.git
-	DEPENDS:+applogic
+	DEPENDS:=+applogic
 endef
 
 define Package/tsmgpio/description
