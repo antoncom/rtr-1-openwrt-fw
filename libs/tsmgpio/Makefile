@@ -42,6 +42,7 @@ define Package/tsmgpio/install
 	$(CP) $(PKG_BUILD_DIR)/files/etc/config/tsmgpio $(1)/etc/config/tsmgpio
 
 	# Place GPIO rule to Applogic
+	$(INSTALL_DIR) $(1)/usr/lib/lua/applogic/rule
 	$(CP) $(PKG_BUILD_DIR)/usr/lib/lua/applogic/rule/09_rule.lua $(1)/usr/lib/lua/applogic/rule/09_rule.lua
 
 	# Daemon
