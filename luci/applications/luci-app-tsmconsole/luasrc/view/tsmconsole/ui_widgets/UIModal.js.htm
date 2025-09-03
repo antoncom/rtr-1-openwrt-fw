@@ -3,16 +3,19 @@
 <%+tsmconsole/utils/external.js%>
 
 <script type="text/javascript">
+
 //<![CDATA[
 	L.require('ui').then(function(ui) {
 		L.require('dom').then(function(dom) {
+			L.require('rpc').then(function(rpc) {
 		// 	uci.load("tsmodem").then(function(out){
 				var UIModal = ui.AbstractElement.extend({
 					__init__: function() {
 						console.log("UIModal INIT....")
 						this.term = null;
-						this.className = "webcon_term"
-						this.last_at_command = ""
+						this.moduleName = "tsmconsole";
+						this.className = "webcon_term";
+						this.last_at_command = "";
 this.welcome = `
 ██████  ██ ████████  ██████  ██████  ██████  ██████
 ██   ██ ██    ██    ██      ██    ██ ██   ██ ██   ██
@@ -20,6 +23,17 @@ this.welcome = `
 ██   ██ ██    ██    ██      ██    ██ ██   ██ ██   ██
 ██████  ██    ██     ██████  ██████  ██   ██ ██████
 `;
+					this.tsmodem_send_at = rpc.declare({
+						object: 'tsmodem.driver',
+						method: 'send_at',
+						params: ["command", "module_name"],
+					});
+
+					this.tsmodem_unlock = rpc.declare({
+						object: 'tsmodem.driver',
+						method: 'unlock',
+						params: ["module_name"],
+					});
 },
 
 					render: function() {
@@ -129,11 +143,12 @@ this.welcome = `
     					}
     				},
 
-                    close: function () {
-                        $(this.el).remove();
-                        $('body').removeClass('modal-overlay-active');
-                        this.start_modem_automation()
-                    },
+						// no used
+						// close: function () {
+						//     $(this.el).remove();
+						//     $('body').removeClass('modal-overlay-active');
+						//     this.start_modem_automation()
+						// },
 
 					fireEvent: function(event_name, event_data) {
 						var s = new CustomEvent(event_name, {
@@ -143,10 +158,32 @@ this.welcome = `
 						window.EventBus.busobjects["UIModal"].dispatchEvent(s);
 					},
 
-                    openModal: function() {
+					sendAtCommand: function(command) {
+						this.tsmodem_send_at(command, this.moduleName).then(function(response) {
+							console.log('ubus resp', response);
+							if(response["status"] == "busy") {
+								console.log(response["msg"]);
+							}
+						});
+					},
+
+					tsmodemUnlock: function() {
+						this.tsmodem_unlock(this.moduleName).then(function(response) {
+							console.log("tsmodem unlock", response);
+						});
+					},
+
+					// todo: check if busy
+					tsmodemKeepLock: function() {
+						this.sendAtCommand("");
+					},
+
+          openModal: function() {
+												var self = this;
                         // Stop modem automation first
-						var self = this
-                        this.stop_modem_automation()
+                        // this.stop_modem_automation()
+												self.tsmodemKeepLock();
+												setInterval(() => { self.tsmodemKeepLock(); }, 45000);
 
                         L.require("ui").then(function(ui){
                             L.showModal(_('Консоль АТ-команд модема'), [
@@ -166,7 +203,8 @@ this.welcome = `
                                         class: 'btn',
                                         click: function() {
                                             // Start modem automation again
-                                            self.start_modem_automation()
+                                            // self.start_modem_automation()
+																						self.tsmodemUnlock()
                                             L.hideModal()
                                             $(".modal").empty()
                                         }
@@ -343,7 +381,8 @@ this.welcome = `
 									term.resume();
 								}
 								else if (at_check["noerror"] && at_check["msg"].length == 0) {
-									self.fireEvent("send-at-command", { ["command"]: command })
+									// self.fireEvent("send-at-command", { ["command"]: command })
+									self.sendAtCommand(command);
 									term.resume();
 								} else {
 									term.resume();
@@ -365,6 +404,7 @@ this.welcome = `
 
 				ui["Modal"] = UIModal;
 		// 	});
+			});
 		});
 	});
 
