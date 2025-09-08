@@ -197,6 +197,7 @@ L.require('ui').then(function(ui) {
 
 					window.EventBus.listenToASAP("UIModal", ["send-at-command"], function(ev) {
 						var event_data = ev.detail || {}
+						console.log('window.EventBus.listenToASAP "UIModal"', event_data);
 
 						self.socket.send(JSON.stringify({
 							proto: "ubus",
@@ -235,6 +236,7 @@ L.require('ui').then(function(ui) {
 
 					window.EventBus.listenToASAP("UISimSettingModal", ["send-at-command"], function(ev) {
 						var event_data = ev.detail || {}
+						console.log('window.EventBus.listenToASAP "UISimSettingModal"', event_data);
 
 						self.socket.send(JSON.stringify({
 							proto: "ubus",
@@ -251,51 +253,68 @@ L.require('ui').then(function(ui) {
 						self.socket.send(JSON.stringify(event_data));
 					})
 
+			try {
+				var self = this;
+				this.socket.onopen = function(event) {
+					var tsmodem_lock_status = rpc.declare({
+						object: 'tsmodem.driver',
+						method: 'lock_status',
+					});
 
-	                try {
-						var self = this
-	                    this.socket.onopen = function(event) {
-							var rpc_sess = rpc.getSessionID()
-							self.socket.send(JSON.stringify({
-								driver_command: "driver-start-automation",
-								ubus_rpc_session: rpc_sess
-							}));
-							console.log("RUN DRIVER AUTOMATION ON PAGE REFRESH.")
-	                    };
-	                    this.socket.onmessage = function(event) {
-							if (event && event.data) {
-								var event_data = JSON.parse(event.data) || {}
-								if (event_data.ruleid) {
-									self.fireEvent(event_data.ruleid, JSON.parse(event.data))
-								}
-								if (event_data.proto && event_data.proto == "ubus") {
-									self.fireEvent("ubus", JSON.parse(event.data))
-								}
-								if (event_data.module && event_data.module == "tsmconsole") {
-									console.log("Fire: tsmconsole")
-									self.fireEvent("tsmconsole", JSON.parse(event.data))
-								}
-							}
-	                    };
-	                } catch (exception) {
-	                    console.log('Error' + exception)
-	                }
+					var tsmodem_unlock = rpc.declare({
+						object: 'tsmodem.driver',
+						method: 'unlock',
+						params: ["module_name"],
+					});
 
-	                return divEl;
-	            },
+					console.log("UNLOCK TSMODEM ON PAGE REFRESH (IF LOCKED BY TSMCONSOLE OR SIMSETTINGMODAL)");
+					tsmodem_lock_status().then((lock_status_response) => {
+						console.log("lock status:", lock_status_response);
 
-				fireEvent: function(event_name, event_data) {
-					var s = new CustomEvent(event_name, {
-						detail: event_data,
-						bubbles: true,
-					})
-					window.EventBus.busobjects["websocket"].dispatchEvent(s);
-				},
-			});
+						if(lock_status_response["owner"] == "tsmconsole" ||
+							lock_status_response["owner"] == "simsettingmodal"
+						) {
+							tsmodem_unlock(lock_status_response["owner"]).then((unlock_response) => {
+								console.log("tsmconsole unlock_status:", unlock_response);
+							});
+						}
+					});
+				};
 
-			ui["WebSocket"] = UIWebSocket;
-	        window.WebSocket = new ui.WebSocket(window.location.hostname, 7890)
-	        window.WebSocket_pseudo_widget = window.WebSocket.render()
+				this.socket.onmessage = function(event) {
+					if (event && event.data) {
+						var event_data = JSON.parse(event.data) || {}
+						if (event_data.ruleid) {
+							self.fireEvent(event_data.ruleid, JSON.parse(event.data))
+						}
+						if (event_data.proto && event_data.proto == "ubus") {
+							self.fireEvent("ubus", JSON.parse(event.data))
+						}
+						if (event_data.module && event_data.module == "tsmconsole") {
+							console.log("Fire: tsmconsole")
+							self.fireEvent("tsmconsole", JSON.parse(event.data))
+						}
+					}
+				};
+	        } catch (exception) {
+	          console.log('Error' + exception)
+	        }
+
+	        return divEl;
+	    },
+
+		fireEvent: function(event_name, event_data) {
+				var s = new CustomEvent(event_name, {
+					detail: event_data,
+					bubbles: true,
+				})
+				window.EventBus.busobjects["websocket"].dispatchEvent(s);
+			},
+		});
+
+		ui["WebSocket"] = UIWebSocket;
+		window.WebSocket = new ui.WebSocket(window.location.hostname, 7890)
+		window.WebSocket_pseudo_widget = window.WebSocket.render()
 		});
 	});
 });
