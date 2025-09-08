@@ -112,29 +112,6 @@ console.log("UIModalSMS_send INCLUDED....")
 						return container;
 					},
 
-                    stop_modem_automation: function() {
-						var self = this
-                    	L.require("rpc").then(function(rpc){
-                    		var rpc_sess = rpc.getSessionID()
-							self.fireEvent("send-to-websocket", {
-								driver_command: "driver-stop-automation",
-								ubus_rpc_session: rpc_sess
-							});
-                    	})
-                    },
-
-                    start_modem_automation: function() {
-						var self = this
-                    	var rpc_sess = "";
-                    	L.require("rpc").then(function(rpc){
-                    		rpc_sess = rpc.getSessionID()
-							self.fireEvent("send-to-websocket", {
-								driver_command: "driver-start-automation",
-								ubus_rpc_session: rpc_sess
-							});
-                    	})
-                    },
-
                     sms_validate: function(comm) {
 						var self = this
     					if(comm.substring(0,4) == "help") {
@@ -148,12 +125,6 @@ console.log("UIModalSMS_send INCLUDED....")
     						return { noerror: true, msg: `[[;green;]&#91;Ok&#93; - SMS отправлено абоненту: ` + self.phone.getValue()}
     					}
     				},
-
-                    close: function () {
-                        $(this.el).remove();
-                        $('body').removeClass('modal-overlay-active');
-                        this.start_modem_automation()
-                    },
 
 					fireEvent: function(event_name, event_data) {
 						var s = new CustomEvent(event_name, {
@@ -187,9 +158,7 @@ console.log("UIModalSMS_send INCLUDED....")
 						}
 					},
 
-
                     openModal: function() {
-                        // Stop modem automation first
 						var self = this
 						self.phone_valid = true
 						self.phone = new ui.Textfield("", {
@@ -198,7 +167,6 @@ console.log("UIModalSMS_send INCLUDED....")
 							optional: false,
 							validate: this.nearleyValidator("phone", "Телефон в формате: +79171234567")
 						});
-                        this.stop_modem_automation()
 
                         L.require("ui").then(function(ui){
                             L.showModal(_('Консоль отправки SMS-сообщений'), [
@@ -221,8 +189,6 @@ console.log("UIModalSMS_send INCLUDED....")
 										style: "float: right;",
                                         class: 'btn',
                                         click: function() {
-                                            // Start modem automation again
-                                            self.start_modem_automation()
                                             L.hideModal()
                                             $(".modal").empty()
                                         }
