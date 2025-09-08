@@ -24,6 +24,7 @@
 //<![CDATA[
 	L.require('ui').then(function(ui) {
 		L.require('dom').then(function(dom) {
+			L.require('rpc').then(function(rpc) {
 		// 	uci.load("tsmodem").then(function(out){
 				class PostController {
 					callback = null;
@@ -105,7 +106,20 @@
 
 							});
 						});
+						this.moduleName = "simsettingmodal";
+						this.keepLockTimer = null;
 
+						this.tsmodem_lock = rpc.declare({
+							object: 'tsmodem.driver',
+							method: 'lock',
+							params: ["module_name"],
+						});
+
+						this.tsmodem_unlock = rpc.declare({
+							object: 'tsmodem.driver',
+							method: 'unlock',
+							params: ["module_name"],
+						});
 					},
 
 					render: function() {
@@ -152,39 +166,37 @@
 						window.EventBus.busobjects["UISimSettingModal"].dispatchEvent(s);
 					},
 
-
-
-					stop_modem_automation: function() {
-						var self = this
-						L.require("rpc").then(function(rpc){
-							var rpc_sess = rpc.getSessionID()
-							self.fireEvent("send-to-websocket", {
-								driver_command: "driver-stop-automation",
-								ubus_rpc_session: rpc_sess
-							});
-						})
+					clearKeepLockTimer: function() {
+						if(this.keepLockTimer != null) {
+							clearInterval(this.keepLockTimer);
+							this.keepLockTimer = null;
+						}
 					},
 
-					start_modem_automation: function() {
-						var self = this
-						var rpc_sess = "";
-						L.require("rpc").then(function(rpc){
-							rpc_sess = rpc.getSessionID()
-							self.fireEvent("send-to-websocket", {
-								driver_command: "driver-start-automation",
-								ubus_rpc_session: rpc_sess
-							});
-						})
+					tsmodemUnlock: function() {
+						this.clearKeepLockTimer();
+						this.tsmodem_unlock(this.moduleName).then((response) => {
+							console.log('tsmodemUnlock (response): ', response);
+						});
+					},
+
+					tsmodemKeepLock: function() {
+						this.tsmodem_lock(this.moduleName).then((response) => {
+							console.log('tsmodemKeepLock (response): ', response);
+						});
+					},
+
+					tsmodemStartLock: function() {
+						this.tsmodemKeepLock();
+						this.clearKeepLockTimer();
+						this.keepLockTimer = setInterval(() => { this.tsmodemKeepLock(); }, 45000);
 					},
 
                     openModal: function() {
                         var globals_data = {}
                         var simid = this.simid
-						var self = this
-
-                        // Stop modem automation first
-                        //window.socket.send('driver-stop-automation');
-                        this.stop_modem_automation()
+						var self = this;
+                        self.tsmodemStartLock();
 
                         L.require("ui").then(function(ui){
                             L.require("uci").then(function(uci) {
@@ -391,11 +403,9 @@
                                             E('div', {
                                                 class: 'btn',
                                                 click: function() {
-                                                    // Start modem automation again
-                                                    //window.socket.send('driver-run-automation');
-                                                    self.start_modem_automation()
-                                                    L.hideModal()
-                                                    $(".modal").empty()
+													self.tsmodemUnlock();
+                                                    L.hideModal();
+                                                    $(".modal").empty();
                                                 }
                                             }, _('Close')),
                                             ' ',
@@ -461,14 +471,11 @@
 															uuid: uuid(),
 														})
 
+														self.tsmodemUnlock();
 
-                                                        // Start modem automation again
-                                                        //window.socket.send('driver-run-automation');
-                                                        self.start_modem_automation()
-
-                                                        L.hideModal()
+                                                        L.hideModal();
                                                         // Clear modal content
-                                                        $(".modal").empty()
+                                                        $(".modal").empty();
 
                                                         return true;
 
@@ -491,6 +498,7 @@
 
 				ui["SimSettingModal"] = UISimSettingModal;
 		// 	});
+			});
 		});
 	});
 
