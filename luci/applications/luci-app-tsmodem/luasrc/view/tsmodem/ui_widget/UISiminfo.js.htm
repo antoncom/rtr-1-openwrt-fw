@@ -11,6 +11,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 	L.require('ui').then(function(ui) {
 		L.require('dom').then(function(dom) {
 		// 	uci.load("tsmodem").then(function(out){
+			L.require('rpc').then(function(rpc) {
 				var UISiminfo = ui.AbstractElement.extend({
 					__init__: function(simname, options) {
 		                this.simid = options.simid
@@ -141,6 +142,12 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 							})
 						}
 
+						this.tsmodem_lock_status = rpc.declare({
+							object: 'tsmodem.driver',
+							method: 'lock_status',
+						});
+
+						this.is_tsmodem_locked_last_check_time = false;
 
 						// Disable "Activate" button for currently active Sim card
 						var active_sim_id = '<%=sim_id %>'
@@ -250,6 +257,35 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 						}
 					},
 
+					tsmodemLockStatusCheck: function() {
+						this.tsmodem_lock_status().then((response) => {
+							console.log(response);
+							var active_sim_id = '<%=sim_id %>';
+							if (active_sim_id == this.simid) {
+								var is_locked = response["owner"] != "";
+								if(this.is_tsmodem_locked_last_check_time != is_locked) {
+									if(is_locked) {
+										console.log("tsmodem locked: set 'disabled' attribute for console, sms send buttons");
+										this.chunk.btn_console.setAttribute("disabled", "disabled");
+										this.chunk.btn_sms_send.setAttribute("disabled", "disabled");
+									} else {
+										console.log("tsmodem unlocked: remove 'disabled' attribute for console, sms send buttons");
+										this.chunk.btn_console.removeAttribute("disabled");
+										this.chunk.btn_sms_send.removeAttribute("disabled");
+									}
+									this.is_tsmodem_locked_last_check_time = is_locked;
+								}
+							}
+						});
+					},
+
+					tsmodemLockStatusCheckTimerStart: function() {
+						this.tsmodemLockStatusCheck();
+						setInterval(() => {
+							this.tsmodemLockStatusCheck();
+						}, 1000);
+					},
+
 					bind: function(container) {
 						this.node = container
 						var self = this
@@ -303,6 +339,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 								// 	uuid: uuid(),
 								// })
 								// self.chunk.btn_activate.disabled = true
+
 								self.fireEvent("btn_console_pressed", {
 									simid: self.simid
 								})
@@ -313,6 +350,8 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 									simid: self.simid
 								})
 							}
+
+							this.tsmodemLockStatusCheckTimerStart();
 						}
 
 						// ---------------------------------------------------
@@ -925,6 +964,7 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 
 				ui["Siminfo"] = UISiminfo;
 		// 	});
+			});
 		});
 	});
 
