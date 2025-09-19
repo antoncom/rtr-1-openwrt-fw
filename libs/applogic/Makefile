@@ -6,14 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=applogic
-PKG_RELEASE:=3.1.0
+PKG_RELEASE:=3.2.0
 
 PKG_SOURCE_URL=https://github.com/antoncom/applogic-rules.git
 PKG_MIRROR_HASH:=28309612101c4a6dd20e8bb47accf04bbfdad751b5c867db27cb49e972bf99c3
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE=2025-06-05
-#PKG_SOURCE_VERSION:=a685edc31b26898da184a3ad171fb2e5a09c55af
-PKG_SOURCE_VERSION:=applogic-3.1.0
+PKG_SOURCE_DATE=2025-09-19
+PKG_SOURCE_VERSION:=applogic-3.2.0
 
 include $(INCLUDE_DIR)/package.mk
 

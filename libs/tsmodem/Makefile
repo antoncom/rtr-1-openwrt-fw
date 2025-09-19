@@ -6,13 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tsmodem
-PKG_RELEASE:=3.1.0
+PKG_RELEASE:=3.2.0
 
 PKG_SOURCE_URL=https://github.com/antoncom/tsmodem.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE=2025-06-04
-#PKG_SOURCE_VERSION:=c4167e859db1b868c96b747b7106dbc03a2f0ac4
-PKG_SOURCE_VERSION:=tsmodem-3.1.0
+PKG_SOURCE_DATE=2025-09-19
+PKG_SOURCE_VERSION:=tsmodem-3.2.0
 
 include $(INCLUDE_DIR)/package.mk
 
