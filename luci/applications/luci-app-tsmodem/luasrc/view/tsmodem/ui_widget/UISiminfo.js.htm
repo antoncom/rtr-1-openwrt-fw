@@ -19,6 +19,8 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 						this.autodetection_mode = options.autodetection_mode
 		                this.provider = options.provider || ""
 						this.provider_autodetected = ""
+						this.balance_sms_phone = ""
+						this.balance_sms_text = ""
 
 						this.cpin = options.cpin
 						this.netreg = options.netreg
@@ -85,6 +87,8 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 							uci.load("tsmodem_adapter_provider").then(function(out){
 								self.provider = uci.get("tsmodem_adapter_provider",self.provider_code, "name") || ""
 
+								self.balance_sms_phone = uci.get("tsmodem_adapter_provider", self.provider_code, "balance_sms_phone");
+								self.balance_sms_text = uci.get("tsmodem_adapter_provider", self.provider_code, "balance_sms_text");
 							});
 						});
 
@@ -145,6 +149,12 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 						this.tsmodem_lock_status = rpc.declare({
 							object: 'tsmodem.driver',
 							method: 'lock_status',
+						});
+
+						this.tsmsms_send_sms = rpc.declare({
+							object: 'tsmodem.sms',
+							method: 'send_sms',
+							params: ["phone", "text"],
 						});
 
 						this.is_tsmodem_locked_last_check_time = false;
@@ -313,24 +323,19 @@ local sim_id = (ubus_sim and ubus_sim["value"]) and ubus_sim["value"] or nil
 							}
 
 							this.chunk.btn_balance.onclick = function(e) {
-
 								self.waitme()
 
 								var node_pointer = "#simid-" + self.simid + " div.balance_value"
 								var chunk_update = E('div', {class: "balance_value"}, " ")
 								$(node_pointer).replaceWith(chunk_update)
 
-								self.fireEvent("btn_balance_pressed", {
-									simid: self.simid,
-									provider_code: self.provider_code,
-									uuid: uuid(),
-								})
+								self.tsmsms_send_sms(self.balance_sms_phone, self.balance_sms_text).then((response) => {
+									console.log('update balance', response);
+								});
 
 								self.chunk.btn_balance.setAttribute("disabled", "disabled");
 								spinner2($(node_pointer), 1)
 								//spinner2($(".spinner-reg-"+self.simid), 1)
-
-
 							}
 
 							this.chunk.btn_console.onclick = function(){
