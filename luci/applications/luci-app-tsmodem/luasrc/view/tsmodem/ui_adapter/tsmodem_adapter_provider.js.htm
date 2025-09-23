@@ -10,7 +10,7 @@ L.require('ui').then(function(ui) {
 						this.fields = {};
 						this.adapter_id = "";
 						this.last_balance_message = "";
-						this.balance_mask = "";
+						// this.balance_mask = "";
 						this.gsm_id = ""
 						this.adapters = adapters;
 						this.needsToSave = false;
@@ -54,23 +54,33 @@ L.require('ui').then(function(ui) {
 								optional: false
 							}),
 
-							"balance_ussd": new ui.TextFieldStyled("", {
-								datatype: "rangelength(3,8)",
+							// "balance_ussd": new ui.TextFieldStyled("", {
+							// 	datatype: "rangelength(3,8)",
+							// 	optional: false
+							// }),
+
+							"balance_sms_phone": new ui.TextFieldStyled("", {
+								datatype: "rangelength(3,12)",
 								optional: false
 							}),
 
-							"balance_mask": new ui.TextAreaHighlighted("", {
-								datatype: "rangelength(0,256)",
-								readonly: false,
-								highlights: ["__RUB__"],
-								validate: function(inp) {
-									if (inp.indexOf("__RUB__") >= 0) {
-										return true;
-									} else {
-										return "<%:__RUB__ placeholder has to be in the text. %>"
-									}
-								}
+							"balance_sms_text": new ui.TextFieldStyled("", {
+								datatype: "rangelength(0,30)",
+								optional: false
 							}),
+
+							// "balance_mask": new ui.TextAreaHighlighted("", {
+							// 	datatype: "rangelength(0,256)",
+							// 	readonly: false,
+							// 	highlights: ["__RUB__"],
+							// 	validate: function(inp) {
+							// 		if (inp.indexOf("__RUB__") >= 0) {
+							// 			return true;
+							// 		} else {
+							// 			return "<%:__RUB__ placeholder has to be in the text. %>"
+							// 		}
+							// 	}
+							// }),
 
 						}
 
@@ -97,35 +107,46 @@ L.require('ui').then(function(ui) {
 								E('div', {class: 'td', style: "text-align: right;"}, [this.fields["gate_address"].render()]),
 							]),
 
-							E('div', {class: 'tr cbi-rowstyle-2'}, [
-								E('div', {class: 'td', style: 'width: 100%;'}, _("USSD-command to get balance")),
-								E('div', {class: 'td', style: "text-align: right;"}, [this.fields["balance_ussd"].render()]),
-							]),
+							// E('div', {class: 'tr cbi-rowstyle-2'}, [
+							// 	E('div', {class: 'td', style: 'width: 100%;'}, _("USSD-command to get balance")),
+							// 	E('div', {class: 'td', style: "text-align: right;"}, [this.fields["balance_ussd"].render()]),
+							// ]),
+
 							E('div', {class: 'tr cbi-rowstyle-1'}, [
-								E('div', {class: 'td', style: 'width: 100%; vertical-align: top;'}, _("Template of the balance message") + "<br/><br/><i><small><font color='green'>" + _('Use __RUB__ for rendering numbers') + "</font></small></i>"),
-								//E('div', {class: 'td', style: "text-align: right;"}, [this.fields["balance_mask"].render()]),
-								E('div', { class: 'td' }, [
-									E('div', { class: 'cbi-value-field message-template' }, [
-										this.fields["balance_mask"].render(),
-
-										E('a', {
-											name: 'tmpl-default',
-											style: 'color: grey;',
-											click: ui.createHandlerFn(this, function() {
-												return this.loadTmplDefault();
-											})
-										}, _('Original')),
-										E('a', {
-											name: 'tmpl-custom',
-											style: '',
-											click: ui.createHandlerFn(this, function() {
-												return this.loadTmplCustom();
-											})
-										}, _('Template')),
-
-									]),
-								]),
+								E('div', {class: 'td', style: 'width: 100%;'}, "Телефон для запроса баланса через СМС"),
+								E('div', {class: 'td', style: "text-align: right;"}, [this.fields["balance_sms_phone"].render()]),
 							]),
+
+							E('div', {class: 'tr cbi-rowstyle-1'}, [
+								E('div', {class: 'td', style: 'width: 100%;'}, "Текст СМС для запроса баланса"),
+								E('div', {class: 'td', style: "text-align: right;"}, [this.fields["balance_sms_text"].render()]),
+							]),
+
+							// E('div', {class: 'tr cbi-rowstyle-1'}, [
+								// E('div', {class: 'td', style: 'width: 100%; vertical-align: top;'}, _("Template of the balance message") + "<br/><br/><i><small><font color='green'>" + _('Use __RUB__ for rendering numbers') + "</font></small></i>"),
+								//E('div', {class: 'td', style: "text-align: right;"}, [this.fields["balance_mask"].render()]),
+								// E('div', { class: 'td' }, [
+								// 	E('div', { class: 'cbi-value-field message-template' }, [
+								// 		this.fields["balance_mask"].render(),
+
+								// 		E('a', {
+								// 			name: 'tmpl-default',
+								// 			style: 'color: grey;',
+								// 			click: ui.createHandlerFn(this, function() {
+								// 				return this.loadTmplDefault();
+								// 			})
+								// 		}, _('Original')),
+								// 		E('a', {
+								// 			name: 'tmpl-custom',
+								// 			style: '',
+								// 			click: ui.createHandlerFn(this, function() {
+								// 				return this.loadTmplCustom();
+								// 			})
+								// 		}, _('Template')),
+
+								// 	]),
+								// ]),
+							// ]),
 							// Add new fields html-markup here
 							//
 						])
@@ -139,20 +160,20 @@ L.require('ui').then(function(ui) {
 						var self = this
 						dom.bindClassInstance(container, this);
 
-						var area = this.fields["balance_mask"].getTextArea()
+						// var area = this.fields["balance_mask"].getTextArea()
 
-						if (area.addEventListener) {
-						  area.addEventListener('input', function() {
-						    // event handling code for sane browsers
-							var mask = self.fields["balance_mask"].getValue()
-							self.adapters[self.gsm_id]["balance_mask"] = mask.substr(0)
-						  }, false);
-						} else if (area.attachEvent) {
-						  area.attachEvent('onpropertychange', function() {
-						    // IE-specific event handling code
-							alert("Internet Explorer is not supported;")
-						  });
-						}
+						// if (area.addEventListener) {
+						//   area.addEventListener('input', function() {
+						//     // event handling code for sane browsers
+						// 	var mask = self.fields["balance_mask"].getValue()
+						// 	self.adapters[self.gsm_id]["balance_mask"] = mask.substr(0)
+						//   }, false);
+						// } else if (area.attachEvent) {
+						//   area.attachEvent('onpropertychange', function() {
+						//     // IE-specific event handling code
+						// 	alert("Internet Explorer is not supported;")
+						//   });
+						// }
 
 						// --------------------------------------------------------------------------------
                         // Subscribe on websocket widget, to get full text of USSD response
@@ -184,24 +205,30 @@ L.require('ui').then(function(ui) {
 									self.fields["name"].triggerValidation()
 
 									self.fields["gate_address"].setValue(gsm_data["gate_address"])
-									self.fields["balance_ussd"].setValue(gsm_data["balance_ussd"] || '')
-									self.fields["balance_mask"].setValue(gsm_data["balance_mask"])
+									// self.fields["balance_ussd"].setValue(gsm_data["balance_ussd"] || '')
+									// self.fields["balance_mask"].setValue(gsm_data["balance_mask"])
+									self.fields["balance_sms_phone"].setValue(gsm_data["balance_sms_phone"])
+									self.fields["balance_sms_text"].setValue(gsm_data["balance_sms_text"])
 
-									self.balance_mask = gsm_data["balance_mask"]
+									// self.balance_mask = gsm_data["balance_mask"]
 									self.last_balance_message = uci.get("tsmodem_adapter_provider", gsm_id, "balance_last_message")
 
 									container.classList.add("active")
 
 									if(gsm_data["editable"] == "0") {
-										self.fields["balance_mask"].getTextArea().readOnly = false;
+										// self.fields["balance_mask"].getTextArea().readOnly = false;
 										self.fields["name"].getTextField().readOnly = true;
 										self.fields["gate_address"].getTextField().readOnly = true;
-										self.fields["balance_ussd"].getTextField().readOnly = false;
+										// self.fields["balance_ussd"].getTextField().readOnly = false;
+										self.fields["balance_sms_phone"].getTextField().readOnly = false;
+										self.fields["balance_sms_text"].getTextField().readOnly = false;
 									} else {
-										self.fields["balance_mask"].getTextArea().readOnly = false;
+										// self.fields["balance_mask"].getTextArea().readOnly = false;
 										self.fields["name"].getTextField().readOnly = false;
 										self.fields["gate_address"].getTextField().readOnly = false;
-										self.fields["balance_ussd"].getTextField().readOnly = false;
+										// self.fields["balance_ussd"].getTextField().readOnly = false;
+										self.fields["balance_sms_phone"].getTextField().readOnly = false;
+										self.fields["balance_sms_text"].getTextField().readOnly = false;
 									}
 
 									self.isActive = true
@@ -220,11 +247,11 @@ L.require('ui').then(function(ui) {
 					getValue: function() {
 						var data = {}
 						for (var name in this.fields) {
-							if(name == "balance_mask") {
-								data[name] = this.adapters[this.gsm_id]["balance_mask"]
-							} else {
+							// if(name == "balance_mask") {
+							// 	data[name] = this.adapters[this.gsm_id]["balance_mask"]
+							// } else {
 								data[name] = this.fields[name].getValue() || ''
-							}
+							// }
 						}
 						return data;
 					},
@@ -286,26 +313,26 @@ L.require('ui').then(function(ui) {
 					// load default templae to textarea
 					//loadTmplDefault: function(eventId=undefined, channelId=undefined) {
 					loadTmplDefault: function(tmpl_text='') {
-						this.validateFunc = this.fields["balance_mask"].options.validate
-						this.fields["balance_mask"].options.validate = function(a) { return true }
+						// this.validateFunc = this.fields["balance_mask"].options.validate
+						// this.fields["balance_mask"].options.validate = function(a) { return true }
 
-						var mask = this.fields["balance_mask"].getValue()
-						this.adapters[this.gsm_id]["balance_mask"] = mask.substr(0)
+						// var mask = this.fields["balance_mask"].getValue()
+						// this.adapters[this.gsm_id]["balance_mask"] = mask.substr(0)
 
-						this.fields["balance_mask"].setValue(this.adapters[this.gsm_id]["balance_last_message"])
+						// this.fields["balance_mask"].setValue(this.adapters[this.gsm_id]["balance_last_message"])
 
 
 						//this.adapters[this.gsm_id]["balance_mask"] = mask.substr(0)
-						this.fields["balance_mask"].getTextArea().readOnly = true;
+						// this.fields["balance_mask"].getTextArea().readOnly = true;
 						//this.fields["balance_mask"].getTextArea().mouseover = null;
 
 
-						if(tmpl_text != '') {
-							this.fields["balance_mask"].setValue(tmpl_text)
-						} else {
-							self.last_balance_message = uci.get("tsmodem_adapter_provider", this.gsm_id, "balance_last_message")
-							this.fields["balance_mask"].setValue(this.last_balance_message)
-						}
+						// if(tmpl_text != '') {
+						// 	this.fields["balance_mask"].setValue(tmpl_text)
+						// } else {
+						// 	self.last_balance_message = uci.get("tsmodem_adapter_provider", this.gsm_id, "balance_last_message")
+						// 	this.fields["balance_mask"].setValue(this.last_balance_message)
+						// }
 						document.querySelector(".hwt-backdrop").style.backgroundColor = "#bbb";
 						document.querySelector(".hwt-input").style.color = "#666";
 						document.querySelector("[name='tmpl-custom']").style.backgroundImage = "none";
@@ -314,15 +341,15 @@ L.require('ui').then(function(ui) {
 					// load custom template to textarea
 					loadTmplCustom: function(eventId=undefined, channelId=undefined) {
 
-						this.fields["balance_mask"].setValue(this.adapters[this.gsm_id]["balance_mask"])
+						// this.fields["balance_mask"].setValue(this.adapters[this.gsm_id]["balance_mask"])
 
 						document.querySelector(".hwt-backdrop").style.backgroundColor = "#fff";
 						document.querySelector(".hwt-input").style.color = "#000";
 
 						var gsm_data = this.adapters[this.gsm_id]
-						this.fields["balance_mask"].getTextArea().readOnly = (gsm_data["editable"] == "0");
+						// this.fields["balance_mask"].getTextArea().readOnly = (gsm_data["editable"] == "0");
 
-						this.fields["balance_mask"].getTextArea().focus()
+						// this.fields["balance_mask"].getTextArea().focus()
 						document.querySelector("[name='tmpl-default']").style.backgroundImage = "none";
 						document.querySelector("[name='tmpl-custom']").style.backgroundImage = "url(/luci-static/resources/tsmodem/icons/check.png)";
 					},
