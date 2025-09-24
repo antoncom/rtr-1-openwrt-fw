@@ -37,14 +37,17 @@
 				// После редактирования настроек -
 				// показать на экране пользователя уведомление
 				function cb_setting_edit(ctrlEdit) {
+					var alert_used = false;
 					return function(x) {
-						if (!x) {
+						if (!x || alert_used) {
 							return;
 						}
+
 						if(ctrlEdit.tmr) {
 							clearTimeout(ctrlEdit.tmr)
 						}
-						alert("success", "Настройки SIM-карты сохранены.", false)
+						alert("success", "Настройки SIM-карты сохранены.", false);
+						alert_used = true;
 					}
 				}
 				var editCtrl = new PostController(cb_setting_edit, null);
