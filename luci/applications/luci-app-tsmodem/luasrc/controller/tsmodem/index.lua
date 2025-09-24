@@ -17,22 +17,21 @@ function index()
 	end
 end
 
-	function send_response(code, message)
-		local response = {}
-		response.action = action
-		response.message = message
+function send_response(code, message)
+	local response = {}
+	response.action = action
+	response.message = message
 
-		if code == 200 then
-			response.status = 'success'
-		else
-			response.status = 'error'
-		end
-	
-		http.status(code)
-		http.prepare_content("application/json")
-		http.write(util.serialize_json(response))
+	if code == 200 then
+		response.status = 'success'
+	else
+		response.status = 'error'
 	end
 
+	http.status(code)
+	http.prepare_content("application/json")
+	http.write(util.serialize_json(response))
+end
 
 function do_sim_action(action, sim_id)
 	local payload = {}
@@ -69,8 +68,10 @@ function do_sim_action(action, sim_id)
 			local allowed_gsm_options = {
 				"name",
 				"gate_address",
-				"balance_ussd",
-				"balance_mask",
+				-- "balance_ussd",
+				-- "balance_mask",
+				"balance_sms_phone",
+				"balance_sms_text",
 			}
 
 			for key, value in pairs(payloads["sim_data"]) do
@@ -81,11 +82,12 @@ function do_sim_action(action, sim_id)
 			end
 
 			local provider_id = payloads["sim_data"].provider
-			for key, value in pairs(payloads["gsm_data"]) do
+			for key, value in pairs(payloads["gsm_data"][provider_id]) do
 				if util.contains(allowed_gsm_options, key) then
 					local ok = uci:set(config_gsm, provider_id, key, value)
 				end
 			end
+
 			local ok = uci:commit(config_gsm)
 
 
