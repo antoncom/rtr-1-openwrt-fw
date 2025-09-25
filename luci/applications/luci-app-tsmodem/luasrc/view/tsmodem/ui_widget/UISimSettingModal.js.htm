@@ -105,8 +105,6 @@
 								self.link_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_link")
 
 								self.autodetection_mode = uci.get("tsmodem", "sim_" + self.simid, "autodetect_provider")
-
-
 							});
 						});
 						this.moduleName = "simsettingmodal";
@@ -323,6 +321,46 @@
 
                                     var emptyProto = new ui.AdapterEmpty()
 
+									uci.unload("tsmodem_adapter_provider");
+									uci.load("tsmodem_adapter_provider").then(function(out) {
+										var sections = uci.sections("tsmodem_adapter_provider");
+										// console.log('sections', sections);
+										// console.log('sim_data', sim_data);
+										// var gsm_id = proto.getValue();
+
+										// var name = uci.get("tsmodem_adapter_provider", gsm_id, "name");
+										// var gate_address = uci.get("tsmodem_adapter_provider", gsm_id, "gate_address");
+										// var balance_sms_phone = uci.get("tsmodem_adapter_provider", gsm_id, "balance_sms_phone")
+										// var balance_sms_text = uci.get("tsmodem_adapter_provider", gsm_id, "balance_sms_text");
+
+										// adapters[gsm_id]['name'] = name;
+										// adapters[gsm_id]['gate_address'] = gate_address;
+										// adapters[gsm_id]['balance_sms_phone'] = balance_sms_phone;
+										// adapters[gsm_id]['balance_sms_text'] = balance_sms_text;
+
+										sections.forEach(section => {
+											var gsm_id = section[".name"];
+
+											if (adapters[gsm_id] != undefined) {
+												adapters[gsm_id]['name'] = section['name'];
+												adapters[gsm_id]['gate_address'] = section['gate_address'];
+												adapters[gsm_id]['balance_sms_phone'] = section['balance_sms_phone'];
+												adapters[gsm_id]['balance_sms_text'] = section['balance_sms_text'];
+
+												// var name = uci.get("tsmodem_adapter_provider", gsm_id, "name");
+												// var gate_address = uci.get("tsmodem_adapter_provider", gsm_id, "gate_address");
+												// var balance_sms_phone = uci.get("tsmodem_adapter_provider", gsm_id, "balance_sms_phone")
+												// var balance_sms_text = uci.get("tsmodem_adapter_provider", gsm_id, "balance_sms_text");
+
+												// adapters[gsm_id]['name'] = name;
+												// adapters[gsm_id]['gate_address'] = gate_address;
+												// adapters[gsm_id]['balance_sms_phone'] = balance_sms_phone;
+												// adapters[gsm_id]['balance_sms_text'] = balance_sms_text;
+											}
+										});
+
+										console.log('adapters', adapters);
+									});
 
                                     L.showModal(_('<%:SIM card settings %>'), [
                                         E('div', { class: 'cbi-map' }, [
@@ -440,6 +478,7 @@
                                                     }
 
                                                     if (form_valid) {
+														console.log(sim_data);
 
                                                         sim_data["name"] = memo.getValue()
                                                         sim_data["proto"] = proto.getValue()
@@ -458,8 +497,8 @@
 														// Code of provider for AUTO is 00000 (see /etc/config/tsmodem)
 														sim_data["autodetect_provider"] = (proto.getValue() == "00000") ? 1 : 0;
 
-														var a_adapter_data = {}
-														a_adapter_data = Object.assign(a_adapter_data, {
+														var gsm_data_to_save = {} // a_adapter_data
+														gsm_data_to_save = Object.assign(gsm_data_to_save, {
 															[proto.getValue()]: adapter_data[sim_data["provider"]]
 														})
 
@@ -467,7 +506,10 @@
 
                                                         //my_handleEdit(simid, sim_data, a_adapter_data);
                                                         //sendAction("edit", data, editCtrl);
-                                                       	sendAction("edit", simid, { "sim_data": sim_data, "gsm_data": adapter_data}, editCtrl )
+                                                       	sendAction("edit", simid, { "sim_data": sim_data, "gsm_data": gsm_data_to_save}, editCtrl )
+														// console.log(sim_data["proto"]);
+														// console.log('adapter_data', adapter_data);
+														// console.log('a_adapter_data', a_adapter_data);
 
                                							self.fireEvent("btn_save_setting_pressed", {
 															simid: self.simid,
