@@ -10,7 +10,7 @@ PKG_RELEASE:=3.2.0
 
 PKG_SOURCE_URL=https://github.com/antoncom/tsmodem.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE=2025-10-7
+PKG_SOURCE_DATE=2025-10-09
 PKG_SOURCE_VERSION:=tsmodem-3.2.0
 
 include $(INCLUDE_DIR)/package.mk
