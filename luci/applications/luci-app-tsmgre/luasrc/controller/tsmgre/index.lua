@@ -44,17 +44,16 @@ function do_action(action)
 
 
 	local commands = {
-		add= function(...)
+		add = function(...)
 			uci:section(config, data.vpnType, data.name, data.options)
 			uci:set(config, data.name, 'isActive', 'false')
 			uci:save(config)
 			return run_network_add(data)
-
 		end,
 
 		edit = function(...)
 			for key, value in pairs(data.options) do
-				uci:set(config, 'tsmgre', key, value)
+				uci:set(config, data.name, key, value)
 				uci:save(config)
 			end
 			return run_network_edit(data)
