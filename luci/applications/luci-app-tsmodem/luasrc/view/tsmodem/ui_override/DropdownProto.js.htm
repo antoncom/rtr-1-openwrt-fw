@@ -131,9 +131,10 @@ L.require("dom").then(function(dom)	{
 					window.EventBus.node.dispatchEvent(new CustomEvent("bus-proto-changed", {
 						bubbles: true,
 						detail: { "proto": self.values[0] }
+						//detail: { "proto": "00000" }
 					}));
 					clearTimeout(self.timeout)
-				}, 100);
+				}, 150);
 				//
 
 

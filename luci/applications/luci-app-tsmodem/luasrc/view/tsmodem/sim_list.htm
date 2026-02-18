@@ -11,9 +11,8 @@
 <%+tsmodem/ui_widget/UISiminfo.js%>
 <%+tsmodem/ui_widget/UISimSettingModal.js%>
 <%+tsmodem/ui_widget/UICover.js%>
-<%+tsmodem/ui_widget/UICountdown.js%>
+<%+tsmodem/ui_widget/UICountdownNew.js%>
 <%+tsmodem/ui_widget/UIJournal.js%>
-
 
 <% 	--[[=========== STYLES ==========]] %>
 <%+tsmodem/css%>
@@ -73,6 +72,8 @@
 	uci:foreach(config, "sim", function(a)
 		sims_config[#sims_config+1] = a
 	end)
+	util.perror("=========================")
+	util.dumptable(sims_config)
 	local i = 1
 	local function animationWrapper(str, is_active)
 		local html = ''
@@ -90,7 +91,7 @@
 <div id="view">
 	<h2 name="content">Настройка переключения SIM-карт</h2>
 	<div class="table cbi-map-descr">
-		<div class="td">
+		<div class="td" style="vertical-align: top;">
 			<p>Роутер BITCORD RTR-02 оснащён двухсимочным 4G/LTE модемом с функцией автоматического переключения SIM-карт.<br>Переключение с основной на резервную SIM-карту происходит при следующих условиях:</p>
 				<ul>
 					<li>Нет регистрации в GSM-сети</li>
@@ -103,7 +104,7 @@
 			</p>
 		</div>
 		<div class="td" style="width: 50%; vertical-align: top;">
-			<div id="ui-countdown"></div>
+			<div id="ui-countdownNew" class="uiCD" style="display: none;"></div>
 		</div>
 	</div>
 	<h3><%:GSM network channels (SIM cards states) %></h3>
@@ -126,8 +127,6 @@
 
 <h3><%:System log %></h3>
 <!-- TODO make html page works //-->
-<div id="journalWrapper"></div>
-
 <table id="journal" class="table journal">
 	<thead class="table-titles">
 		<tr>
@@ -146,7 +145,6 @@
 		value="<%:Clear the log %>"
 	/>
 </div>
-
 
 <span id="btn_enable_spinner" class="btn_spinner"></span> 
 
@@ -196,6 +194,14 @@ L.require("ui").then(function(ui){
 					balance: " ",
 				});
 
+				var countdownNew = new ui.CountdownNew("1", "Заголовок", "Описание")
+
+
+			  	var viewCountDown= document.getElementById('ui-countdownNew');
+			  	var cd_widget = countdownNew.render()
+				viewCountDown.appendChild(cd_widget);
+
+
 				var viewWrapper= document.getElementById('simcards_rows');
 				viewWrapper.appendChild(sim_0.render());
 				viewWrapper.appendChild(sim_1.render());
@@ -213,11 +219,8 @@ L.require("ui").then(function(ui){
 				$("body").append(widget_ui_cover)
 
 				var jur = new ui.Journal("",{});
-				var jur_ui = jur.render()
-				$("journalWrapper").append(jur_ui);
-
-				console.log("journalWrapper!!!!!!!!!!!!")
-				console.log(jur_ui)
+				//console.log("JUR", jur.render())
+				$("journalWrapper").append(jur.render());
 
 
 				var viewWrapper= document.getElementById('simcards_rows');
@@ -229,27 +232,16 @@ L.require("ui").then(function(ui){
 
 				var sms_send_modal = new ui.ModalSMS_send();
 				$("body").append(sms_send_modal.render())
+
+
+
+
+				console_modal.start_modem_automation()
+
 			});
 		});
 	});
 });
-
-// $( document ).ready(function() {
-//     console.log( "TD!" );
-//     new DataTable('#journal');
-
-// });
-/*
-$(document).ready( function () {
-	$('#journal').DataTable();
-} );
-*/
-/*
-$(document).ready(function() {
-	console.log("READY");
-	$('#journal').paging({limit:2	});
-});
-*/
 
 //]]>
 </script>

@@ -24,7 +24,6 @@
 //<![CDATA[
 	L.require('ui').then(function(ui) {
 		L.require('dom').then(function(dom) {
-			L.require('rpc').then(function(rpc) {
 		// 	uci.load("tsmodem").then(function(out){
 				class PostController {
 					callback = null;
@@ -37,17 +36,14 @@
 				// После редактирования настроек -
 				// показать на экране пользователя уведомление
 				function cb_setting_edit(ctrlEdit) {
-					var alert_used = false;
 					return function(x) {
-						if (!x || alert_used) {
+						if (!x) {
 							return;
 						}
-
 						if(ctrlEdit.tmr) {
 							clearTimeout(ctrlEdit.tmr)
 						}
-						alert("success", "Настройки SIM-карты сохранены.", false);
-						alert_used = true;
+						alert("success", "Настройки SIM-карты сохранены.", false)
 					}
 				}
 				var editCtrl = new PostController(cb_setting_edit, null);
@@ -91,7 +87,6 @@
 				var UISimSettingModal = ui.AbstractElement.extend({
 					__init__: function(simname, options) {
                         this.simid = options.simid
-						this.adapters_cache = {}
 						var self = this
 						L.require("uci").then(function(uci) {
 							uci.load("tsmodem").then(function(out){
@@ -106,34 +101,13 @@
 								self.link_timeout = uci.get("tsmodem", "sim_" + self.simid, "timeout_link")
 
 								self.autodetection_mode = uci.get("tsmodem", "sim_" + self.simid, "autodetect_provider")
-							});
 
-							uci.load("tsmodem_adapter_provider").then(function(out) {
-								var sections = uci.sections("tsmodem_adapter_provider");
-								sections.forEach(section => {
-									var gsm_id = section[".name"];
-									self.adapters_cache[gsm_id] = {};
-									self.adapters_cache[gsm_id]['name'] = section['name'];
-									self.adapters_cache[gsm_id]['gate_address'] = section['gate_address'];
-									self.adapters_cache[gsm_id]['balance_sms_phone'] = section['balance_sms_phone'];
-									self.adapters_cache[gsm_id]['balance_sms_text'] = section['balance_sms_text'];												
-								});
+								console.log(self)
+
+
 							});
 						});
-						this.moduleName = "simsettingmodal";
-						this.keepLockTimer = null;
 
-						this.tsmodem_lock = rpc.declare({
-							object: 'tsmodem.driver',
-							method: 'lock',
-							params: ["module_name"],
-						});
-
-						this.tsmodem_unlock = rpc.declare({
-							object: 'tsmodem.driver',
-							method: 'unlock',
-							params: ["module_name"],
-						});
 					},
 
 					render: function() {
@@ -180,43 +154,46 @@
 						window.EventBus.busobjects["UISimSettingModal"].dispatchEvent(s);
 					},
 
-					clearKeepLockTimer: function() {
-						if(this.keepLockTimer != null) {
-							clearInterval(this.keepLockTimer);
-							this.keepLockTimer = null;
-						}
+
+
+					stop_modem_automation: function() {
+						var self = this
+						L.require("rpc").then(function(rpc){
+							var rpc_sess = rpc.getSessionID()
+							self.fireEvent("send-to-websocket", {
+								driver_command: "driver-stop-automation",
+								ubus_rpc_session: rpc_sess
+							});
+						})
 					},
 
-					tsmodemUnlock: function() {
-						this.clearKeepLockTimer();
-						this.tsmodem_unlock(this.moduleName).then((response) => {
-							console.log('tsmodemUnlock (response): ', response);
-						});
-					},
-
-					tsmodemKeepLock: function() {
-						this.tsmodem_lock(this.moduleName).then((response) => {
-							console.log('tsmodemKeepLock (response): ', response);
-						});
-					},
-
-					tsmodemStartLock: function() {
-						this.tsmodemKeepLock();
-						this.clearKeepLockTimer();
-						this.keepLockTimer = setInterval(() => { this.tsmodemKeepLock(); }, 45000);
+					start_modem_automation: function() {
+						var self = this
+						var rpc_sess = "";
+						L.require("rpc").then(function(rpc){
+							rpc_sess = rpc.getSessionID()
+							self.fireEvent("send-to-websocket", {
+								driver_command: "driver-start-automation",
+								ubus_rpc_session: rpc_sess
+							});
+						})
 					},
 
                     openModal: function() {
                         var globals_data = {}
                         var simid = this.simid
-						var self = this;
-                        self.tsmodemStartLock();
+						var self = this
+
+                        // Stop modem automation first
+                        //window.socket.send('driver-stop-automation');
+                        this.stop_modem_automation()
 
                         L.require("ui").then(function(ui){
                             L.require("uci").then(function(uci) {
                                 uci.load("<%=config%>").then(function(out){
                                     var sim_data = uci.get("<%=config%>", "sim_" + simid);
                                     //var	adapter_data = uci.get("<%=adapter_config%>", sim_data["provider"]);
+
                                     var	adapter_data = {}
                                     var adapters = <%= util.serialize_json(adapters) %>
                                     if(adapters["template"]) {
@@ -334,15 +311,6 @@
 
                                     var emptyProto = new ui.AdapterEmpty()
 
-									Object.keys(self.adapters_cache).forEach(gsm_id => {
-										var section = self.adapters_cache[gsm_id];
-										if(adapters[gsm_id] != undefined) {
-											adapters[gsm_id]['name'] = section['name'];
-											adapters[gsm_id]['gate_address'] = section['gate_address'];
-											adapters[gsm_id]['balance_sms_phone'] = section['balance_sms_phone'];
-											adapters[gsm_id]['balance_sms_text'] = section['balance_sms_text'];	
-										}
-									});
 
                                     L.showModal(_('<%:SIM card settings %>'), [
                                         E('div', { class: 'cbi-map' }, [
@@ -426,9 +394,11 @@
                                             E('div', {
                                                 class: 'btn',
                                                 click: function() {
-													self.tsmodemUnlock();
-                                                    L.hideModal();
-                                                    $(".modal").empty();
+                                                    // Start modem automation again
+                                                    //window.socket.send('driver-run-automation');
+                                                    self.start_modem_automation()
+                                                    L.hideModal()
+                                                    $(".modal").empty()
                                                 }
                                             }, _('Close')),
                                             ' ',
@@ -460,7 +430,6 @@
                                                     }
 
                                                     if (form_valid) {
-														console.log(sim_data);
 
                                                         sim_data["name"] = memo.getValue()
                                                         sim_data["proto"] = proto.getValue()
@@ -479,34 +448,30 @@
 														// Code of provider for AUTO is 00000 (see /etc/config/tsmodem)
 														sim_data["autodetect_provider"] = (proto.getValue() == "00000") ? 1 : 0;
 
-														var gsm_data_to_save = {} // a_adapter_data
-														gsm_data_to_save = Object.assign(gsm_data_to_save, {
+														var a_adapter_data = {}
+														a_adapter_data = Object.assign(a_adapter_data, {
 															[proto.getValue()]: adapter_data[sim_data["provider"]]
 														})
 
                                                         sim_data["provider"] = proto.getValue()
 
-														var gsm_id = proto.getValue();
-														var section = gsm_data_to_save[gsm_id];
-														self.adapters_cache[gsm_id]['name'] = section['name'];
-														self.adapters_cache[gsm_id]['gate_address'] = section['gate_address'];
-														self.adapters_cache[gsm_id]['balance_sms_phone'] = section['balance_sms_phone'];
-														self.adapters_cache[gsm_id]['balance_sms_text'] = section['balance_sms_text'];
-
                                                         //my_handleEdit(simid, sim_data, a_adapter_data);
                                                         //sendAction("edit", data, editCtrl);
-                                                       	sendAction("edit", simid, { "sim_data": sim_data, "gsm_data": gsm_data_to_save}, editCtrl )
+                                                       	sendAction("edit", simid, { "sim_data": sim_data, "gsm_data": adapter_data}, editCtrl )
 
                                							self.fireEvent("btn_save_setting_pressed", {
 															simid: self.simid,
 															uuid: uuid(),
 														})
 
-														self.tsmodemUnlock();
 
-                                                        L.hideModal();
+                                                        // Start modem automation again
+                                                        //window.socket.send('driver-run-automation');
+                                                        self.start_modem_automation()
+
+                                                        L.hideModal()
                                                         // Clear modal content
-                                                        $(".modal").empty();
+                                                        $(".modal").empty()
 
                                                         return true;
 
@@ -529,7 +494,6 @@
 
 				ui["SimSettingModal"] = UISimSettingModal;
 		// 	});
-			});
 		});
 	});
 

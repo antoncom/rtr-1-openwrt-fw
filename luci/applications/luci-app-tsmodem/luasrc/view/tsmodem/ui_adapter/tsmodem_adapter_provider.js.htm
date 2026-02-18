@@ -7,6 +7,7 @@ L.require('ui').then(function(ui) {
 			uci.load("tsmodem_adapter_provider").then(function(out){
 				var UIAdapterProvider = ui.AbstractElement.extend(/** @lends LuCI.ui.Textarea.prototype */ {
 					__init__: function(adapters) {
+
 						this.fields = {};
 						this.adapter_id = "";
 						this.last_balance_message = "";
@@ -83,7 +84,6 @@ L.require('ui').then(function(ui) {
 							// }),
 
 						}
-
 
 						//--------------------------------------------------------
 					},
@@ -198,6 +198,7 @@ L.require('ui').then(function(ui) {
 									self.last_balance_message = uci.get("tsmodem_adapter_provider", gsm_id, "balance_last_message")
 
 									var gsm_id = ev.detail["proto"]
+
 									self.gsm_id = gsm_id
 									var gsm_data = self.adapters[gsm_id]
 

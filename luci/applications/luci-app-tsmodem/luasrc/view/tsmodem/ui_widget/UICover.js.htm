@@ -51,6 +51,7 @@
                     // Subscribe on UISiminfo widget, btn_setting_pressed event: Open SIM Setting modal
                     // --------------------------------------------------------------------------------
                     window.EventBus.listenToASAP("websocket", ["99_rule"], function(ev) {
+
                         var event_data = ev.detail || {}
                         self.simid = event_data.simid || self.simid || "simid-0"
                         self.switching = event_data.switching || self.switching || false
@@ -62,12 +63,6 @@
 							self.removeOverlay()
 						}
 
-						if(event_data["do_switch"] == "true") {
-							self.waitme()
-                            self.displayOverlay()
-                        } else if(event_data["do_switch"] == "false" && !self.debounce) {
-							self.removeOverlay()
-						}
                     })
 
                     // -------------------------------------
