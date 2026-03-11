@@ -7,7 +7,7 @@
 			var UICountdownNew = ui.AbstractElement.extend({
 				__init__: function(simid, title, descr) {
 					this.secondCount = 60;
-					this.className = "uiCD"
+					this.className = "uiCD";
 
 					window["countdown_global"] = this; 
 
@@ -25,117 +25,112 @@
 					 		description: function(simid) { return "Пока что Sim-карта в слоте SIM-" + getSimNumber(simid) + " не зарегистрирована в GSM-сети." }
 					}
 
-					
-
-
+					this["03_rule"] = {
+							title: function(simid) { return "Баланс ниже минимума: SIM-" + getSimNumber(simid) },
+							description: function(simid) { return "Если не пополнить баланс или не изменить минимум в настройках, то по истечении таймера Сим-карта будет переключена." }
+					}
 				},
-
-
 
 				setCounter: function(id, value, max)
 				{
-
 					if (!isNaN(value) && !isNaN(max)) {
-					  var elem = document.getElementById(id);
-					  // Get the radius ("r" attribute)
-					  var radius = elem.r.baseVal.value;
-					  // Calculate the circumference of the circle
-					  var circumference = radius * 2 * Math.PI;
-					  // How long the bar has to be
-					  var barLength = value * circumference / max;
+						var elem = document.getElementById(id);
+						// Get the radius ("r" attribute)
+						var radius = elem.r.baseVal.value;
+						// Calculate the circumference of the circle
+						var circumference = radius * 2 * Math.PI;
+						// How long the bar has to be
+						var barLength = value * circumference / max;
 
-					  // Set a dash pattern for the stroke.
-					  // The dash pattern consists of a dash of the right length,
-					  // followed by a gap big enough to ensure that we don't see the next dash.
-					  elem.setAttribute("stroke-dasharray", barLength + " " + circumference);
+						// Set a dash pattern for the stroke.
+						// The dash pattern consists of a dash of the right length,
+						// followed by a gap big enough to ensure that we don't see the next dash.
+						elem.setAttribute("stroke-dasharray", barLength + " " + circumference);
 
-
-					  var textElem = document.getElementById("countdown-display");
-				    if (textElem) {
-				        textElem.textContent = value;
-				    }
+						var textElem = document.getElementById("countdown-display");
+						if (textElem) {
+							textElem.textContent = value;
+						}
 				  }
 				},
 
 				render: function() {
-    const container = document.createElement("div");
-    container.classList.add(this.className);
+					const container = document.createElement("div");
+					container.classList.add(this.className);
 
-    // Создаём структуру
-    const countdownContainer = document.createElement("div");
-    countdownContainer.className = "countdown-container";
+					// Создаём структуру
+					const countdownContainer = document.createElement("div");
+					countdownContainer.className = "countdown-container";
 
-    // Круг (остаётся как есть)
-    const circlePart = document.createElement("div");
-    circlePart.className = "circle-part";
-    circlePart.innerHTML = `
-        <svg viewBox="0 0 220 220" preserveAspectRatio="xMidYMid meet">
-            <g fill="none" stroke-width="24">
-                <circle cx="110" cy="110" r="87" stroke="#ccc"/>
-                <circle id="seconds" cx="110" cy="110" r="87" stroke="dodgerblue" transform="rotate(-90 110 110)"/>
-            </g>
-            <text id="countdown-display" x="110" y="110" text-anchor="middle" dominant-baseline="central" font-size="48" font-weight="bold" fill="#333">60</text>
-        </svg>
-    `;
-    countdownContainer.appendChild(circlePart);
+					// Круг (остаётся как есть)
+					const circlePart = document.createElement("div");
+					circlePart.className = "circle-part";
+					circlePart.innerHTML = `
+						<svg viewBox="0 0 220 220" preserveAspectRatio="xMidYMid meet">
+							<g fill="none" stroke-width="24">
+								<circle cx="110" cy="110" r="87" stroke="#ccc"/>
+								<circle id="seconds" cx="110" cy="110" r="87" stroke="dodgerblue" transform="rotate(-90 110 110)"/>
+							</g>
+							<text id="countdown-display" x="110" y="110" text-anchor="middle" dominant-baseline="central" font-size="48" font-weight="bold" fill="#333">60</text>
+						</svg>
+					`;
+					countdownContainer.appendChild(circlePart);
 
-    // Текстовый блок
-    const infoPart = document.createElement("div");
-    infoPart.className = "info-part";
+					// Текстовый блок
+					const infoPart = document.createElement("div");
+					infoPart.className = "info-part";
 
-    const infoBox = document.createElement("div");
-    infoBox.className = "info-box";
+					const infoBox = document.createElement("div");
+					infoBox.className = "info-box";
 
-    const titleDiv = document.createElement("div");
-    titleDiv.className = "error-title";
-    // titleDiv.textContent = "..."; ← заполним позже
+					const titleDiv = document.createElement("div");
+					titleDiv.className = "error-title";
+					// titleDiv.textContent = "..."; ← заполним позже
 
-    const descDiv = document.createElement("div");
-    descDiv.className = "error-description";
-    // descDiv.textContent = "..."; ← заполним позже
+					const descDiv = document.createElement("div");
+					descDiv.className = "error-description";
+					// descDiv.textContent = "..."; ← заполним позже
 
-    infoBox.appendChild(titleDiv);
-    infoBox.appendChild(descDiv);
-    infoPart.appendChild(infoBox);
-    countdownContainer.appendChild(infoPart);
+					infoBox.appendChild(titleDiv);
+					infoBox.appendChild(descDiv);
+					infoPart.appendChild(infoBox);
+					countdownContainer.appendChild(infoPart);
 
-    container.appendChild(countdownContainer);
+					container.appendChild(countdownContainer);
 
-    // Вставляем <style> (можно один раз в документ, но для виджета проще внутри)
-    const style = document.createElement("style");
-    style.textContent = `
-        .countdown-container { display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 32px; max-width: 100%; margin: 0 auto; padding: 0 12px; box-sizing: border-box; }
-        .circle-part, .info-part, .circle-part svg, .info-box { margin: 0; }
-        .circle-part { flex: 0 0 auto; padding: 0; }
-        .circle-part svg { width: 220px; height: 220px; max-width: 48vw; display: block; }
-        .info-part { flex: 0 0 209px; min-width: 209px; max-width: 209px; padding: 0; }
-        .info-box { background: #fdfdfd; border: none; border-radius: 6px; padding: 16px 20px; height: 100%; box-sizing: border-box; }
-        .error-title { font-size: 15px; font-weight: bold; color: #d32f2f; margin: 0 0 10px 0; line-height: 1.3; }
-        .error-description { font-size: 13px; color: #444; line-height: 1.45; margin: 0; }
-        @media (max-width: 799px) {
-            .countdown-container { flex-wrap: wrap; flex-direction: column; align-items: center; gap: 20px; margin: 0 auto; }
-            .info-part { width: 100%; max-width: 420px; min-width: unset; flex: 1 1 auto; }
-            .circle-part svg { width: 200px; height: 200px; }
-        }
-        @media (max-width: 480px) {
-            .circle-part svg { width: 180px; height: 180px; }
-            .info-box { padding: 14px 16px; }
-        }
-    `;
-    container.appendChild(style);
+					// Вставляем <style> (можно один раз в документ, но для виджета проще внутри)
+					const style = document.createElement("style");
+					style.textContent = `
+						.countdown-container { display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 32px; max-width: 100%; margin: 0 auto; padding: 0 12px; box-sizing: border-box; }
+						.circle-part, .info-part, .circle-part svg, .info-box { margin: 0; }
+						.circle-part { flex: 0 0 auto; padding: 0; }
+						.circle-part svg { width: 220px; height: 220px; max-width: 48vw; display: block; }
+						.info-part { flex: 0 0 209px; min-width: 209px; max-width: 209px; padding: 0; }
+						.info-box { background: #fdfdfd; border: none; border-radius: 6px; padding: 16px 20px; height: 100%; box-sizing: border-box; }
+						.error-title { font-size: 15px; font-weight: bold; color: #d32f2f; margin: 0 0 10px 0; line-height: 1.3; }
+						.error-description { font-size: 13px; color: #444; line-height: 1.45; margin: 0; }
+						@media (max-width: 799px) {
+							.countdown-container { flex-wrap: wrap; flex-direction: column; align-items: center; gap: 20px; margin: 0 auto; }
+							.info-part { width: 100%; max-width: 420px; min-width: unset; flex: 1 1 auto; }
+							.circle-part svg { width: 200px; height: 200px; }
+						}
+						@media (max-width: 480px) {
+							.circle-part svg { width: 180px; height: 180px; }
+							.info-box { padding: 14px 16px; }
+						}
+					`;
+					container.appendChild(style);
 
-    // Заполняем текст
-    this.titleDiv = titleDiv
-    this.descDiv = descDiv
+					// Заполняем текст
+					this.titleDiv = titleDiv;
+					this.descDiv = descDiv;
 
-    
-
-    return this.bind(container);
-},
+					return this.bind(container);
+				},
 
 				bind: function(container) {
-					this.node = container
-					var self = this
+					this.node = container;
+					var self = this;
 					dom.bindClassInstance(container, this);
 
 
@@ -143,51 +138,79 @@
 					// 01_rule UI updates: Sim is in slot or not
 					// -----------------------------------------------
 					window.EventBus.listenToASAP("websocket", ["01_rule"], function(ev) {
-						if (ev.detail.sim_id == undefined) return
-						var sim_id = ev.detail.sim_id
-						var sim_ready = ev.detail.sim_ready
-						var timeout = ev.detail.timeout
-						var wait_timer = ev.detail.wait_timer
+						// console.log('01_RULE, UICountdownNew ev: ', ev);
+						// console.log('01_RULE, UICountdownNew ev detail: ', ev.detail);
+
+						if (ev.detail.sim_id == undefined) return;
+						var sim_id = ev.detail.sim_id;
+						var sim_ready = ev.detail.sim_ready;
+						var timeout = ev.detail.timeout;
+						var wait_timer = ev.detail.wait_timer;
 						const infoBox = document.getElementById("ui-countdownNew");
 						if (sim_ready === "true") {
 						    infoBox.style.display = "none";
 						} else {
-						  infoBox.style.display = "block";
-						  window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout))
+							infoBox.style.display = "block";
+							window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout));
 
 							if (self["01_rule"]) {
-					        self.titleDiv.textContent = self["01_rule"].title(sim_id) || "";
-					        self.descDiv.textContent  = self["01_rule"].description(sim_id) || "";
-					    }
+								self.titleDiv.textContent = self["01_rule"].title(sim_id) || "";
+								self.descDiv.textContent  = self["01_rule"].description(sim_id) || "";
+					    	}
 						}
-						
-					})
+					});
 
 
 					// -----------------------------------------------
 					// 02_rule UI updates: Sim not registered
 					// -----------------------------------------------
 					window.EventBus.listenToASAP("websocket", ["02_rule"], function(ev) {
-						if (ev.detail.sim_id == undefined) return
-						var sim_id = ev.detail.sim_id
-						var network_registration = ev.detail.network_registration
-						var timeout = ev.detail.timeout
-						var wait_timer = ev.detail.wait_timer
+						if (ev.detail.sim_id == undefined) return;
+						var sim_id = ev.detail.sim_id;
+						var network_registration = ev.detail.network_registration;
+						var timeout = ev.detail.timeout;
+						var wait_timer = ev.detail.wait_timer;
 						const infoBox = document.getElementById("ui-countdownNew");
 						if (network_registration === "1") {
 						    infoBox.style.display = "none";
 						} else {
-						  infoBox.style.display = "block";
-						  window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout))
+							infoBox.style.display = "block";
+							window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout));
 
 							if (self["02_rule"]) {
-					        self.titleDiv.textContent = self["02_rule"].title(sim_id) || "";
-					        self.descDiv.textContent  = self["02_rule"].description(sim_id) || "";
-					    }
+								self.titleDiv.textContent = self["02_rule"].title(sim_id) || "";
+								self.descDiv.textContent  = self["02_rule"].description(sim_id) || "";
+							}
 						}
-						
-					})
-					
+					});
+
+
+					// -----------------------------------------------
+					// 03_rule UI updates: Switch sim slot
+					// -----------------------------------------------
+					window.EventBus.listenToASAP("websocket", ["03_rule"], function(ev) {
+						// console.log('03_RULE, UICountdownNew ev: ', ev);
+						// console.log('03_RULE, UICountdownNew ev detail: ', ev.detail);
+
+						if (ev.detail.sim_id == undefined) return; // || ev.detail.no_switch == undefined
+
+						var sim_id = ev.detail.sim_id;
+						var timeout = ev.detail.timeout;
+						var wait_timer = ev.detail.wait_timer;
+						var no_switch = ev.detail.no_switch;
+						const infoBox = document.getElementById("ui-countdownNew");
+						if(no_switch === "true") {
+							infoBox.style.display = "none";
+						} else {
+							infoBox.style.display = "block";
+							window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout));
+
+							if (self["03_rule"]) {
+								self.titleDiv.textContent = self["03_rule"].title(sim_id) || "";
+								self.descDiv.textContent = self["03_rule"].description(sim_id) || "";
+							}
+						}
+					});
 
 					return(container);
 				},
