@@ -29,6 +29,11 @@
 							title: function(simid) { return "Баланс ниже минимума: SIM-" + getSimNumber(simid) },
 							description: function(simid) { return "Если не пополнить баланс или не изменить минимум в настройках, то по истечении таймера Сим-карта будет переключена." }
 					}
+
+					this["04_rule"] = {
+					 		title: function(simid) { return "Отсутствие ping-" + getSimNumber(simid) + " в сети" },
+					 		description: function(simid) { return "Пока что Sim-карта в слоте SIM-" + getSimNumber(simid) + " не может связаться с заданным ip-адресом." }
+					}
 				},
 
 				setCounter: function(id, value, max)
@@ -209,6 +214,29 @@
 								self.titleDiv.textContent = self["03_rule"].title(sim_id) || "";
 								self.descDiv.textContent = self["03_rule"].description(sim_id) || "";
 							}
+						}
+					});
+
+					// -----------------------------------------------
+					// 04_rule UI updates: No ping!
+					// -----------------------------------------------
+					window.EventBus.listenToASAP("websocket", ["04_rule"], function(ev) {
+						if (ev.detail.sim_id == undefined) return;
+						var sim_id = ev.detail.sim_id;
+						var ping_status = ev.detail.ping_status;
+						var timeout = ev.detail.timeout;
+						var wait_timer = ev.detail.wait_timer;
+						const infoBox = document.getElementById("ui-countdownNew");
+						if (ping_status === "1") {
+						    infoBox.style.display = "none";
+						} else {
+						  infoBox.style.display = "block";
+						  window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout));
+
+							if (self["04_rule"]) {
+					      self.titleDiv.textContent = self["04_rule"].title(sim_id) || "";
+					      self.descDiv.textContent  = self["04_rule"].description(sim_id) || "";
+					    }
 						}
 					});
 
