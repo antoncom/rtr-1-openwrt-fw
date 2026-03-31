@@ -72,8 +72,8 @@ local util = require "luci.util"
 								}),
 							}
 
-
 							if((this.phone && this.phone.length > 0) || (this.uci_id == "new")) {
+							// if((this.phone.length > 0) || (this.uci_id == "new")) {
 								this.chunk.btn_phone_add.disabled = true;
 								if(this.uci_id == "new") {
 									this.chunk.btn_phone_delete.disabled = true;
@@ -93,9 +93,22 @@ local util = require "luci.util"
 							});
 						},
 
-						render: function() {
+						rerenderIds: function() {
+							const allRows = document.querySelectorAll('.cbi-rowstyle');
+
+							allRows.forEach((row, index) => {
+								const numberDiv = row.querySelector('div[data-title="N"] div');
+								if (numberDiv) {
+									numberDiv.innerText = index + 1;
+								}
+							});
+						},
+
+						render: function(phone_id) {
+							const phone_id_value = phone_id === undefined ? "" : phone_id;
+
 			                var container = E('div', { id: 'uci-' + this.uci_id, class: 'tr cbi-rowstyle' }, [
-			                	E('div', {class: 'td', ["data-title"]: 'N'}, E('div', {}, parseInt("1"))),
+			                	E('div', {class: 'td', ["data-title"]: 'N'}, E('div', {}, phone_id_value)),
 			                	E('div', {class: 'td', ["data-title"]: 'Phone'}, this.chunk.phone.render()),
 			                	E('div', {class: 'td', ["data-title"]: 'Email'}, this.chunk.email.render()),
 			                    E('div', {class: "nowrap cbi-section-actions td", style: "text-align: right;"}, [
@@ -103,8 +116,15 @@ local util = require "luci.util"
 									this.chunk.btn_phone_save,
 									this.chunk.btn_phone_delete,
 			                    ])
-			                ])
+			                ]);
 
+							// console.log(container);
+							// self.rerenderIds();
+							if(phone_id === undefined) {
+								setTimeout(() => {
+									this.rerenderIds(); 
+								}, 0);
+							}
 
 							return this.bind(container);
 						},
@@ -131,6 +151,7 @@ local util = require "luci.util"
 						},
 
 						cbRequestDone_phone_email_add: function(slf) {
+							// console.log("TEST cbRequestDone_phone_email_add");
 							return function(x) {
 								var self = slf
 
@@ -210,6 +231,7 @@ local util = require "luci.util"
 						// После сохранения телефона/имэйла в списке разрешённых -
 						// показать на экране пользователя уведомление
 						cbRequestDone_phone_email_save: function(slf) {
+							// console.log("TEST cbRequestDone_phone_email_save");
 							return function(x) {
 								var self = slf
 								if (!x) {
@@ -273,6 +295,7 @@ local util = require "luci.util"
 						// После успешного удаления записи -
 						// показать на экране пользователя уведомление
 						cbRequestDone_phone_email_delete: function(slf) {
+							// console.log("TEST cbRequestDone_phone_email_delete");
 							return function(x) {
 								var self = slf
 								if (!x) {
@@ -289,6 +312,11 @@ local util = require "luci.util"
 								if(raw) {
 									raw.parentNode.removeChild(raw)
 								}
+
+								// setTimeout(() => {
+								// 	this.rerenderIds(); 
+								// }, 0);
+
 							}
 						},
 
@@ -317,6 +345,10 @@ local util = require "luci.util"
 							request.addInterceptor(self.cb_delete)
 							// отправляем данные формы на роутер методом POST
 							xhrResponse = request.post('<%=luci.dispatcher.build_url("admin", "system", "sms_commands_2", "action")%>/'+ '%h'.format(action), payload, self.xhr_opts);
+						
+							// setTimeout(() => {
+							// 	this.rerenderIds(); 
+							// }, 0);
 						},
 
 						nearleyValidator: function(field, errormsg) {

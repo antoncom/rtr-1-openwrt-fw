@@ -86,9 +86,22 @@ local util = require "luci.util"
 							});
 						},
 
-						render: function() {
+						rerenderIds: function() {
+							const allRows = document.querySelectorAll('.sms_commands_rows .cbi-rowstyle');
+
+							allRows.forEach((row, index) => {
+								const numberDiv = row.querySelector('div[data-title="N"] div');
+								if (numberDiv) {
+									numberDiv.innerText = index + 1;
+								}
+							});
+						},
+
+						render: function(command_id) {
+							const command_id_value = command_id === undefined ? "" : command_id;
+
 			                var container = E('div', { id: 'uci-' + this.uci_id, class: 'tr cbi-rowstyle' }, [
-			                	E('div', {class: 'td', ["data-title"]: 'N'}, E('div', {}, parseInt("1"))),
+			                	E('div', {class: 'td', ["data-title"]: 'N'}, E('div', {}, command_id_value)),
 			                	E('div', {class: 'td', ["data-title"]: 'SMScomm'}, this.chunk.smscomm.render()),
 			                	E('div', {class: 'td', ["data-title"]: 'SHELLcomm'}, this.chunk.shellcomm.render()),
 			                    E('div', {class: "nowrap cbi-section-actions td", style: "text-align: right;"}, [
@@ -96,8 +109,13 @@ local util = require "luci.util"
 									this.chunk.btn_save,
 									this.chunk.btn_delete,
 			                    ])
-			                ])
+			                ]);
 
+							if(command_id === undefined) {
+								setTimeout(() => {
+									this.rerenderIds(); 
+								}, 0);
+							}
 
 							return this.bind(container);
 						},

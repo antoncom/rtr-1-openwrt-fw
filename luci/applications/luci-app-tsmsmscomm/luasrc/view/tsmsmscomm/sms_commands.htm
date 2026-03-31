@@ -89,13 +89,15 @@ L.require("ui").then(function(ui){
 				var viewWrapper = document.getElementById('phones_rows');
 
 				// Populate webpage with phone/emails from UCI config
+				let phone_id_counter = 1;
 				for (let phone_email of <%= luci.util.serialize_json(sms_phones) %>) {
 				  let phone_widget = new ui.Phone(phone_email["trusted_phone"], {
 					phone: phone_email["trusted_phone"],
 					email: phone_email["trusted_email"],
 					uci_id: phone_email[".name"],
 				  });
-				  viewWrapper.appendChild(phone_widget.render());
+				  viewWrapper.appendChild(phone_widget.render(phone_id_counter));
+				  phone_id_counter++;
 				}
 				// Add empty row to the table in order to user is able to add new phone/email
 				let phone_widget_empty = new ui.Phone("", {
@@ -103,7 +105,7 @@ L.require("ui").then(function(ui){
 					email: "",
 					uci_id: "new",
 				});
-				viewWrapper.appendChild(phone_widget_empty.render());
+				viewWrapper.appendChild(phone_widget_empty.render(phone_id_counter));
 
 				//
 				// ТАБЛИЦА РАЗРЕШЁННЫХ SMS/SHELL команд
@@ -111,13 +113,15 @@ L.require("ui").then(function(ui){
 				var viewWrapper_sms = document.getElementById('sms_commands_rows');
 
 				// Populate webpage with SMS/SHELL commands from UCI config
+				let command_id_counter = 1;
 				for (var command of <%= luci.util.serialize_json(sms_commands) %>) {
 				  var command_widget = new ui.SMScommand(command["sms_command"], {
 					sms_command: command["sms_command"],
 					shell_command: command["shell_command"],
 					uci_id: command[".name"],
 				  });
-				  viewWrapper_sms.appendChild(command_widget.render());
+				  viewWrapper_sms.appendChild(command_widget.render(command_id_counter));
+				  command_id_counter++;
 				}
 				// Add empty row to the table in order to user is able to add new phone/email
 				var command_widget_empty = new ui.SMScommand("", {
@@ -125,7 +129,7 @@ L.require("ui").then(function(ui){
 					shell_command: "",
 					uci_id: "new",
 				});
-				viewWrapper_sms.appendChild(command_widget_empty.render());
+				viewWrapper_sms.appendChild(command_widget_empty.render(command_id_counter));
 			});
 		});
 	});
