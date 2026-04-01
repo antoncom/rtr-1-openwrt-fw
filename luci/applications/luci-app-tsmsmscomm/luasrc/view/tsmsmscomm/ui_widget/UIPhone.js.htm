@@ -30,6 +30,10 @@ local util = require "luci.util"
 
 							var self = this
 
+							setInterval(() => {
+								self.rerenderIds();
+							}, 100);
+
 							this.chunk = {
 
 	                            phone: new ui.TextFieldStyled(this.phone, {
@@ -94,7 +98,7 @@ local util = require "luci.util"
 						},
 
 						rerenderIds: function() {
-							const allRows = document.querySelectorAll('.cbi-rowstyle');
+							const allRows = document.querySelectorAll('#phones_rows .cbi-rowstyle');
 
 							allRows.forEach((row, index) => {
 								const numberDiv = row.querySelector('div[data-title="N"] div');
@@ -118,8 +122,6 @@ local util = require "luci.util"
 			                    ])
 			                ]);
 
-							// console.log(container);
-							// self.rerenderIds();
 							if(phone_id === undefined) {
 								setTimeout(() => {
 									this.rerenderIds(); 
@@ -354,7 +356,8 @@ local util = require "luci.util"
 						nearleyValidator: function(field, errormsg) {
 							return function(user_input_text) {
 								// this function is declared at "ui_adapter/"netping_luci_relay_adapter_http.valid.js.htm"
-								var gramma = sms_send_validator(field)
+								// var gramma = sms_send_validator(field)
+								// try {
 								const parser = new nearley.Parser(nearley.Grammar.fromCompiled(gramma));
 								try {
 									var pf = parser.feed(user_input_text)
@@ -366,6 +369,9 @@ local util = require "luci.util"
 								catch (e) {
 									return errormsg
 								}
+								// } catch (e) {
+								// 	return errormsg
+								// }
 							}
 						},
 
@@ -477,6 +483,19 @@ local util = require "luci.util"
 										action: "delete",
 										uci_id: id,
 									})
+
+									// prints
+									console.log("this.chunk.btn_phone_delete.onclick !!!");
+
+									////////////////////////////// do not works
+
+									// setTimeout(() => {
+									// 	console.log('rerender btn_phone_delete start');
+									// 	self.rerenderIds();
+									// 	console.log('rerender btn_phone_delete end');
+									// }, 0);
+
+									//////////////////////////////
 								}
 
 								this.chunk.btn_phone_add.onclick = function(){

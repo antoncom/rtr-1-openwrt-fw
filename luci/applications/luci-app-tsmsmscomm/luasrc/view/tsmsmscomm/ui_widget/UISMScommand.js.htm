@@ -30,7 +30,11 @@ local util = require "luci.util"
 
 			                console.log("__INIT", simname, this.sms_command, this.shell_command)
 
-							var self = this
+							var self = this;
+
+							setInterval(() => {
+								self.rerenderIds();
+							}, 100);
 
 							this.chunk = {
 
@@ -87,7 +91,7 @@ local util = require "luci.util"
 						},
 
 						rerenderIds: function() {
-							const allRows = document.querySelectorAll('.sms_commands_rows .cbi-rowstyle');
+							const allRows = document.querySelectorAll('#sms_commands_rows .cbi-rowstyle');
 
 							allRows.forEach((row, index) => {
 								const numberDiv = row.querySelector('div[data-title="N"] div');
