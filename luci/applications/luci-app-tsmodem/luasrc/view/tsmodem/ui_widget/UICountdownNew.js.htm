@@ -8,6 +8,7 @@
 				__init__: function(simid, title, descr) {
 					this.secondCount = 60;
 					this.className = "uiCD";
+					this.current_timer = "";
 
 					window["countdown_global"] = this; 
 
@@ -56,7 +57,7 @@
 						if (textElem) {
 							textElem.textContent = value;
 						}
-				  }
+					}
 				},
 
 				render: function() {
@@ -138,13 +139,13 @@
 					var self = this;
 					dom.bindClassInstance(container, this);
 
-
 					// -----------------------------------------------
 					// 01_rule UI updates: Sim is in slot or not
 					// -----------------------------------------------
 					window.EventBus.listenToASAP("websocket", ["01_rule"], function(ev) {
-						// console.log('01_RULE, UICountdownNew ev: ', ev);
-						// console.log('01_RULE, UICountdownNew ev detail: ', ev.detail);
+						// console.log('[01_rule] self.current_timer: ', self.current_timer);
+						if( self.current_timer != "" && self.current_timer != "01_rule" ) { return; }
+						// console.log('[01_rule] self.current_timer (2): ', self.current_timer);
 
 						if (ev.detail.sim_id == undefined) return;
 						var sim_id = ev.detail.sim_id;
@@ -153,15 +154,17 @@
 						var wait_timer = ev.detail.wait_timer;
 						const infoBox = document.getElementById("ui-countdownNew");
 						if (sim_ready === "true") {
-						    infoBox.style.display = "none";
+							self.current_timer = "";
+							infoBox.style.display = "none";
 						} else {
+							self.current_timer = "01_rule";
 							infoBox.style.display = "block";
 							window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout));
 
 							if (self["01_rule"]) {
 								self.titleDiv.textContent = self["01_rule"].title(sim_id) || "";
 								self.descDiv.textContent  = self["01_rule"].description(sim_id) || "";
-					    	}
+							}
 						}
 					});
 
@@ -170,6 +173,11 @@
 					// 02_rule UI updates: Sim not registered
 					// -----------------------------------------------
 					window.EventBus.listenToASAP("websocket", ["02_rule"], function(ev) {
+						// console.log('[02_rule] self.current_timer: ', self.current_timer);
+						if( self.current_timer != "" && self.current_timer != "02_rule" ) { return; }
+						// console.log('[02_rule] self.current_timer (2): ', self.current_timer);
+
+
 						if (ev.detail.sim_id == undefined) return;
 						var sim_id = ev.detail.sim_id;
 						var network_registration = ev.detail.network_registration;
@@ -177,8 +185,10 @@
 						var wait_timer = ev.detail.wait_timer;
 						const infoBox = document.getElementById("ui-countdownNew");
 						if (network_registration === "1") {
-						    infoBox.style.display = "none";
+							self.current_timer = "";
+							infoBox.style.display = "none";
 						} else {
+							self.current_timer = "02_rule";
 							infoBox.style.display = "block";
 							window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout));
 
@@ -194,20 +204,38 @@
 					// 03_rule UI updates: Switch sim slot
 					// -----------------------------------------------
 					window.EventBus.listenToASAP("websocket", ["03_rule"], function(ev) {
+						// console.log('[03_rule] self.current_timer: ', self.current_timer);
+						if( self.current_timer != "" && self.current_timer != "03_rule" ) { return; }
+						// console.log('[03_rule] self.current_timer (2): ', self.current_timer);
+
 						// console.log('03_RULE, UICountdownNew ev: ', ev);
 						// console.log('03_RULE, UICountdownNew ev detail: ', ev.detail);
 
-						if (ev.detail.sim_id == undefined) return; // || ev.detail.no_switch == undefined
+						if (ev.detail.sim_id == undefined) return;
 
 						var sim_id = ev.detail.sim_id;
 						var timeout = ev.detail.timeout;
 						var wait_timer = ev.detail.wait_timer;
-						var no_switch = ev.detail.no_switch;
+						var is_balance_ok = ev.detail.is_balance_ok;
+
 						const infoBox = document.getElementById("ui-countdownNew");
-						if(no_switch === "true") {
+						if(is_balance_ok === "true") {
+							self.current_timer = "";
 							infoBox.style.display = "none";
 						} else {
+							if(timeout == undefined || wait_timer == undefined) { return; }
+
+							self.current_timer = "03_rule";
+
 							infoBox.style.display = "block";
+
+							// console.log('03_RULE, UICountdownNew ev (else block): ', ev);
+							// console.log('03_RULE, UICountdownNew ev detail (else block): ', ev.detail);
+							// console.log('wait_timer: ', wait_timer);
+							// console.log('timeout: ', timeout);
+							// console.log('wait_timer parseInt: ', parseInt(wait_timer));
+							// console.log('timeout parseInt: ', parseInt(timeout));
+
 							window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout));
 
 							if (self["03_rule"]) {
@@ -221,6 +249,10 @@
 					// 04_rule UI updates: No ping!
 					// -----------------------------------------------
 					window.EventBus.listenToASAP("websocket", ["04_rule"], function(ev) {
+						// console.log('[04_rule] self.current_timer: ', self.current_timer);
+						if( self.current_timer != "" && self.current_timer != "04_rule" ) { return; }
+						// console.log('[04_rule] self.current_timer (2): ', self.current_timer);
+
 						if (ev.detail.sim_id == undefined) return;
 						var sim_id = ev.detail.sim_id;
 						var ping_status = ev.detail.ping_status;
@@ -228,15 +260,18 @@
 						var wait_timer = ev.detail.wait_timer;
 						const infoBox = document.getElementById("ui-countdownNew");
 						if (ping_status === "1") {
-						    infoBox.style.display = "none";
+							self.current_timer = "";
+							infoBox.style.display = "none";
 						} else {
-						  infoBox.style.display = "block";
-						  window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout));
+							self.current_timer = "04_rule";
+
+							infoBox.style.display = "block";
+							window.countdown_global.setCounter('seconds', parseInt(wait_timer), parseInt(timeout));
 
 							if (self["04_rule"]) {
-					      self.titleDiv.textContent = self["04_rule"].title(sim_id) || "";
-					      self.descDiv.textContent  = self["04_rule"].description(sim_id) || "";
-					    }
+								self.titleDiv.textContent = self["04_rule"].title(sim_id) || "";
+								self.descDiv.textContent  = self["04_rule"].description(sim_id) || "";
+							}
 						}
 					});
 
