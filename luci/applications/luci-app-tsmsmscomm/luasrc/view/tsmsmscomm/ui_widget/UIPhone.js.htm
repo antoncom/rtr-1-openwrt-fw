@@ -30,18 +30,22 @@ local util = require "luci.util"
 
 							var self = this
 
+							setInterval(() => {
+								self.rerenderIds();
+							}, 100);
+
 							this.chunk = {
 
 	                            phone: new ui.TextFieldStyled(this.phone, {
 	                                        optional: false,
 	                                        htmlStyle: "margin-top: 7px;",
-	                                        validate: this.nearleyValidator("phone", "Введите телефон в формате: +79051002010")
+	                                        // validate: this.nearleyValidator("phone", "Введите телефон в формате: +79051002010")
 	                            }),
 
 	                            email: new ui.TextFieldStyled(this.email, {
 	                                        optional: true,
 	                                        htmlStyle: "margin-top: 7px;",
-	                                        validate: this.nearleyValidator("email", "Введите корректный имэйл адрес")
+	                                        // validate: this.nearleyValidator("email", "Введите корректный имэйл адрес")
 	                            }),
 
 								btn_phone_save: E('input',  {
@@ -72,7 +76,6 @@ local util = require "luci.util"
 								}),
 							}
 
-
 							if((this.phone && this.phone.length > 0) || (this.uci_id == "new")) {
 								this.chunk.btn_phone_add.disabled = true;
 								if(this.uci_id == "new") {
@@ -93,9 +96,22 @@ local util = require "luci.util"
 							});
 						},
 
-						render: function() {
+						rerenderIds: function() {
+							const allRows = document.querySelectorAll('#phones_rows .cbi-rowstyle');
+
+							allRows.forEach((row, index) => {
+								const numberDiv = row.querySelector('div[data-title="N"] div');
+								if (numberDiv) {
+									numberDiv.innerText = index + 1;
+								}
+							});
+						},
+
+						render: function(phone_id) {
+							const phone_id_value = phone_id === undefined ? "" : phone_id;
+
 			                var container = E('div', { id: 'uci-' + this.uci_id, class: 'tr cbi-rowstyle' }, [
-			                	E('div', {class: 'td', ["data-title"]: 'N'}, E('div', {}, parseInt("1"))),
+			                	E('div', {class: 'td', ["data-title"]: 'N'}, E('div', {}, phone_id_value)),
 			                	E('div', {class: 'td', ["data-title"]: 'Phone'}, this.chunk.phone.render()),
 			                	E('div', {class: 'td', ["data-title"]: 'Email'}, this.chunk.email.render()),
 			                    E('div', {class: "nowrap cbi-section-actions td", style: "text-align: right;"}, [
@@ -103,8 +119,13 @@ local util = require "luci.util"
 									this.chunk.btn_phone_save,
 									this.chunk.btn_phone_delete,
 			                    ])
-			                ])
+			                ]);
 
+							if(phone_id === undefined) {
+								setTimeout(() => {
+									this.rerenderIds(); 
+								}, 0);
+							}
 
 							return this.bind(container);
 						},
